@@ -103,20 +103,24 @@ func main() {
 		"app": "qjob",
 	})
 	l.Debug("starting")
+	if len(os.Args) < 2 {
+		printVersion()
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	if os.Args[1] == "--version" || os.Args[1] == "-v" {
+		printVersion()
+		os.Exit(0)
+	}
 	flag.Parse()
 	parseEnvToFlags()
 	l.Debug("parsed flags")
-	// get args
 	args := flag.Args()
 	if len(args) == 0 {
 		// print help
 		printVersion()
 		flag.PrintDefaults()
 		os.Exit(1)
-	}
-	if args[0] == "--version" || args[0] == "-v" {
-		printVersion()
-		os.Exit(0)
 	}
 	j := &qjob.QJob{
 		DriverName:    qjob.DriverName(*flagDriver),
