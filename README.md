@@ -82,3 +82,36 @@ For example, you can use [keda](https://keda.sh) to monitor your queue and scale
 ## Deployment
 
 You will need to install qjob in the container which will be used to run your job. You can either compile qjob from source, or use the latest precompiled binaries available.
+
+### Example Dockerfile
+
+```dockerfile
+FROM node:17
+
+RUN apt-get update && apt-get install -y \
+    curl
+
+RUN curl -LO https://github.com/robertlestak/qjob/releases/download/v0.0.1/qjob_linux_amd64 && \
+    chmod +x qjob_linux_amd64 && \
+    mv qjob_linux_amd64 /usr/local/bin/qjob
+
+RUN echo "console.log('the payload is:', process.env.QJOB_PAYLOAD)" > app.js
+
+CMD ["node", "app.js"]
+ENTRYPOINT ["/usr/local/bin/qjob"]
+```
+
+```bash
+docker build -t qjob .
+```
+
+```bash
+docker run --rm -it \
+    -v ~/.aws:/root/.aws \
+    -e QJOB_AWS_REGION=us-east-1 \
+    -e QJOB_AWS_SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/123456789012/my-queue \
+    -e QJOB_AWS_SQS_ROLE_ARN=arn:aws:iam::123456789012:role/my-role \
+    -e QJOB_DRIVER=aws-sqs \
+    -e AWS_SDK_LOAD_CONFIG=1 \
+    qjob
+```
