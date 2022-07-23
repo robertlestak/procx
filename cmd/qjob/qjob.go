@@ -19,6 +19,7 @@ var (
 	flagPassWorkAsArg = flag.Bool("pass-work-as-arg", false, "pass work as an argument")
 	flagRabbitMQURL   = flag.String("rabbitmq-url", "", "RabbitMQ URL")
 	flagRabbitMQQueue = flag.String("rabbitmq-queue", "", "RabbitMQ queue")
+	flagDaemon        = flag.Bool("daemon", false, "run as daemon")
 )
 
 func init() {
@@ -92,10 +93,47 @@ func parseEnvToFlags() {
 		r := os.Getenv("QJOB_RABBITMQ_QUEUE")
 		flagRabbitMQQueue = &r
 	}
+	if os.Getenv("QJOB_DAEMON") != "" {
+		r := os.Getenv("QJOB_DAEMON")
+		t := r == "true"
+		flagDaemon = &t
+	}
 }
 
 func printVersion() {
 	fmt.Printf("qjob version %s\n", Version)
+}
+
+func runOnce() {
+	l := log.WithFields(log.Fields{
+		"app": "qjob",
+	})
+	l.Debug("starting")
+	args := flag.Args()
+	j := &qjob.QJob{
+		DriverName:    qjob.DriverName(*flagDriver),
+		HostEnv:       *flagHostEnv,
+		PassWorkAsArg: *flagPassWorkAsArg,
+	}
+	if err := initDriver(j); err != nil {
+		l.Error(err)
+		os.Exit(1)
+	}
+	j.ParseArgs(args)
+	l.Debug("parsed args")
+	// execute
+	if j.Bin == "" {
+		l.Error("no bin specified")
+		os.Exit(1)
+	}
+	if err := j.InitDriver(); err != nil {
+		l.Errorf("failed to init driver: %s", err)
+		os.Exit(1)
+	}
+	if err := j.DoWork(); err != nil {
+		l.Errorf("failed to do work: %s", err)
+		os.Exit(1)
+	}
 }
 
 func main() {
@@ -122,29 +160,13 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	j := &qjob.QJob{
-		DriverName:    qjob.DriverName(*flagDriver),
-		HostEnv:       *flagHostEnv,
-		PassWorkAsArg: *flagPassWorkAsArg,
-	}
-	if err := initDriver(j); err != nil {
-		l.Error(err)
-		os.Exit(1)
-	}
-	j.ParseArgs(args)
-	l.Debug("parsed args")
-	// execute
-	if j.Bin == "" {
-		l.Error("no bin specified")
-		os.Exit(1)
-	}
-	if err := j.InitDriver(); err != nil {
-		l.Errorf("failed to init driver: %s", err)
-		os.Exit(1)
-	}
-	if err := j.DoWork(); err != nil {
-		l.Errorf("failed to do work: %s", err)
-		os.Exit(1)
+	if *flagDaemon {
+		l.Debug("running as daemon")
+		for {
+			runOnce()
+		}
+	} else {
+		runOnce()
 	}
 	l.Debug("exited")
 }

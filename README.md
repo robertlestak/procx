@@ -10,6 +10,8 @@ qjob will make the job payload available in the `QJOB_PAYLOAD` environment varia
 
 By default, the subprocess spawned by qjob will not have access to the host environment variables. This can be changed by setting the `-hostenv` flag.
 
+By default, qjob will connect to the data source, consume a single message, and then exit when the spawned process exits. If the `-daemon` flag is set, qjob will connect to the data source and consume messages until the process is killed, or until a job fails.
+
 ## Usage
 
 ```bash
@@ -20,6 +22,8 @@ qjob [flags] <process path>
         AWS SQS queue URL
   -aws-sqs-role-arn string
         AWS SQS role ARN
+  -daemon
+        run as daemon
   -driver string
         driver to use. (aws-sqs, rabbitmq, local)
   -hostenv
