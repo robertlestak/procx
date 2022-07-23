@@ -11,12 +11,14 @@ import (
 
 var (
 	Version           = "dev"
-	flagDriver        = flag.String("driver", "", "driver to use")
+	flagDriver        = flag.String("driver", "", "driver to use. (aws-sqs, rabbitmq, local)")
 	flagHostEnv       = flag.Bool("hostenv", false, "use host environment")
 	flagAWSRegion     = flag.String("aws-region", "", "AWS region")
 	flagSQSRoleARN    = flag.String("aws-sqs-role-arn", "", "AWS SQS role ARN")
 	flagSQSQueueURL   = flag.String("aws-sqs-queue-url", "", "AWS SQS queue URL")
 	flagPassWorkAsArg = flag.Bool("pass-work-as-arg", false, "pass work as an argument")
+	flagRabbitMQURL   = flag.String("rabbitmq-url", "", "RabbitMQ URL")
+	flagRabbitMQQueue = flag.String("rabbitmq-queue", "", "RabbitMQ queue")
 )
 
 func init() {
@@ -39,6 +41,15 @@ func initDriver(j *qjob.QJob) error {
 				Region:      *flagAWSRegion,
 				RoleARN:     *flagSQSRoleARN,
 				SQSQueueURL: *flagSQSQueueURL,
+			},
+		}
+	}
+	if flagRabbitMQURL != nil {
+		j.Driver = &qjob.Driver{
+			Name: qjob.DriverRabbit,
+			RabbitMQ: &qjob.DriverRabbitMQ{
+				URL:   *flagRabbitMQURL,
+				Queue: *flagRabbitMQQueue,
 			},
 		}
 	}
@@ -73,10 +84,18 @@ func parseEnvToFlags() {
 		t := r == "true"
 		flagPassWorkAsArg = &t
 	}
+	if os.Getenv("QJOB_RABBITMQ_URL") != "" {
+		r := os.Getenv("QJOB_RABBITMQ_URL")
+		flagRabbitMQURL = &r
+	}
+	if os.Getenv("QJOB_RABBITMQ_QUEUE") != "" {
+		r := os.Getenv("QJOB_RABBITMQ_QUEUE")
+		flagRabbitMQQueue = &r
+	}
 }
 
 func printVersion() {
-	fmt.Printf("qjob version %s", Version)
+	fmt.Printf("qjob version %s\n", Version)
 }
 
 func main() {

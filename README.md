@@ -21,33 +21,42 @@ qjob [flags] <process path>
   -aws-sqs-role-arn string
         AWS SQS role ARN
   -driver string
-        driver to use
+        driver to use. (aws-sqs, rabbitmq, local)
   -hostenv
         use host environment
   -pass-work-as-arg
         pass work as an argument
+  -rabbitmq-queue string
+        RabbitMQ queue
+  -rabbitmq-url string
+        RabbitMQ URL
 ```
 
 ### Environment Variables
 
-    - QJOB_AWS_REGION
-            AWS region
-    - QJOB_AWS_SQS_QUEUE_URL
-            AWS SQS queue URL
-    - QJOB_AWS_SQS_ROLE_ARN
-            AWS SQS role ARN
-    - QJOB_DRIVER
-            driver to use
-    - QJOB_HOSTENV
-            use host environment
-    - QJOB_PASS_WORK_AS_ARG
-            pass work as an argument
+- QJOB_AWS_REGION
+        AWS region
+- QJOB_AWS_SQS_QUEUE_URL
+        AWS SQS queue URL
+- QJOB_AWS_SQS_ROLE_ARN
+        AWS SQS role ARN
+- QJOB_DRIVER
+        driver to use
+- QJOB_HOSTENV
+        use host environment
+- QJOB_PASS_WORK_AS_ARG
+        pass work as an argument
+- QJOB_RABBITMQ_URL
+        RabbitMQ URL
+- QJOB_RABBITMQ_QUEUE
+        RabbitMQ queue
 
 ## Drivers
 
 Currently, the following drivers are supported:
 
 - AWS SQS (`aws-sqs`)
+- RabbitMQ (`rabbitmq`)
 - Local (`local`)
 
 Plans to add more drivers in the future, and PRs are welcome.
@@ -64,6 +73,18 @@ qjob \
     -aws-sqs-role-arn arn:aws:iam::123456789012:role/my-role \
     -aws-region us-east-1 \
     -driver aws-sqs \
+    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+```
+
+### RabbitMQ
+
+The RabbitMQ driver will connect to the specified queue AMQP endpoint and retrieve the next message from the specified queue.
+
+```bash
+qjob \
+    -rabbitmq-url amqp://guest:guest@localhost:5672 \
+    -rabbitmq-queue my-queue \
+    -driver rabbitmq \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
 ```
 

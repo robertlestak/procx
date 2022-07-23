@@ -12,6 +12,7 @@ import (
 
 var (
 	DriverAWSSQS      DriverName = "aws-sqs"
+	DriverRabbit      DriverName = "rabbitmq"
 	DriverLocal       DriverName = "local"
 	ErrDriverNotFound            = errors.New("driver not found")
 )
@@ -24,13 +25,15 @@ type DriverAWS struct {
 	SQSQueueURL string
 }
 
-type Driver struct {
-	Name DriverName
-	AWS  *DriverAWS
+type DriverRabbitMQ struct {
+	URL   string
+	Queue string
 }
 
-type Driver2 interface {
-	Init() error
+type Driver struct {
+	Name     DriverName
+	AWS      *DriverAWS
+	RabbitMQ *DriverRabbitMQ
 }
 
 type QJob struct {
@@ -68,6 +71,20 @@ func (j *QJob) InitAWSSQS() error {
 	return nil
 }
 
+func (j *QJob) InitRabbitMQ() error {
+	l := log.WithFields(log.Fields{
+		"app": "qjob",
+	})
+	l.Debug("starting")
+	err := client.CreateRabbitMQClient(j.Driver.RabbitMQ.URL)
+	if err != nil {
+		return err
+	}
+	client.RabbitMQQueue = j.Driver.RabbitMQ.Queue
+	l.Debug("exited")
+	return nil
+}
+
 func (j *QJob) InitDriver() error {
 	l := log.WithFields(log.Fields{
 		"action": "InitDriver",
@@ -77,6 +94,8 @@ func (j *QJob) InitDriver() error {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.InitAWSSQS()
+	case DriverRabbit:
+		return j.InitRabbitMQ()
 	case DriverLocal:
 		return nil
 	default:
@@ -120,6 +139,27 @@ func (j *QJob) clearWorkSQS() error {
 	return nil
 }
 
+func (j *QJob) getWorkRabbitMQ() (*string, error) {
+	l := log.WithFields(log.Fields{
+		"action": "getWorkRabbitMQ",
+		"driver": j.DriverName,
+	})
+	l.Debug("getWorkRabbitMQ")
+	m, err := client.ReceiveMessageRabbitMQ()
+	if err != nil {
+		l.Error(err)
+		return nil, err
+	}
+	l.Debug("received message")
+	if m == nil {
+		l.Debug("no message")
+		return nil, nil
+	}
+	l.Debug("message received")
+	body := string(m.Body)
+	return &body, nil
+}
+
 func (j *QJob) GetWorkFromDriver() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "GetWorkFromDriver",
@@ -129,12 +169,24 @@ func (j *QJob) GetWorkFromDriver() (*string, error) {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.getWorkSQS()
+	case DriverRabbit:
+		return j.getWorkRabbitMQ()
 	case DriverLocal:
 		w := os.Getenv("QJOB_PAYLOAD")
 		return &w, nil
 	default:
 		return nil, ErrDriverNotFound
 	}
+}
+
+func (j *QJob) clearWorkRabbitMQ() error {
+	l := log.WithFields(log.Fields{
+		"action": "clearWorkRabbitMQ",
+		"driver": j.DriverName,
+	})
+	l.Debug("clearWorkRabbitMQ")
+	client.RabbitMQClient.Close()
+	return nil
 }
 
 func (j *QJob) ClearWorkFromDriver() error {
@@ -146,6 +198,8 @@ func (j *QJob) ClearWorkFromDriver() error {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.clearWorkSQS()
+	case DriverRabbit:
+		return j.clearWorkRabbitMQ()
 	case DriverLocal:
 		return nil
 	default:
