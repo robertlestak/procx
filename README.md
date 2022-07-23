@@ -46,6 +46,7 @@ qjob [flags] <process path>
 - `QJOB_PASS_WORK_AS_ARG`
 - `QJOB_RABBITMQ_URL`
 - `QJOB_RABBITMQ_QUEUE`
+- `QJOB_DAEMON`
 
 ## Drivers
 
