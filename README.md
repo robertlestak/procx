@@ -112,9 +112,9 @@ FROM node:17
 RUN apt-get update && apt-get install -y \
     curl
 
-RUN curl -LO https://github.com/robertlestak/qjob/releases/download/v0.0.1/qjob_linux_amd64 && \
-    chmod +x qjob_linux_amd64 && \
-    mv qjob_linux_amd64 /usr/local/bin/qjob
+RUN curl -LO https://github.com/robertlestak/qjob/releases/latest/download/qjob_linux && \
+    chmod +x qjob_linux && \
+    mv qjob_linux /usr/local/bin/qjob
 
 RUN echo "console.log('the payload is:', process.env.QJOB_PAYLOAD)" > app.js
 
