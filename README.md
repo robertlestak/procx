@@ -82,7 +82,7 @@ qjob \
 
 ### Local
 
-The local driver is a simple wrapper around the process to execute, primarily for local testing. It does not communicate with any queue, and expects the job payload to be manually defined by the operator.
+The local driver is a simple wrapper around the process to execute, primarily for local testing. It does not communicate with any queue, and expects the job payload to be manually defined by the operator as a `QJOB_PAYLOAD` environment variable.
 
 ## Orchestration
 
