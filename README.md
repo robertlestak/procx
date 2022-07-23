@@ -34,22 +34,14 @@ qjob [flags] <process path>
 
 ### Environment Variables
 
-- QJOB_AWS_REGION
-        AWS region
-- QJOB_AWS_SQS_QUEUE_URL
-        AWS SQS queue URL
-- QJOB_AWS_SQS_ROLE_ARN
-        AWS SQS role ARN
-- QJOB_DRIVER
-        driver to use
-- QJOB_HOSTENV
-        use host environment
-- QJOB_PASS_WORK_AS_ARG
-        pass work as an argument
-- QJOB_RABBITMQ_URL
-        RabbitMQ URL
-- QJOB_RABBITMQ_QUEUE
-        RabbitMQ queue
+- `QJOB_AWS_REGION`
+- `QJOB_AWS_SQS_QUEUE_URL`
+- `QJOB_AWS_SQS_ROLE_ARN`
+- `QJOB_DRIVER`
+- `QJOB_HOSTENV`
+- `QJOB_PASS_WORK_AS_ARG`
+- `QJOB_RABBITMQ_URL`
+- `QJOB_RABBITMQ_QUEUE`
 
 ## Drivers
 
