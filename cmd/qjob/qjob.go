@@ -14,6 +14,7 @@ var (
 	flagDriver        = flag.String("driver", "", "driver to use. (aws-sqs, rabbitmq, local)")
 	flagHostEnv       = flag.Bool("hostenv", false, "use host environment")
 	flagAWSRegion     = flag.String("aws-region", "", "AWS region")
+	flagAWSLoadConfig = flag.Bool("aws-load-config", false, "load AWS config from ~/.aws/config")
 	flagSQSRoleARN    = flag.String("aws-sqs-role-arn", "", "AWS SQS role ARN")
 	flagSQSQueueURL   = flag.String("aws-sqs-queue-url", "", "AWS SQS queue URL")
 	flagPassWorkAsArg = flag.Bool("pass-work-as-arg", false, "pass work as an argument")
@@ -30,12 +31,12 @@ func init() {
 	log.SetLevel(ll)
 }
 
-func initDriver(j *qjob.QJob) error {
+func initDriver(j *qjob.QJob) (*qjob.QJob, error) {
 	l := log.WithFields(log.Fields{
 		"app": "qjob",
 	})
 	l.Debug("starting")
-	if flagSQSQueueURL != nil {
+	if flagSQSQueueURL != nil && *flagSQSQueueURL != "" {
 		j.Driver = &qjob.Driver{
 			Name: qjob.DriverAWSSQS,
 			AWS: &qjob.DriverAWS{
@@ -45,7 +46,7 @@ func initDriver(j *qjob.QJob) error {
 			},
 		}
 	}
-	if flagRabbitMQURL != nil {
+	if flagRabbitMQURL != nil && *flagRabbitMQURL != "" {
 		j.Driver = &qjob.Driver{
 			Name: qjob.DriverRabbit,
 			RabbitMQ: &qjob.DriverRabbitMQ{
@@ -55,7 +56,7 @@ func initDriver(j *qjob.QJob) error {
 		}
 	}
 	l.Debug("exited")
-	return nil
+	return j, nil
 }
 
 func parseEnvToFlags() {
@@ -98,6 +99,14 @@ func parseEnvToFlags() {
 		t := r == "true"
 		flagDaemon = &t
 	}
+	if os.Getenv("QJOB_AWS_LOAD_CONFIG") != "" || os.Getenv("AWS_SDK_LOAD_CONFIG") != "" {
+		r := os.Getenv("QJOB_AWS_LOAD_CONFIG")
+		t := r == "true"
+		flagAWSLoadConfig = &t
+	}
+	if *flagAWSLoadConfig {
+		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
+	}
 }
 
 func printVersion() {
@@ -115,7 +124,9 @@ func runOnce() {
 		HostEnv:       *flagHostEnv,
 		PassWorkAsArg: *flagPassWorkAsArg,
 	}
-	if err := initDriver(j); err != nil {
+	var err error
+	j, err = initDriver(j)
+	if err != nil {
 		l.Error(err)
 		os.Exit(1)
 	}

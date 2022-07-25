@@ -16,6 +16,8 @@ By default, qjob will connect to the data source, consume a single message, and 
 
 ```bash
 qjob [flags] <process path>
+  -aws-load-config
+        load AWS config from ~/.aws/config
   -aws-region string
         AWS region
   -aws-sqs-queue-url string
@@ -64,6 +66,8 @@ The SQS driver will retrieve the next message from the specified queue, and pass
 
 For cross-account access, you must provide the ARN of the role that has access to the queue, and the identity running qjob must be able to assume the target identity.
 
+If running on a developer workstation, you will most likely want to pass your `~/.aws/config` identity. To do so, pass the `-aws-load-config` flag.
+
 ```bash
 qjob \
     -aws-sqs-queue-url https://sqs.us-east-1.amazonaws.com/123456789012/my-queue \
@@ -88,6 +92,13 @@ qjob \
 ### Local
 
 The local driver is a simple wrapper around the process to execute, primarily for local testing. It does not communicate with any queue, and expects the job payload to be manually defined by the operator as a `QJOB_PAYLOAD` environment variable.
+
+```bash
+QJOB_PAYLOAD="my payload" \
+qjob \
+    -driver local \
+    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+```
 
 ## Orchestration
 
