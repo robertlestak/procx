@@ -12,6 +12,19 @@ By default, the subprocess spawned by qjob will not have access to the host envi
 
 By default, qjob will connect to the data source, consume a single message, and then exit when the spawned process exits. If the `-daemon` flag is set, qjob will connect to the data source and consume messages until the process is killed, or until a job fails.
 
+## Install
+
+```bash
+curl -SsL https://raw.githubusercontent.com/robertlestak/qjob/main/scripts/install.sh | bash -e
+```
+
+### A note on permissions
+
+Depending on the path of `INSTALL_DIR` and the permissions of the user running the installation script, you may get a Permission Denied error if you are trying to move the binary into a location which your current user does not have access to. This is most often the case when running the script as a non-root user yet trying to install into `/usr/local/bin`. To fix this, you can either:
+
+Create a `$HOME/bin` directory in your current user home directory. This will be the default installation directory. Be sure to add this to your `$PATH` environment variable.
+Use `sudo` to run the installation script, to install into `/usr/local/bin` (`curl -SsL https://raw.githubusercontent.com/robertlestak/qjob/main/scripts/install.sh | sudo bash -e`).
+
 ## Usage
 
 ```bash
