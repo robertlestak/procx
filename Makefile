@@ -1,4 +1,4 @@
-VERSION=v0.0.5
+VERSION=v0.0.6
 
 qjob: bin/qjob_darwin bin/qjob_windows bin/qjob_linux
 
@@ -11,6 +11,11 @@ bin/qjob_linux:
 	mkdir -p bin
 	GOOS=linux GOARCH=amd64 go build -ldflags="-X 'main.Version=$(VERSION)'" -o bin/qjob_linux cmd/qjob/*.go
 	openssl sha512 bin/qjob_linux > bin/qjob_linux.sha512
+
+bin/qjob_hostarch:
+	mkdir -p bin
+	go build -ldflags="-X 'main.Version=$(VERSION)'" -o bin/qjob_hostarch cmd/qjob/*.go
+	openssl sha512 bin/qjob_hostarch > bin/qjob_hostarch.sha512
 
 bin/qjob_windows:
 	mkdir -p bin

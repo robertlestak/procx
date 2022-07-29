@@ -1,11 +1,11 @@
-FROM golang:1.18 as builder
+FROM golang:1.18-alpine as builder
 
 WORKDIR /src
 
 COPY . .
 
-RUN go build -o /bin/qjob cmd/qjob/*.go
+RUN apk add make openssl && make bin/qjob_hostarch
 
 FROM alpine:3.6 as runtime
 
-COPY --from=builder /bin/qjob /bin/qjob
+COPY --from=builder /src/bin/qjob_hostarch /bin/qjob

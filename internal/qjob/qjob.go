@@ -6,15 +6,16 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/robertlestak/qjob/internal/client"
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	DriverAWSSQS      DriverName = "aws-sqs"
-	DriverRabbit      DriverName = "rabbitmq"
-	DriverLocal       DriverName = "local"
-	ErrDriverNotFound            = errors.New("driver not found")
+	DriverAWSSQS            DriverName = "aws-sqs"
+	DriverRabbit            DriverName = "rabbitmq"
+	DriverRedisSubscription DriverName = "redis-subscription"
+	DriverRedisList         DriverName = "redis-list"
+	DriverLocal             DriverName = "local"
+	ErrDriverNotFound                  = errors.New("driver not found")
 )
 
 type DriverName string
@@ -30,10 +31,18 @@ type DriverRabbitMQ struct {
 	Queue string
 }
 
+type DriverRedis struct {
+	Host     string
+	Port     string
+	Password string
+	Key      string
+}
+
 type Driver struct {
 	Name     DriverName
 	AWS      *DriverAWS
 	RabbitMQ *DriverRabbitMQ
+	Redis    *DriverRedis
 }
 
 type QJob struct {
@@ -56,35 +65,6 @@ func (j *QJob) ParseArgs(args []string) {
 	}
 }
 
-func (j *QJob) InitAWSSQS() error {
-	l := log.WithFields(log.Fields{
-		"app": "qjob",
-	})
-	l.Debug("starting")
-	c, err := client.CreateSQSClient(j.Driver.AWS.Region, j.Driver.AWS.RoleARN)
-	if err != nil {
-		return err
-	}
-	client.SQSClient = c
-	client.SQSQueueURL = j.Driver.AWS.SQSQueueURL
-	l.Debug("exited")
-	return nil
-}
-
-func (j *QJob) InitRabbitMQ() error {
-	l := log.WithFields(log.Fields{
-		"app": "qjob",
-	})
-	l.Debug("starting")
-	err := client.CreateRabbitMQClient(j.Driver.RabbitMQ.URL)
-	if err != nil {
-		return err
-	}
-	client.RabbitMQQueue = j.Driver.RabbitMQ.Queue
-	l.Debug("exited")
-	return nil
-}
-
 func (j *QJob) InitDriver() error {
 	l := log.WithFields(log.Fields{
 		"action": "InitDriver",
@@ -96,68 +76,15 @@ func (j *QJob) InitDriver() error {
 		return j.InitAWSSQS()
 	case DriverRabbit:
 		return j.InitRabbitMQ()
+	case DriverRedisSubscription:
+		return j.InitRedis()
+	case DriverRedisList:
+		return j.InitRedis()
 	case DriverLocal:
 		return nil
 	default:
 		return ErrDriverNotFound
 	}
-}
-
-func (j *QJob) getWorkSQS() (*string, error) {
-	l := log.WithFields(log.Fields{
-		"action": "getWorkSQS",
-		"driver": j.DriverName,
-	})
-	l.Debug("getWorkSQS")
-	m, err := client.ReceiveMessageSQS()
-	if err != nil {
-		l.Error(err)
-		return nil, err
-	}
-	l.Debug("received message")
-	if m == nil {
-		l.Debug("no message")
-		return nil, nil
-	}
-	l.Debug("message received")
-	client.SQSReceiptHandle = *m.ReceiptHandle
-	return m.Body, nil
-}
-
-func (j *QJob) clearWorkSQS() error {
-	l := log.WithFields(log.Fields{
-		"action": "clearWorkSQS",
-		"driver": j.DriverName,
-	})
-	l.Debug("clearWorkSQS")
-	err := client.DeleteMessageSQS()
-	if err != nil {
-		l.Error(err)
-		return err
-	}
-	l.Debug("message deleted")
-	return nil
-}
-
-func (j *QJob) getWorkRabbitMQ() (*string, error) {
-	l := log.WithFields(log.Fields{
-		"action": "getWorkRabbitMQ",
-		"driver": j.DriverName,
-	})
-	l.Debug("getWorkRabbitMQ")
-	m, err := client.ReceiveMessageRabbitMQ()
-	if err != nil {
-		l.Error(err)
-		return nil, err
-	}
-	l.Debug("received message")
-	if m == nil {
-		l.Debug("no message")
-		return nil, nil
-	}
-	l.Debug("message received")
-	body := string(m.Body)
-	return &body, nil
 }
 
 func (j *QJob) GetWorkFromDriver() (*string, error) {
@@ -174,19 +101,13 @@ func (j *QJob) GetWorkFromDriver() (*string, error) {
 	case DriverLocal:
 		w := os.Getenv("QJOB_PAYLOAD")
 		return &w, nil
+	case DriverRedisList:
+		return j.getWorkRedisList()
+	case DriverRedisSubscription:
+		return j.getWorkRedisSubscription()
 	default:
 		return nil, ErrDriverNotFound
 	}
-}
-
-func (j *QJob) clearWorkRabbitMQ() error {
-	l := log.WithFields(log.Fields{
-		"action": "clearWorkRabbitMQ",
-		"driver": j.DriverName,
-	})
-	l.Debug("clearWorkRabbitMQ")
-	client.RabbitMQClient.Close()
-	return nil
 }
 
 func (j *QJob) ClearWorkFromDriver() error {
@@ -200,11 +121,28 @@ func (j *QJob) ClearWorkFromDriver() error {
 		return j.clearWorkSQS()
 	case DriverRabbit:
 		return j.clearWorkRabbitMQ()
+	case DriverRedisList:
+		return nil
+	case DriverRedisSubscription:
+		return nil
 	case DriverLocal:
 		return nil
 	default:
 		return ErrDriverNotFound
 	}
+}
+
+func (j *QJob) HandleFailure() error {
+	l := log.WithFields(log.Fields{
+		"action": "HandleFailure",
+		"driver": j.DriverName,
+	})
+	l.Debug("HandleFailure")
+	switch j.DriverName {
+	case DriverRedisList:
+		return j.handleFailureRedisList()
+	}
+	return nil
 }
 
 func (j *QJob) DoWork() error {
@@ -227,6 +165,9 @@ func (j *QJob) DoWork() error {
 	err = j.Exec(os.Stdout, os.Stderr)
 	if err != nil {
 		l.Error(err)
+		if err := j.HandleFailure(); err != nil {
+			l.Error(err)
+		}
 		return err
 	}
 	l.Debug("work completed")

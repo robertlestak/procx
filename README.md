@@ -40,7 +40,7 @@ qjob [flags] <process path>
   -daemon
         run as daemon
   -driver string
-        driver to use. (aws-sqs, rabbitmq, local)
+        driver to use. (aws-sqs, rabbitmq, redis-list, redis-subscription, local)
   -hostenv
         use host environment
   -pass-work-as-arg
@@ -49,6 +49,14 @@ qjob [flags] <process path>
         RabbitMQ queue
   -rabbitmq-url string
         RabbitMQ URL
+  -redis-host string
+        Redis host
+  -redis-key string
+        Redis key
+  -redis-password string
+        Redis password
+  -redis-port string
+        Redis port (default "6379")
 ```
 
 ### Environment Variables
@@ -61,6 +69,10 @@ qjob [flags] <process path>
 - `QJOB_PASS_WORK_AS_ARG`
 - `QJOB_RABBITMQ_URL`
 - `QJOB_RABBITMQ_QUEUE`
+- `QJOB_REDIS_HOST`
+- `QJOB_REDIS_PORT`
+- `QJOB_REDIS_PASSWORD`
+- `QJOB_REDIS_KEY`
 - `QJOB_DAEMON`
 
 ## Drivers
@@ -69,6 +81,8 @@ Currently, the following drivers are supported:
 
 - AWS SQS (`aws-sqs`)
 - RabbitMQ (`rabbitmq`)
+- Redis List (`redis-list`)
+- Redis Subscription (`redis-subscription`)
 - Local (`local`)
 
 Plans to add more drivers in the future, and PRs are welcome.
@@ -99,6 +113,32 @@ qjob \
     -rabbitmq-url amqp://guest:guest@localhost:5672 \
     -rabbitmq-queue my-queue \
     -driver rabbitmq \
+    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+```
+
+### Redis List
+
+The Redis List driver will connect to the specified Redis server and retrieve the next message from the specified list.
+
+```bash
+qjob \
+    -redis-host localhost \
+    -redis-port 6379 \
+    -redis-key my-list \
+    -driver redis-list \
+    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+```
+
+### Redis Subscription
+
+The Redis Subscription driver will connect to the specified Redis server and retrieve the next message from the specified subscription.
+
+```bash
+qjob \
+    -redis-host localhost \
+    -redis-port 6379 \
+    -redis-key my-subscription \
+    -driver redis-subscription \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
 ```
 

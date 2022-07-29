@@ -11,7 +11,7 @@ import (
 
 var (
 	Version           = "dev"
-	flagDriver        = flag.String("driver", "", "driver to use. (aws-sqs, rabbitmq, local)")
+	flagDriver        = flag.String("driver", "", "driver to use. (aws-sqs, rabbitmq, redis-list, redis-subscription, local)")
 	flagHostEnv       = flag.Bool("hostenv", false, "use host environment")
 	flagAWSRegion     = flag.String("aws-region", "", "AWS region")
 	flagAWSLoadConfig = flag.Bool("aws-load-config", false, "load AWS config from ~/.aws/config")
@@ -20,6 +20,10 @@ var (
 	flagPassWorkAsArg = flag.Bool("pass-work-as-arg", false, "pass work as an argument")
 	flagRabbitMQURL   = flag.String("rabbitmq-url", "", "RabbitMQ URL")
 	flagRabbitMQQueue = flag.String("rabbitmq-queue", "", "RabbitMQ queue")
+	flagRedisHost     = flag.String("redis-host", "", "Redis host")
+	flagRedisPort     = flag.String("redis-port", "6379", "Redis port")
+	flagRedisPassword = flag.String("redis-password", "", "Redis password")
+	flagRedisKey      = flag.String("redis-key", "", "Redis key")
 	flagDaemon        = flag.Bool("daemon", false, "run as daemon")
 )
 
@@ -52,6 +56,17 @@ func initDriver(j *qjob.QJob) (*qjob.QJob, error) {
 			RabbitMQ: &qjob.DriverRabbitMQ{
 				URL:   *flagRabbitMQURL,
 				Queue: *flagRabbitMQQueue,
+			},
+		}
+	}
+	if flagRedisHost != nil && *flagRedisHost != "" {
+		j.Driver = &qjob.Driver{
+			Name: qjob.DriverName(*flagDriver),
+			Redis: &qjob.DriverRedis{
+				Host:     *flagRedisHost,
+				Port:     *flagRedisPort,
+				Password: *flagRedisPassword,
+				Key:      *flagRedisKey,
 			},
 		}
 	}
@@ -103,6 +118,22 @@ func parseEnvToFlags() {
 		r := os.Getenv("QJOB_AWS_LOAD_CONFIG")
 		t := r == "true"
 		flagAWSLoadConfig = &t
+	}
+	if os.Getenv("QJOB_REDIS_HOST") != "" {
+		r := os.Getenv("QJOB_REDIS_HOST")
+		flagRedisHost = &r
+	}
+	if os.Getenv("QJOB_REDIS_PORT") != "" {
+		r := os.Getenv("QJOB_REDIS_PORT")
+		flagRedisPort = &r
+	}
+	if os.Getenv("QJOB_REDIS_PASSWORD") != "" {
+		r := os.Getenv("QJOB_REDIS_PASSWORD")
+		flagRedisPassword = &r
+	}
+	if os.Getenv("QJOB_REDIS_KEY") != "" {
+		r := os.Getenv("QJOB_REDIS_KEY")
+		flagRedisKey = &r
 	}
 	if *flagAWSLoadConfig {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
