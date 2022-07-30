@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/robertlestak/qjob/internal/qjob"
+	"github.com/robertlestak/qjob/pkg/qjob"
 	log "github.com/sirupsen/logrus"
 )
 
