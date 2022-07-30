@@ -13,6 +13,7 @@ import (
 var (
 	DriverAWSSQS            DriverName = "aws-sqs"
 	DriverGCPPubSub         DriverName = "gcp-pubsub"
+	DriverPostgres          DriverName = "postgres"
 	DriverRabbit            DriverName = "rabbitmq"
 	DriverRedisSubscription DriverName = "redis-pubsub"
 	DriverRedisList         DriverName = "redis-list"
@@ -34,6 +35,25 @@ type DriverGCP struct {
 	pubSubMessage    *pubsub.Message `json:"-"`
 }
 
+type SqlQuery struct {
+	Query  string `json:"query"`
+	Params []any  `json:"params"`
+}
+
+type DriverPsql struct {
+	Host            string    `json:"host"`
+	Port            int       `json:"port"`
+	User            string    `json:"user"`
+	Password        string    `json:"password"`
+	DBName          string    `json:"dbName"`
+	SSLMode         string    `json:"sslMode"`
+	QueryReturnsKey *bool     `json:"queryReturnsKey"`
+	RetrieveQuery   *SqlQuery `json:"retrieveQuery"`
+	FailureQuery    *SqlQuery `json:"failureQuery"`
+	ClearQuery      *SqlQuery `json:"clearQuery"`
+	Key             *string   `json:"key"`
+}
+
 type DriverRabbitMQ struct {
 	URL   string `json:"url"`
 	Queue string `json:"queue"`
@@ -50,6 +70,7 @@ type Driver struct {
 	Name     DriverName      `json:"name"`
 	AWS      *DriverAWS      `json:"aws"`
 	GCP      *DriverGCP      `json:"gcp"`
+	Psql     *DriverPsql     `json:"psql"`
 	RabbitMQ *DriverRabbitMQ `json:"rabbitmq"`
 	Redis    *DriverRedis    `json:"redis"`
 }
@@ -85,6 +106,8 @@ func (j *QJob) InitDriver() error {
 		return j.InitAWSSQS()
 	case DriverGCPPubSub:
 		return j.InitGCPPubSub()
+	case DriverPostgres:
+		return j.InitPsql()
 	case DriverRabbit:
 		return j.InitRabbitMQ()
 	case DriverRedisSubscription:
@@ -109,6 +132,8 @@ func (j *QJob) GetWorkFromDriver() (*string, error) {
 		return j.getWorkSQS()
 	case DriverGCPPubSub:
 		return j.getWorkGCPPubSub()
+	case DriverPostgres:
+		return j.getWorkPsql()
 	case DriverRabbit:
 		return j.getWorkRabbitMQ()
 	case DriverLocal:
@@ -132,6 +157,8 @@ func (j *QJob) ClearWorkFromDriver() error {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.clearWorkSQS()
+	case DriverPostgres:
+		return j.clearWorkPsql()
 	case DriverRabbit:
 		return j.clearWorkRabbitMQ()
 	case DriverGCPPubSub:
@@ -156,6 +183,8 @@ func (j *QJob) HandleFailure() error {
 	switch j.DriverName {
 	case DriverRedisList:
 		return j.handleFailureRedisList()
+	case DriverPostgres:
+		return j.handleFailurePsql()
 	}
 	return nil
 }

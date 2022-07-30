@@ -40,7 +40,7 @@ qjob [flags] <process path>
   -daemon
         run as daemon
   -driver string
-        driver to use. (aws-sqs, gcp-pubsub, rabbitmq, redis-list, redis-pubsub, local)
+        driver to use. (aws-sqs, gcp-pubsub, postgres, rabbitmq, redis-list, redis-pubsub, local)
   -gcp-project-id string
         GCP project ID
   -gcp-pubsub-subscription string
@@ -49,6 +49,32 @@ qjob [flags] <process path>
         use host environment
   -pass-work-as-arg
         pass work as an argument
+  -psql-clear-params string
+        PostgreSQL clear params
+  -psql-clear-query string
+        PostgreSQL clear query
+  -psql-database string
+        PostgreSQL database
+  -psql-fail-params string
+        PostgreSQL fail params
+  -psql-fail-query string
+        PostgreSQL fail query
+  -psql-host string
+        PostgreSQL host
+  -psql-password string
+        PostgreSQL password
+  -psql-port string
+        PostgreSQL port (default "5432")
+  -psql-query-key
+        PostgreSQL query returns key as first column and value as second column
+  -psql-retrieve-params string
+        PostgreSQL retrieve params
+  -psql-retrieve-query string
+        PostgreSQL retrieve query
+  -psql-ssl-mode string
+        PostgreSQL SSL mode (default "disable")
+  -psql-user string
+        PostgreSQL user
   -rabbitmq-queue string
         RabbitMQ queue
   -rabbitmq-url string
@@ -73,6 +99,19 @@ qjob [flags] <process path>
 - `QJOB_DRIVER`
 - `QJOB_HOSTENV`
 - `QJOB_PASS_WORK_AS_ARG`
+- `QJOB_PSQL_CLEAR_PARAMS`
+- `QJOB_PSQL_CLEAR_QUERY`
+- `QJOB_PSQL_DATABASE`
+- `QJOB_PSQL_FAIL_PARAMS`
+- `QJOB_PSQL_FAIL_QUERY`
+- `QJOB_PSQL_HOST`
+- `QJOB_PSQL_PASSWORD`
+- `QJOB_PSQL_PORT`
+- `QJOB_PSQL_QUERY_KEY`
+- `QJOB_PSQL_RETRIEVE_PARAMS`
+- `QJOB_PSQL_RETRIEVE_QUERY`
+- `QJOB_PSQL_SSL_MODE`
+- `QJOB_PSQL_USER`
 - `QJOB_RABBITMQ_URL`
 - `QJOB_RABBITMQ_QUEUE`
 - `QJOB_REDIS_HOST`
@@ -87,6 +126,7 @@ Currently, the following drivers are supported:
 
 - AWS SQS (`aws-sqs`)
 - GCP Pub/Sub (`gcp-pubsub`)
+- PostgreSQL (`postgres`)
 - RabbitMQ (`rabbitmq`)
 - Redis List (`redis-list`)
 - Redis Subscription (`redis-pubsub`)
@@ -121,6 +161,28 @@ qjob \
     -gcp-project-id my-project \
     -gcp-pubsub-subscription my-subscription \
     -driver gcp-pubsub \
+    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+```
+
+### PostgreSQL
+
+The PostgreSQL driver will retrieve the next message from the specified queue, and pass it to the process. By default, the query used to retrieve the message (`-psql-retrieve-query`) will assume to return a single column, however if you pass `-psql-query-key` it will assume to return a two-column result, with the first column being the key and the second column being the value. This then allows you to provide a placeholder `{{key}}` param for clearing / failure queries, and this will be replaced with the respective key.
+
+```bash
+qjob \
+    -psql-host localhost \
+    -psql-port 5432 \
+    -psql-database mydb \
+    -psql-user myuser \
+    -psql-password mypassword \
+    -psql-retrieve-query "SELECT id, work from mytable where queue = $1 and status = $2" \
+    -psql-query-key \
+    -psql-retrieve-params "myqueue,pending" \
+    -psql-clear-query "UPDATE mytable SET status = $1 where queue = $2 and id = $3" \
+    -psql-clear-params "cleared,myqueue,{{key}}" \
+    -psql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = $1 and id = $2" \
+    -psql-fail-params "myqueue,{{key}}" \
+    -driver postgres \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
 ```
 
