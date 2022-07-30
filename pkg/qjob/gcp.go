@@ -36,7 +36,7 @@ func (j *QJob) getWorkGCPPubSub() (*string, error) {
 	}
 	l.Debug("message received")
 	body := string(m.Data)
-	j.Driver.GCP.PubSubMessage = m
+	j.Driver.GCP.pubSubMessage = m
 	return &body, nil
 }
 
@@ -46,7 +46,7 @@ func (j *QJob) clearWorkGCPPubSub() error {
 		"driver": j.DriverName,
 	})
 	l.Debug("clearWorkGCPPubSub")
-	j.Driver.GCP.PubSubMessage.Ack()
+	j.Driver.GCP.pubSubMessage.Ack()
 	l.Debug("acknowledged")
 	return nil
 }

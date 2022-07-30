@@ -23,45 +23,45 @@ var (
 type DriverName string
 
 type DriverAWS struct {
-	Region      string
-	RoleARN     string
-	SQSQueueURL string
+	Region      string `json:"region"`
+	RoleARN     string `json:"roleArn"`
+	SQSQueueURL string `json:"sqsQueueUrl"`
 }
 
 type DriverGCP struct {
-	ProjectID        string
-	SubscriptionName string
-	PubSubMessage    *pubsub.Message
+	ProjectID        string          `json:"projectId"`
+	SubscriptionName string          `json:"subscriptionName"`
+	pubSubMessage    *pubsub.Message `json:"-"`
 }
 
 type DriverRabbitMQ struct {
-	URL   string
-	Queue string
+	URL   string `json:"url"`
+	Queue string `json:"queue"`
 }
 
 type DriverRedis struct {
-	Host     string
-	Port     string
-	Password string
-	Key      string
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	Password string `json:"password"`
+	Key      string `json:"key"`
 }
 
 type Driver struct {
-	Name     DriverName
-	AWS      *DriverAWS
-	GCP      *DriverGCP
-	RabbitMQ *DriverRabbitMQ
-	Redis    *DriverRedis
+	Name     DriverName      `json:"name"`
+	AWS      *DriverAWS      `json:"aws"`
+	GCP      *DriverGCP      `json:"gcp"`
+	RabbitMQ *DriverRabbitMQ `json:"rabbitmq"`
+	Redis    *DriverRedis    `json:"redis"`
 }
 
 type QJob struct {
-	DriverName    DriverName
-	Driver        *Driver
-	PassWorkAsArg bool
-	HostEnv       bool
-	Bin           string
-	Args          []string
-	work          string
+	DriverName    DriverName `json:"driverName"`
+	Driver        *Driver    `json:"driver"`
+	PassWorkAsArg bool       `json:"passWorkAsArg"`
+	HostEnv       bool       `json:"hostEnv"`
+	Bin           string     `json:"bin"`
+	Args          []string   `json:"args"`
+	work          string     `json:"-"`
 }
 
 func (j *QJob) ParseArgs(args []string) {
