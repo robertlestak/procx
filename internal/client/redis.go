@@ -68,7 +68,7 @@ func ReceiveMessageRedisList(queue string) (string, error) {
 		"queue":   queue,
 	})
 	l.Debug("Receiving message from redis list")
-	msg, err := RedisClient.RPop(queue).Result()
+	msg, err := RedisClient.LPop(queue).Result()
 	if err != nil {
 		// If the queue is empty, return nil
 		if err == redis.Nil {

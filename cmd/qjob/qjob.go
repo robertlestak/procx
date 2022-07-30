@@ -10,21 +10,23 @@ import (
 )
 
 var (
-	Version           = "dev"
-	flagDriver        = flag.String("driver", "", "driver to use. (aws-sqs, rabbitmq, redis-list, redis-subscription, local)")
-	flagHostEnv       = flag.Bool("hostenv", false, "use host environment")
-	flagAWSRegion     = flag.String("aws-region", "", "AWS region")
-	flagAWSLoadConfig = flag.Bool("aws-load-config", false, "load AWS config from ~/.aws/config")
-	flagSQSRoleARN    = flag.String("aws-sqs-role-arn", "", "AWS SQS role ARN")
-	flagSQSQueueURL   = flag.String("aws-sqs-queue-url", "", "AWS SQS queue URL")
-	flagPassWorkAsArg = flag.Bool("pass-work-as-arg", false, "pass work as an argument")
-	flagRabbitMQURL   = flag.String("rabbitmq-url", "", "RabbitMQ URL")
-	flagRabbitMQQueue = flag.String("rabbitmq-queue", "", "RabbitMQ queue")
-	flagRedisHost     = flag.String("redis-host", "", "Redis host")
-	flagRedisPort     = flag.String("redis-port", "6379", "Redis port")
-	flagRedisPassword = flag.String("redis-password", "", "Redis password")
-	flagRedisKey      = flag.String("redis-key", "", "Redis key")
-	flagDaemon        = flag.Bool("daemon", false, "run as daemon")
+	Version             = "dev"
+	flagDriver          = flag.String("driver", "", "driver to use. (aws-sqs, gcp-pubsub, rabbitmq, redis-list, redis-subscription, local)")
+	flagHostEnv         = flag.Bool("hostenv", false, "use host environment")
+	flagAWSRegion       = flag.String("aws-region", "", "AWS region")
+	flagAWSLoadConfig   = flag.Bool("aws-load-config", false, "load AWS config from ~/.aws/config")
+	flagSQSRoleARN      = flag.String("aws-sqs-role-arn", "", "AWS SQS role ARN")
+	flagSQSQueueURL     = flag.String("aws-sqs-queue-url", "", "AWS SQS queue URL")
+	flagGCPProjectID    = flag.String("gcp-project-id", "", "GCP project ID")
+	flagGCPSubscription = flag.String("gcp-pubsub-subscription", "", "GCP Pub/Sub subscription name")
+	flagPassWorkAsArg   = flag.Bool("pass-work-as-arg", false, "pass work as an argument")
+	flagRabbitMQURL     = flag.String("rabbitmq-url", "", "RabbitMQ URL")
+	flagRabbitMQQueue   = flag.String("rabbitmq-queue", "", "RabbitMQ queue")
+	flagRedisHost       = flag.String("redis-host", "", "Redis host")
+	flagRedisPort       = flag.String("redis-port", "6379", "Redis port")
+	flagRedisPassword   = flag.String("redis-password", "", "Redis password")
+	flagRedisKey        = flag.String("redis-key", "", "Redis key")
+	flagDaemon          = flag.Bool("daemon", false, "run as daemon")
 )
 
 func init() {
@@ -67,6 +69,15 @@ func initDriver(j *qjob.QJob) (*qjob.QJob, error) {
 				Port:     *flagRedisPort,
 				Password: *flagRedisPassword,
 				Key:      *flagRedisKey,
+			},
+		}
+	}
+	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverGCPPubSub {
+		j.Driver = &qjob.Driver{
+			Name: qjob.DriverGCPPubSub,
+			GCP: &qjob.DriverGCP{
+				ProjectID:        *flagGCPProjectID,
+				SubscriptionName: *flagGCPSubscription,
 			},
 		}
 	}
@@ -134,6 +145,14 @@ func parseEnvToFlags() {
 	if os.Getenv("QJOB_REDIS_KEY") != "" {
 		r := os.Getenv("QJOB_REDIS_KEY")
 		flagRedisKey = &r
+	}
+	if os.Getenv("QJOB_GCP_PROJECT_ID") != "" {
+		r := os.Getenv("QJOB_GCP_PROJECT_ID")
+		flagGCPProjectID = &r
+	}
+	if os.Getenv("QJOB_GCP_SUBSCRIPTION") != "" {
+		r := os.Getenv("QJOB_GCP_SUBSCRIPTION")
+		flagGCPSubscription = &r
 	}
 	if *flagAWSLoadConfig {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")

@@ -6,11 +6,13 @@ import (
 	"os"
 	"os/exec"
 
+	"cloud.google.com/go/pubsub"
 	log "github.com/sirupsen/logrus"
 )
 
 var (
 	DriverAWSSQS            DriverName = "aws-sqs"
+	DriverGCPPubSub         DriverName = "gcp-pubsub"
 	DriverRabbit            DriverName = "rabbitmq"
 	DriverRedisSubscription DriverName = "redis-subscription"
 	DriverRedisList         DriverName = "redis-list"
@@ -24,6 +26,12 @@ type DriverAWS struct {
 	Region      string
 	RoleARN     string
 	SQSQueueURL string
+}
+
+type DriverGCP struct {
+	ProjectID        string
+	SubscriptionName string
+	PubSubMessage    *pubsub.Message
 }
 
 type DriverRabbitMQ struct {
@@ -41,6 +49,7 @@ type DriverRedis struct {
 type Driver struct {
 	Name     DriverName
 	AWS      *DriverAWS
+	GCP      *DriverGCP
 	RabbitMQ *DriverRabbitMQ
 	Redis    *DriverRedis
 }
@@ -74,6 +83,8 @@ func (j *QJob) InitDriver() error {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.InitAWSSQS()
+	case DriverGCPPubSub:
+		return j.InitGCPPubSub()
 	case DriverRabbit:
 		return j.InitRabbitMQ()
 	case DriverRedisSubscription:
@@ -96,6 +107,8 @@ func (j *QJob) GetWorkFromDriver() (*string, error) {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.getWorkSQS()
+	case DriverGCPPubSub:
+		return j.getWorkGCPPubSub()
 	case DriverRabbit:
 		return j.getWorkRabbitMQ()
 	case DriverLocal:
@@ -121,6 +134,8 @@ func (j *QJob) ClearWorkFromDriver() error {
 		return j.clearWorkSQS()
 	case DriverRabbit:
 		return j.clearWorkRabbitMQ()
+	case DriverGCPPubSub:
+		return j.clearWorkGCPPubSub()
 	case DriverRedisList:
 		return nil
 	case DriverRedisSubscription:

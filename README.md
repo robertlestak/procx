@@ -40,7 +40,11 @@ qjob [flags] <process path>
   -daemon
         run as daemon
   -driver string
-        driver to use. (aws-sqs, rabbitmq, redis-list, redis-subscription, local)
+        driver to use. (aws-sqs, gcp-pubsub, rabbitmq, redis-list, redis-subscription, local)
+  -gcp-project-id string
+        GCP project ID
+  -gcp-pubsub-subscription string
+        GCP Pub/Sub subscription name
   -hostenv
         use host environment
   -pass-work-as-arg
@@ -64,6 +68,8 @@ qjob [flags] <process path>
 - `QJOB_AWS_REGION`
 - `QJOB_AWS_SQS_QUEUE_URL`
 - `QJOB_AWS_SQS_ROLE_ARN`
+- `QJOB_GCP_PROJECT_ID`
+- `QJOB_GCP_PUBSUB_SUBSCRIPTION`
 - `QJOB_DRIVER`
 - `QJOB_HOSTENV`
 - `QJOB_PASS_WORK_AS_ARG`
@@ -80,6 +86,7 @@ qjob [flags] <process path>
 Currently, the following drivers are supported:
 
 - AWS SQS (`aws-sqs`)
+- GCP Pub/Sub (`gcp-pubsub`)
 - RabbitMQ (`rabbitmq`)
 - Redis List (`redis-list`)
 - Redis Subscription (`redis-subscription`)
@@ -101,6 +108,19 @@ qjob \
     -aws-sqs-role-arn arn:aws:iam::123456789012:role/my-role \
     -aws-region us-east-1 \
     -driver aws-sqs \
+    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+```
+
+### GCP Pub/Sub
+
+The GCP Pub/Sub driver will retrieve the next message from the specified subscription, and pass it to the process. Upon successful completion of the process, it will acknowledge the message.
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
+qjob \
+    -gcp-project-id my-project \
+    -gcp-pubsub-subscription my-subscription \
+    -driver gcp-pubsub \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
 ```
 
