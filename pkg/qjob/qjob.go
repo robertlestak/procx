@@ -14,7 +14,7 @@ var (
 	DriverAWSSQS            DriverName = "aws-sqs"
 	DriverGCPPubSub         DriverName = "gcp-pubsub"
 	DriverRabbit            DriverName = "rabbitmq"
-	DriverRedisSubscription DriverName = "redis-subscription"
+	DriverRedisSubscription DriverName = "redis-pubsub"
 	DriverRedisList         DriverName = "redis-list"
 	DriverLocal             DriverName = "local"
 	ErrDriverNotFound                  = errors.New("driver not found")

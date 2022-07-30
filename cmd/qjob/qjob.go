@@ -11,7 +11,7 @@ import (
 
 var (
 	Version             = "dev"
-	flagDriver          = flag.String("driver", "", "driver to use. (aws-sqs, gcp-pubsub, rabbitmq, redis-list, redis-subscription, local)")
+	flagDriver          = flag.String("driver", "", "driver to use. (aws-sqs, gcp-pubsub, rabbitmq, redis-list, redis-pubsub, local)")
 	flagHostEnv         = flag.Bool("hostenv", false, "use host environment")
 	flagAWSRegion       = flag.String("aws-region", "", "AWS region")
 	flagAWSLoadConfig   = flag.Bool("aws-load-config", false, "load AWS config from ~/.aws/config")

@@ -40,7 +40,7 @@ qjob [flags] <process path>
   -daemon
         run as daemon
   -driver string
-        driver to use. (aws-sqs, gcp-pubsub, rabbitmq, redis-list, redis-subscription, local)
+        driver to use. (aws-sqs, gcp-pubsub, rabbitmq, redis-list, redis-pubsub, local)
   -gcp-project-id string
         GCP project ID
   -gcp-pubsub-subscription string
@@ -89,7 +89,7 @@ Currently, the following drivers are supported:
 - GCP Pub/Sub (`gcp-pubsub`)
 - RabbitMQ (`rabbitmq`)
 - Redis List (`redis-list`)
-- Redis Subscription (`redis-subscription`)
+- Redis Subscription (`redis-pubsub`)
 - Local (`local`)
 
 Plans to add more drivers in the future, and PRs are welcome.
@@ -158,7 +158,7 @@ qjob \
     -redis-host localhost \
     -redis-port 6379 \
     -redis-key my-subscription \
-    -driver redis-subscription \
+    -driver redis-pubsub \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
 ```
 
