@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/pubsub v1.24.0
 	github.com/aws/aws-sdk-go v1.44.61
 	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/lib/pq v1.10.6
 	github.com/rabbitmq/amqp091-go v1.4.0

@@ -14,6 +14,7 @@ var (
 	DriverAWSSQS            DriverName = "aws-sqs"
 	DriverGCPPubSub         DriverName = "gcp-pubsub"
 	DriverPostgres          DriverName = "postgres"
+	DriverMySQL             DriverName = "mysql"
 	DriverRabbit            DriverName = "rabbitmq"
 	DriverRedisSubscription DriverName = "redis-pubsub"
 	DriverRedisList         DriverName = "redis-list"
@@ -54,6 +55,19 @@ type DriverPsql struct {
 	Key             *string   `json:"key"`
 }
 
+type DriverMysql struct {
+	Host            string    `json:"host"`
+	Port            int       `json:"port"`
+	User            string    `json:"user"`
+	Password        string    `json:"password"`
+	DBName          string    `json:"dbName"`
+	QueryReturnsKey *bool     `json:"queryReturnsKey"`
+	RetrieveQuery   *SqlQuery `json:"retrieveQuery"`
+	FailureQuery    *SqlQuery `json:"failureQuery"`
+	ClearQuery      *SqlQuery `json:"clearQuery"`
+	Key             *string   `json:"key"`
+}
+
 type DriverRabbitMQ struct {
 	URL   string `json:"url"`
 	Queue string `json:"queue"`
@@ -71,6 +85,7 @@ type Driver struct {
 	AWS      *DriverAWS      `json:"aws"`
 	GCP      *DriverGCP      `json:"gcp"`
 	Psql     *DriverPsql     `json:"psql"`
+	Mysql    *DriverMysql    `json:"mysql"`
 	RabbitMQ *DriverRabbitMQ `json:"rabbitmq"`
 	Redis    *DriverRedis    `json:"redis"`
 }
@@ -108,6 +123,8 @@ func (j *QJob) InitDriver() error {
 		return j.InitGCPPubSub()
 	case DriverPostgres:
 		return j.InitPsql()
+	case DriverMySQL:
+		return j.InitMysql()
 	case DriverRabbit:
 		return j.InitRabbitMQ()
 	case DriverRedisSubscription:
@@ -134,6 +151,8 @@ func (j *QJob) GetWorkFromDriver() (*string, error) {
 		return j.getWorkGCPPubSub()
 	case DriverPostgres:
 		return j.getWorkPsql()
+	case DriverMySQL:
+		return j.GetWorkMysql()
 	case DriverRabbit:
 		return j.getWorkRabbitMQ()
 	case DriverLocal:
@@ -159,6 +178,8 @@ func (j *QJob) ClearWorkFromDriver() error {
 		return j.clearWorkSQS()
 	case DriverPostgres:
 		return j.clearWorkPsql()
+	case DriverMySQL:
+		return j.ClearWorkMysql()
 	case DriverRabbit:
 		return j.clearWorkRabbitMQ()
 	case DriverGCPPubSub:
@@ -185,6 +206,8 @@ func (j *QJob) HandleFailure() error {
 		return j.handleFailureRedisList()
 	case DriverPostgres:
 		return j.handleFailurePsql()
+	case DriverMySQL:
+		return j.HandleFailureMysql()
 	}
 	return nil
 }
