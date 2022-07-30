@@ -181,6 +181,8 @@ This allows you to plug in any scheduling or management system you want, and hav
 
 For example, you can use [keda](https://keda.sh) to monitor your queue and scale qjob worker pods based on the messages in the queue, and when started, qjob will consume and complete the work from the queue.
 
+If you are running in Kubernetes, the [`qjob-operator`](https://github.com/robertlestak/qjob-operator) is a simple operator that will manage QJob workloads on top of Kubernetes and KEDA.
+
 ## Deployment
 
 You will need to install qjob in the container which will be used to run your job. You can either compile qjob from source, or use the latest precompiled binaries available.
