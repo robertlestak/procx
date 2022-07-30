@@ -166,7 +166,7 @@ Currently, the following drivers are supported:
 - MySQL (`mysql`)
 - RabbitMQ (`rabbitmq`)
 - Redis List (`redis-list`)
-- Redis Subscription (`redis-pubsub`)
+- Redis Pub/Sub (`redis-pubsub`)
 - Local (`local`)
 
 Plans to add more drivers in the future, and PRs are welcome.
@@ -270,9 +270,9 @@ qjob \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
 ```
 
-### Redis Subscription
+### Redis Pub/Sub
 
-The Redis Subscription driver will connect to the specified Redis server and retrieve the next message from the specified subscription.
+The Redis Pub/Sub driver will connect to the specified Redis server and retrieve the next message from the specified subscription.
 
 ```bash
 qjob \
