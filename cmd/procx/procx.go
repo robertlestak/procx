@@ -4,9 +4,18 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/robertlestak/procx/internal/flags"
+	"github.com/robertlestak/procx/pkg/drivers"
 	"github.com/robertlestak/procx/pkg/procx"
 	log "github.com/sirupsen/logrus"
+)
+
+var (
+	Version      = "dev"
+	AppName      = "procx"
+	EnvKeyPrefix = fmt.Sprintf("%s_", strings.ToUpper(AppName))
 )
 
 func init() {
@@ -18,34 +27,43 @@ func init() {
 }
 
 func printVersion() {
-	fmt.Printf("procx version %s\n", Version)
+	fmt.Printf(AppName+" version %s\n", Version)
+}
+
+func LoadEnv(prefix string) error {
+	if os.Getenv(prefix+"DRIVER") != "" {
+		d := os.Getenv(prefix + "DRIVER")
+		flags.FlagDriver = &d
+	}
+	if os.Getenv(prefix+"HOSTENV") != "" {
+		h := os.Getenv(prefix + "HOSTENV")
+		t := h == "true"
+		flags.FlagHostEnv = &t
+	}
+	if os.Getenv(prefix+"PASS_WORK_AS_ARG") != "" {
+		r := os.Getenv(prefix + "PASS_WORK_AS_ARG")
+		t := r == "true"
+		flags.FlagPassWorkAsArg = &t
+	}
+	if os.Getenv(prefix+"DAEMON") != "" {
+		r := os.Getenv(prefix + "DAEMON")
+		t := r == "true"
+		flags.FlagDaemon = &t
+	}
+	return nil
 }
 
 func run() {
 	l := log.WithFields(log.Fields{
-		"app": "procx",
+		"app": AppName,
 	})
-	l.Debug("starting")
-	args := flag.Args()
+	l.Debug("start")
 	j := &procx.ProcX{
-		DriverName:    procx.DriverName(*flagDriver),
-		HostEnv:       *flagHostEnv,
-		PassWorkAsArg: *flagPassWorkAsArg,
+		DriverName:    drivers.DriverName(*flags.FlagDriver),
+		HostEnv:       *flags.FlagHostEnv,
+		PassWorkAsArg: *flags.FlagPassWorkAsArg,
 	}
-	var err error
-	j, err = initDriver(j)
-	if err != nil {
-		l.Error(err)
-		os.Exit(1)
-	}
-	j.ParseArgs(args)
-	l.Debug("parsed args")
-	// execute
-	if j.Bin == "" {
-		l.Error("no bin specified")
-		os.Exit(1)
-	}
-	if err := j.Driver.Init(); err != nil {
+	if err := j.Init(EnvKeyPrefix); err != nil {
 		l.WithError(err).Error("InitDriver")
 		os.Exit(1)
 	}
@@ -57,29 +75,26 @@ func run() {
 
 func main() {
 	l := log.WithFields(log.Fields{
-		"app": "procx",
+		"app": AppName,
 	})
-	l.Debug("starting")
-	if len(os.Args) < 2 {
-		printVersion()
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
+	l.Debug("start")
 	if os.Args[1] == "--version" || os.Args[1] == "-v" {
 		printVersion()
 		os.Exit(0)
 	}
-	flag.Parse()
-	parseEnvToFlags()
+	flags.FlagSet.Parse(os.Args[1:])
+	if err := LoadEnv(EnvKeyPrefix); err != nil {
+		l.Error(err)
+		os.Exit(1)
+	}
 	l.Debug("parsed flags")
-	args := flag.Args()
+	args := flags.FlagSet.Args()
 	if len(args) == 0 {
-		// print help
 		printVersion()
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	if *flagDaemon {
+	if *flags.FlagDaemon {
 		l.Debug("running as daemon")
 		for {
 			run()

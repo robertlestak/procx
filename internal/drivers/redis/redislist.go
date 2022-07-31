@@ -2,9 +2,11 @@ package redis
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/robertlestak/procx/internal/flags"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -14,6 +16,30 @@ type RedisList struct {
 	Port     string
 	Password string
 	Key      string
+}
+
+func (d *RedisList) LoadEnv(prefix string) error {
+	if os.Getenv(prefix+"REDIS_HOST") != "" {
+		d.Host = os.Getenv(prefix + "REDIS_HOST")
+	}
+	if os.Getenv(prefix+"REDIS_PORT") != "" {
+		d.Port = os.Getenv(prefix + "REDIS_PORT")
+	}
+	if os.Getenv(prefix+"REDIS_PASSWORD") != "" {
+		d.Password = os.Getenv(prefix + "REDIS_PASSWORD")
+	}
+	if os.Getenv(prefix+"REDIS_KEY") != "" {
+		d.Key = os.Getenv(prefix + "REDIS_KEY")
+	}
+	return nil
+}
+
+func (d *RedisList) LoadFlags() error {
+	d.Host = *flags.FlagRedisHost
+	d.Port = *flags.FlagRedisPort
+	d.Password = *flags.FlagRedisPassword
+	d.Key = *flags.FlagRedisKey
+	return nil
 }
 
 func (d *RedisList) Init() error {

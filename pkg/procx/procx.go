@@ -1,51 +1,23 @@
 package procx
 
 import (
-	"errors"
 	"io"
 	"os"
 	"os/exec"
 
+	"github.com/robertlestak/procx/internal/flags"
+	"github.com/robertlestak/procx/pkg/drivers"
 	log "github.com/sirupsen/logrus"
 )
 
-type DriverName string
-
-var (
-	DriverAWSSQS            DriverName = "aws-sqs"
-	DriverCassandraDB       DriverName = "cassandra"
-	DriverCentauriNet       DriverName = "centauri"
-	DriverGCPPubSub         DriverName = "gcp-pubsub"
-	DriverPostgres          DriverName = "postgres"
-	DriverMongoDB           DriverName = "mongodb"
-	DriverMySQL             DriverName = "mysql"
-	DriverRabbit            DriverName = "rabbitmq"
-	DriverRedisSubscription DriverName = "redis-pubsub"
-	DriverRedisList         DriverName = "redis-list"
-	DriverLocal             DriverName = "local"
-	ErrDriverNotFound                  = errors.New("driver not found")
-)
-
-type SqlQuery struct {
-	Query  string `json:"query"`
-	Params []any  `json:"params"`
-}
-
-type Driver interface {
-	Init() error
-	GetWork() (*string, error)
-	ClearWork() error
-	HandleFailure() error
-}
-
 type ProcX struct {
-	DriverName    DriverName `json:"driverName"`
-	Driver        Driver     `json:"driver2"`
-	PassWorkAsArg bool       `json:"passWorkAsArg"`
-	HostEnv       bool       `json:"hostEnv"`
-	Bin           string     `json:"bin"`
-	Args          []string   `json:"args"`
-	work          string     `json:"-"`
+	DriverName    drivers.DriverName `json:"driverName"`
+	Driver        drivers.Driver     `json:"driver"`
+	PassWorkAsArg bool               `json:"passWorkAsArg"`
+	HostEnv       bool               `json:"hostEnv"`
+	Bin           string             `json:"bin"`
+	Args          []string           `json:"args"`
+	work          string             `json:"-"`
 }
 
 func (j *ProcX) ParseArgs(args []string) {
@@ -58,12 +30,48 @@ func (j *ProcX) ParseArgs(args []string) {
 	}
 }
 
+func (j *ProcX) Init(envKeyPrefix string) error {
+	l := log.WithFields(log.Fields{
+		"action": "Init",
+	})
+	l.Debug("Init")
+	if j.DriverName == "" {
+		l.Error("no driver specified")
+		return drivers.ErrDriverNotFound
+	}
+	l.Debug("driver specified")
+	j.Driver = drivers.GetDriver(j.DriverName)
+	if j.Driver == nil {
+		l.Error("driver not found")
+		return drivers.ErrDriverNotFound
+	}
+	j.ParseArgs(flags.FlagSet.Args())
+	if err := j.Driver.LoadFlags(); err != nil {
+		l.WithError(err).Error("LoadFlags")
+		return err
+	}
+	if err := j.Driver.LoadEnv(envKeyPrefix); err != nil {
+		l.WithError(err).Error("LoadEnv")
+		return err
+	}
+	if err := j.Driver.Init(); err != nil {
+		l.WithError(err).Error("Init")
+		return err
+	}
+	return nil
+}
+
 func (j *ProcX) DoWork() error {
 	l := log.WithFields(log.Fields{
 		"action": "DoWork",
 		"driver": j.DriverName,
 	})
 	l.Debug("DoWork")
+	// execute
+	if j.Bin == "" {
+		l.Error("no bin specified")
+		os.Exit(1)
+	}
 	work, err := j.Driver.GetWork()
 	if err != nil {
 		l.Error(err)

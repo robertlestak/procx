@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/google/uuid"
+	"github.com/robertlestak/procx/internal/flags"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,6 +18,34 @@ type SQS struct {
 	ReceiptHandle string
 	Region        string
 	RoleARN       string
+}
+
+func (d *SQS) LoadEnv(prefix string) error {
+	if os.Getenv(prefix+"AWS_REGION") != "" {
+		d.Region = os.Getenv(prefix + "AWS_REGION")
+	}
+	if os.Getenv(prefix+"AWS_SQS_ROLE_ARN") != "" {
+		d.RoleARN = os.Getenv(prefix + "AWS_SQS_ROLE_ARN")
+	}
+	if os.Getenv(prefix+"AWS_SQS_QUEUE_URL") != "" {
+		d.Queue = os.Getenv(prefix + "AWS_SQS_QUEUE_URL")
+	}
+	if os.Getenv(prefix+"AWS_LOAD_CONFIG") != "" || os.Getenv("SDK_LOAD_CONFIG") != "" {
+		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
+	}
+	return nil
+}
+
+func (d *SQS) LoadFlags() error {
+	if flags.FlagSQSQueueURL != nil && *flags.FlagSQSQueueURL != "" {
+		d.Queue = *flags.FlagSQSQueueURL
+		d.Region = *flags.FlagAWSRegion
+		d.RoleARN = *flags.FlagSQSRoleARN
+	}
+	if flags.FlagAWSLoadConfig != nil && *flags.FlagAWSLoadConfig {
+		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
+	}
+	return nil
 }
 
 func (d *SQS) Init() error {

@@ -2,10 +2,12 @@ package centauri
 
 import (
 	"errors"
+	"os"
 	"sort"
 
 	_ "github.com/lib/pq"
 	"github.com/robertlestak/centauri/pkg/agent"
+	"github.com/robertlestak/procx/internal/flags"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -14,6 +16,32 @@ type Centauri struct {
 	PrivateKey []byte
 	Channel    *string
 	Key        *string
+}
+
+func (d *Centauri) LoadEnv(prefix string) error {
+	if os.Getenv(prefix+"CENTAURI_PEER_URL") != "" {
+		d.URL = os.Getenv(prefix + "CENTAURI_PEER_URL")
+	}
+	if os.Getenv(prefix+"CENTAURI_CHANNEL") != "" {
+		v := os.Getenv(prefix + "CENTAURI_CHANNEL")
+		d.Channel = &v
+	}
+	if os.Getenv(prefix+"CENTAURI_KEY") != "" {
+		v := os.Getenv(prefix + "CENTAURI_KEY")
+		d.Key = &v
+	}
+	return nil
+}
+
+func (d *Centauri) LoadFlags() error {
+	if flags.FlagCentauriKey == nil || (flags.FlagCentauriKey != nil && *flags.FlagCentauriKey == "") {
+		return errors.New("key required")
+	}
+	kd := []byte(*flags.FlagCentauriKey)
+	d.URL = *flags.FlagCentauriPeerURL
+	d.Channel = flags.FlagCentauriChannel
+	d.PrivateKey = kd
+	return nil
 }
 
 func (d *Centauri) Init() error {

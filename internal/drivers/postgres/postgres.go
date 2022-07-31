@@ -4,9 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 
 	_ "github.com/lib/pq"
-	"github.com/robertlestak/procx/pkg/procx"
+	"github.com/robertlestak/procx/internal/flags"
+	"github.com/robertlestak/procx/pkg/schema"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -21,9 +25,132 @@ type Postgres struct {
 	SslMode       string
 	Key           *string
 	QueryKey      *bool
-	RetrieveQuery *procx.SqlQuery
-	ClearQuery    *procx.SqlQuery
-	FailQuery     *procx.SqlQuery
+	RetrieveQuery *schema.SqlQuery
+	ClearQuery    *schema.SqlQuery
+	FailQuery     *schema.SqlQuery
+}
+
+func (d *Postgres) LoadEnv(prefix string) error {
+
+	if os.Getenv(prefix+"PSQL_HOST") != "" {
+		d.Host = os.Getenv(prefix + "PSQL_HOST")
+	}
+	if os.Getenv(prefix+"PSQL_PORT") != "" {
+		pval, err := strconv.Atoi(os.Getenv(prefix + "PSQL_PORT"))
+		if err != nil {
+			return err
+		}
+		d.Port = pval
+	}
+	if os.Getenv(prefix+"PSQL_USER") != "" {
+		d.User = os.Getenv(prefix + "PSQL_USER")
+	}
+	if os.Getenv(prefix+"PSQL_PASSWORD") != "" {
+		d.Pass = os.Getenv(prefix + "PSQL_PASSWORD")
+	}
+	if os.Getenv(prefix+"PSQL_DATABASE") != "" {
+		d.Db = os.Getenv(prefix + "PSQL_DATABASE")
+	}
+	if os.Getenv(prefix+"PSQL_SSL_MODE") != "" {
+		d.SslMode = os.Getenv(prefix + "PSQL_SSL_MODE")
+	}
+	if os.Getenv(prefix+"PSQL_RETRIEVE_QUERY") != "" {
+		d.RetrieveQuery = &schema.SqlQuery{
+			Query: os.Getenv(prefix + "PSQL_RETRIEVE_QUERY"),
+		}
+	}
+	if os.Getenv(prefix+"PSQL_CLEAR_QUERY") != "" {
+		d.ClearQuery = &schema.SqlQuery{
+			Query: os.Getenv(prefix + "PSQL_CLEAR_QUERY"),
+		}
+	}
+	if os.Getenv(prefix+"PSQL_FAIL_QUERY") != "" {
+		d.FailQuery = &schema.SqlQuery{
+			Query: os.Getenv(prefix + "PSQL_FAIL_QUERY"),
+		}
+	}
+	if os.Getenv(prefix+"PSQL_RETRIEVE_PARAMS") != "" {
+		p := strings.Split(os.Getenv(prefix+"PSQL_RETRIEVE_PARAMS"), ",")
+		for _, v := range p {
+			d.RetrieveQuery.Params = append(d.RetrieveQuery.Params, v)
+		}
+	}
+	if os.Getenv(prefix+"PSQL_CLEAR_PARAMS") != "" {
+		p := strings.Split(os.Getenv(prefix+"PSQL_CLEAR_PARAMS"), ",")
+		for _, v := range p {
+			d.ClearQuery.Params = append(d.ClearQuery.Params, v)
+		}
+	}
+	if os.Getenv(prefix+"PSQL_FAIL_PARAMS") != "" {
+		p := strings.Split(os.Getenv(prefix+"PSQL_FAIL_PARAMS"), ",")
+		for _, v := range p {
+			d.FailQuery.Params = append(d.FailQuery.Params, v)
+		}
+	}
+	if os.Getenv(prefix+"PSQL_QUERY_KEY") != "" {
+		tval := os.Getenv(prefix+"PSQL_QUERY_KEY") == "true"
+		d.QueryKey = &tval
+	}
+	return nil
+}
+
+func (d *Postgres) LoadFlags() error {
+	pv, err := strconv.Atoi(*flags.FlagPsqlPort)
+	if err != nil {
+		return err
+	}
+	var rps []any
+	var cps []any
+	var fps []any
+	if *flags.FlagPsqlRetrieveParams != "" {
+		s := strings.Split(*flags.FlagPsqlRetrieveParams, ",")
+		for _, v := range s {
+			rps = append(rps, v)
+		}
+	}
+	if *flags.FlagPsqlClearParams != "" {
+		s := strings.Split(*flags.FlagPsqlClearParams, ",")
+		for _, v := range s {
+			cps = append(cps, v)
+		}
+	}
+	if *flags.FlagPsqlFailParams != "" {
+		s := strings.Split(*flags.FlagPsqlFailParams, ",")
+		for _, v := range s {
+			fps = append(fps, v)
+		}
+	}
+	d.Host = *flags.FlagPsqlHost
+	d.Port = pv
+	d.User = *flags.FlagPsqlUser
+	d.Pass = *flags.FlagPsqlPassword
+	d.Db = *flags.FlagPsqlDatabase
+	d.SslMode = *flags.FlagPsqlSSLMode
+	if *flags.FlagPsqlQueryKey {
+		d.QueryKey = flags.FlagPsqlQueryKey
+	}
+	if *flags.FlagPsqlRetrieveQuery != "" {
+		rq := &schema.SqlQuery{
+			Query:  *flags.FlagPsqlRetrieveQuery,
+			Params: rps,
+		}
+		d.RetrieveQuery = rq
+	}
+	if *flags.FlagPsqlClearQuery != "" {
+		cq := &schema.SqlQuery{
+			Query:  *flags.FlagPsqlClearQuery,
+			Params: cps,
+		}
+		d.ClearQuery = cq
+	}
+	if *flags.FlagPsqlFailQuery != "" {
+		fq := &schema.SqlQuery{
+			Query:  *flags.FlagPsqlFailQuery,
+			Params: fps,
+		}
+		d.FailQuery = fq
+	}
+	return nil
 }
 
 func (d *Postgres) Init() error {

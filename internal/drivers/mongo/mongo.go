@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/robertlestak/procx/internal/flags"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -27,6 +30,62 @@ type Mongo struct {
 	ClearQuery    *string
 	FailQuery     *string
 	Key           *string
+}
+
+func (d *Mongo) LoadEnv(prefix string) error {
+	if os.Getenv(prefix+"MONGO_HOST") != "" {
+		d.Host = os.Getenv(prefix + "MONGO_HOST")
+	}
+	if os.Getenv(prefix+"MONGO_PORT") != "" {
+		pval, err := strconv.Atoi(os.Getenv(prefix + "MONGO_PORT"))
+		if err != nil {
+			return err
+		}
+		d.Port = pval
+	}
+	if os.Getenv(prefix+"MONGO_USER") != "" {
+		d.User = os.Getenv(prefix + "MONGO_USER")
+	}
+	if os.Getenv(prefix+"MONGO_PASSWORD") != "" {
+		d.Password = os.Getenv(prefix + "MONGO_PASSWORD")
+	}
+	if os.Getenv(prefix+"MONGO_DATABASE") != "" {
+		d.DB = os.Getenv(prefix + "MONGO_DATABASE")
+	}
+	if os.Getenv(prefix+"MONGO_RETRIEVE_QUERY") != "" {
+		qv := os.Getenv(prefix + "MONGO_RETRIEVE_QUERY")
+		d.RetrieveQuery = &qv
+	}
+	if os.Getenv(prefix+"MONGO_CLEAR_QUERY") != "" {
+		qv := os.Getenv(prefix + "MONGO_CLEAR_QUERY")
+		d.ClearQuery = &qv
+	}
+	if os.Getenv(prefix+"MONGO_FAIL_QUERY") != "" {
+		qv := os.Getenv(prefix + "MONGO_FAIL_QUERY")
+		d.FailQuery = &qv
+	}
+	if os.Getenv(prefix+"MONGO_COLLECTION") != "" {
+		c := os.Getenv(prefix + "MONGO_COLLECTION")
+		d.Collection = strings.TrimSpace(c)
+	}
+	return nil
+}
+
+func (d *Mongo) LoadFlags() error {
+	pv, err := strconv.Atoi(*flags.FlagMongoPort)
+	if err != nil {
+		return err
+	}
+	d.Host = *flags.FlagMongoHost
+	d.Port = pv
+	d.User = *flags.FlagMongoUser
+	d.Password = *flags.FlagMongoPassword
+	d.DB = *flags.FlagMongoDatabase
+	d.Collection = *flags.FlagMongoCollection
+	d.RetrieveQuery = flags.FlagMongoRetrieveQuery
+	d.ClearQuery = flags.FlagMongoClearQuery
+	d.FailQuery = flags.FlagMongoFailQuery
+	return nil
 }
 
 func (d *Mongo) Init() error {

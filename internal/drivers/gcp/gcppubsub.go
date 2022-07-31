@@ -2,8 +2,10 @@ package gcp
 
 import (
 	"context"
+	"os"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/robertlestak/procx/internal/flags"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -11,6 +13,22 @@ type GCPPubSub struct {
 	Client           *pubsub.Client
 	ProjectID        string
 	SubscriptionName string
+}
+
+func (d *GCPPubSub) LoadEnv(prefix string) error {
+	if os.Getenv(prefix+"GCP_PROJECT_ID") != "" {
+		d.ProjectID = os.Getenv(prefix + "GCP_PROJECT_ID")
+	}
+	if os.Getenv(prefix+"GCP_SUBSCRIPTION") != "" {
+		d.SubscriptionName = os.Getenv(prefix + "GCP_SUBSCRIPTION")
+	}
+	return nil
+}
+
+func (d *GCPPubSub) LoadFlags() error {
+	d.ProjectID = *flags.FlagGCPProjectID
+	d.SubscriptionName = *flags.FlagGCPSubscription
+	return nil
 }
 
 func (d *GCPPubSub) Init() error {

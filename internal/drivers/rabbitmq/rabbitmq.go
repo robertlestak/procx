@@ -1,7 +1,10 @@
 package rabbitmq
 
 import (
+	"os"
+
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/robertlestak/procx/internal/flags"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -9,6 +12,22 @@ type RabbitMQ struct {
 	Client *amqp.Connection
 	URL    string
 	Queue  string
+}
+
+func (d *RabbitMQ) LoadEnv(prefix string) error {
+	if os.Getenv(prefix+"RABBITMQ_URL") != "" {
+		d.URL = os.Getenv(prefix + "RABBITMQ_URL")
+	}
+	if os.Getenv(prefix+"RABBITMQ_QUEUE") != "" {
+		d.Queue = os.Getenv(prefix + "RABBITMQ_QUEUE")
+	}
+	return nil
+}
+
+func (d *RabbitMQ) LoadFlags() error {
+	d.URL = *flags.FlagRabbitMQURL
+	d.Queue = *flags.FlagRabbitMQQueue
+	return nil
 }
 
 func (d *RabbitMQ) Init() error {

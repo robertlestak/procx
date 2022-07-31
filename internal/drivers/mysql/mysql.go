@@ -4,9 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/robertlestak/procx/pkg/procx"
+	"github.com/robertlestak/procx/internal/flags"
+	"github.com/robertlestak/procx/pkg/schema"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,9 +23,127 @@ type Mysql struct {
 	Db            string
 	Key           *string
 	QueryKey      *bool
-	RetrieveQuery *procx.SqlQuery
-	ClearQuery    *procx.SqlQuery
-	FailQuery     *procx.SqlQuery
+	RetrieveQuery *schema.SqlQuery
+	ClearQuery    *schema.SqlQuery
+	FailQuery     *schema.SqlQuery
+}
+
+func (d *Mysql) LoadEnv(prefix string) error {
+	if os.Getenv(prefix+"MYSQL_HOST") != "" {
+		d.Host = os.Getenv(prefix + "MYSQL_HOST")
+	}
+	if os.Getenv(prefix+"MYSQL_PORT") != "" {
+		pv, err := strconv.Atoi(os.Getenv(prefix + "MYSQL_PORT"))
+		if err != nil {
+			return err
+		}
+		d.Port = pv
+	}
+	if os.Getenv(prefix+"MYSQL_USER") != "" {
+		d.User = os.Getenv(prefix + "MYSQL_USER")
+	}
+	if os.Getenv(prefix+"MYSQL_PASSWORD") != "" {
+		d.Pass = os.Getenv(prefix + "MYSQL_PASSWORD")
+	}
+	if os.Getenv(prefix+"MYSQL_DATABASE") != "" {
+		d.Db = os.Getenv(prefix + "MYSQL_DATABASE")
+	}
+	if os.Getenv(prefix+"MYSQL_RETRIEVE_QUERY") != "" {
+		d.RetrieveQuery = &schema.SqlQuery{
+			Query: os.Getenv(prefix + "MYSQL_RETRIEVE_QUERY"),
+		}
+	}
+	if os.Getenv(prefix+"MYSQL_CLEAR_QUERY") != "" {
+		d.ClearQuery = &schema.SqlQuery{
+			Query: os.Getenv(prefix + "MYSQL_CLEAR_QUERY"),
+		}
+	}
+	if os.Getenv(prefix+"MYSQL_FAIL_QUERY") != "" {
+		d.FailQuery = &schema.SqlQuery{
+			Query: os.Getenv(prefix + "MYSQL_FAIL_QUERY"),
+		}
+	}
+	if os.Getenv(prefix+"MYSQL_RETRIEVE_PARAMS") != "" {
+		p := strings.Split(os.Getenv(prefix+"MYSQL_RETRIEVE_PARAMS"), ",")
+		for _, v := range p {
+			d.RetrieveQuery.Params = append(d.RetrieveQuery.Params, v)
+		}
+	}
+	if os.Getenv(prefix+"MYSQL_CLEAR_PARAMS") != "" {
+		p := strings.Split(os.Getenv(prefix+"MYSQL_CLEAR_PARAMS"), ",")
+		for _, v := range p {
+			d.ClearQuery.Params = append(d.ClearQuery.Params, v)
+		}
+	}
+	if os.Getenv(prefix+"MYSQL_FAIL_PARAMS") != "" {
+		p := strings.Split(os.Getenv(prefix+"MYSQL_FAIL_PARAMS"), ",")
+		for _, v := range p {
+			d.FailQuery.Params = append(d.FailQuery.Params, v)
+		}
+	}
+	if os.Getenv(prefix+"MYSQL_QUERY_KEY") != "" {
+		v := os.Getenv(prefix+"MYSQL_QUERY_KEY") == "true"
+		d.QueryKey = &v
+	}
+	return nil
+}
+
+func (d *Mysql) LoadFlags() error {
+	pv, err := strconv.Atoi(*flags.FlagMysqlPort)
+	if err != nil {
+		return err
+	}
+	var rps []any
+	var cps []any
+	var fps []any
+	if *flags.FlagMysqlRetrieveParams != "" {
+		s := strings.Split(*flags.FlagMysqlRetrieveParams, ",")
+		for _, v := range s {
+			rps = append(rps, v)
+		}
+	}
+	if *flags.FlagMysqlClearParams != "" {
+		s := strings.Split(*flags.FlagMysqlClearParams, ",")
+		for _, v := range s {
+			cps = append(cps, v)
+		}
+	}
+	if *flags.FlagMysqlFailParams != "" {
+		s := strings.Split(*flags.FlagMysqlFailParams, ",")
+		for _, v := range s {
+			fps = append(fps, v)
+		}
+	}
+	d.Host = *flags.FlagMysqlHost
+	d.Port = pv
+	d.User = *flags.FlagMysqlUser
+	d.Pass = *flags.FlagMysqlPassword
+	d.Db = *flags.FlagMysqlDatabase
+	if *flags.FlagMysqlQueryKey {
+		d.QueryKey = flags.FlagMysqlQueryKey
+	}
+	if *flags.FlagMysqlRetrieveQuery != "" {
+		rq := &schema.SqlQuery{
+			Query:  *flags.FlagMysqlRetrieveQuery,
+			Params: rps,
+		}
+		d.RetrieveQuery = rq
+	}
+	if *flags.FlagMysqlClearQuery != "" {
+		cq := &schema.SqlQuery{
+			Query:  *flags.FlagMysqlClearQuery,
+			Params: cps,
+		}
+		d.ClearQuery = cq
+	}
+	if *flags.FlagMysqlFailQuery != "" {
+		fq := &schema.SqlQuery{
+			Query:  *flags.FlagMysqlFailQuery,
+			Params: fps,
+		}
+		d.FailQuery = fq
+	}
+	return nil
 }
 
 func (d *Mysql) Init() error {
