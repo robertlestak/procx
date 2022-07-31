@@ -361,8 +361,10 @@ qjob \
 
 The local driver is a simple wrapper around the process to execute, primarily for local testing. It does not communicate with any queue, and expects the job payload to be manually defined by the operator as a `QJOB_PAYLOAD` environment variable.
 
+This can also be used to read in a file, or to shim in a local pipe for testing.
+
 ```bash
-QJOB_PAYLOAD="my payload" \
+QJOB_PAYLOAD="$(</path/to/payload.txt)" \
 qjob \
     -driver local \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
@@ -373,8 +375,6 @@ qjob \
 qjob is solely focused on the worker-side consumption and clearing of work, and intentionally has no scope to the scheduling or management of work.
 
 This allows you to plug in any scheduling or management system you want, and have qjob consume the work from that system.
-
-For example, you can use [keda](https://keda.sh) to monitor your queue and scale qjob worker pods based on the messages in the queue, and when started, qjob will consume and complete the work from the queue.
 
 If you are running in Kubernetes, the [`qjob-operator`](https://github.com/robertlestak/qjob-operator) is a simple operator that will manage QJob workloads on top of Kubernetes and KEDA.
 
