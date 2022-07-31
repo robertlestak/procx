@@ -33,22 +33,22 @@ func printVersion() {
 func LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"DRIVER") != "" {
 		d := os.Getenv(prefix + "DRIVER")
-		flags.FlagDriver = &d
+		flags.Driver = &d
 	}
 	if os.Getenv(prefix+"HOSTENV") != "" {
 		h := os.Getenv(prefix + "HOSTENV")
 		t := h == "true"
-		flags.FlagHostEnv = &t
+		flags.HostEnv = &t
 	}
 	if os.Getenv(prefix+"PASS_WORK_AS_ARG") != "" {
 		r := os.Getenv(prefix + "PASS_WORK_AS_ARG")
 		t := r == "true"
-		flags.FlagPassWorkAsArg = &t
+		flags.PassWorkAsArg = &t
 	}
 	if os.Getenv(prefix+"DAEMON") != "" {
 		r := os.Getenv(prefix + "DAEMON")
 		t := r == "true"
-		flags.FlagDaemon = &t
+		flags.Daemon = &t
 	}
 	return nil
 }
@@ -59,9 +59,9 @@ func run() {
 	})
 	l.Debug("start")
 	j := &procx.ProcX{
-		DriverName:    drivers.DriverName(*flags.FlagDriver),
-		HostEnv:       *flags.FlagHostEnv,
-		PassWorkAsArg: *flags.FlagPassWorkAsArg,
+		DriverName:    drivers.DriverName(*flags.Driver),
+		HostEnv:       *flags.HostEnv,
+		PassWorkAsArg: *flags.PassWorkAsArg,
 	}
 	if err := j.Init(EnvKeyPrefix); err != nil {
 		l.WithError(err).Error("InitDriver")
@@ -94,7 +94,7 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	if *flags.FlagDaemon {
+	if *flags.Daemon {
 		l.Debug("running as daemon")
 		for {
 			run()

@@ -26,8 +26,8 @@ func (d *GCPPubSub) LoadEnv(prefix string) error {
 }
 
 func (d *GCPPubSub) LoadFlags() error {
-	d.ProjectID = *flags.FlagGCPProjectID
-	d.SubscriptionName = *flags.FlagGCPSubscription
+	d.ProjectID = *flags.GCPProjectID
+	d.SubscriptionName = *flags.GCPSubscription
 	return nil
 }
 

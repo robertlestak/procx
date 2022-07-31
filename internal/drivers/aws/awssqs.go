@@ -37,12 +37,12 @@ func (d *SQS) LoadEnv(prefix string) error {
 }
 
 func (d *SQS) LoadFlags() error {
-	if flags.FlagSQSQueueURL != nil && *flags.FlagSQSQueueURL != "" {
-		d.Queue = *flags.FlagSQSQueueURL
-		d.Region = *flags.FlagAWSRegion
-		d.RoleARN = *flags.FlagSQSRoleARN
+	if flags.SQSQueueURL != nil && *flags.SQSQueueURL != "" {
+		d.Queue = *flags.SQSQueueURL
+		d.Region = *flags.AWSRegion
+		d.RoleARN = *flags.SQSRoleARN
 	}
-	if flags.FlagAWSLoadConfig != nil && *flags.FlagAWSLoadConfig {
+	if flags.AWSLoadConfig != nil && *flags.AWSLoadConfig {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	}
 	return nil

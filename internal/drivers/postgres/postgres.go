@@ -95,57 +95,57 @@ func (d *Postgres) LoadEnv(prefix string) error {
 }
 
 func (d *Postgres) LoadFlags() error {
-	pv, err := strconv.Atoi(*flags.FlagPsqlPort)
+	pv, err := strconv.Atoi(*flags.PsqlPort)
 	if err != nil {
 		return err
 	}
 	var rps []any
 	var cps []any
 	var fps []any
-	if *flags.FlagPsqlRetrieveParams != "" {
-		s := strings.Split(*flags.FlagPsqlRetrieveParams, ",")
+	if *flags.PsqlRetrieveParams != "" {
+		s := strings.Split(*flags.PsqlRetrieveParams, ",")
 		for _, v := range s {
 			rps = append(rps, v)
 		}
 	}
-	if *flags.FlagPsqlClearParams != "" {
-		s := strings.Split(*flags.FlagPsqlClearParams, ",")
+	if *flags.PsqlClearParams != "" {
+		s := strings.Split(*flags.PsqlClearParams, ",")
 		for _, v := range s {
 			cps = append(cps, v)
 		}
 	}
-	if *flags.FlagPsqlFailParams != "" {
-		s := strings.Split(*flags.FlagPsqlFailParams, ",")
+	if *flags.PsqlFailParams != "" {
+		s := strings.Split(*flags.PsqlFailParams, ",")
 		for _, v := range s {
 			fps = append(fps, v)
 		}
 	}
-	d.Host = *flags.FlagPsqlHost
+	d.Host = *flags.PsqlHost
 	d.Port = pv
-	d.User = *flags.FlagPsqlUser
-	d.Pass = *flags.FlagPsqlPassword
-	d.Db = *flags.FlagPsqlDatabase
-	d.SslMode = *flags.FlagPsqlSSLMode
-	if *flags.FlagPsqlQueryKey {
-		d.QueryKey = flags.FlagPsqlQueryKey
+	d.User = *flags.PsqlUser
+	d.Pass = *flags.PsqlPassword
+	d.Db = *flags.PsqlDatabase
+	d.SslMode = *flags.PsqlSSLMode
+	if *flags.PsqlQueryKey {
+		d.QueryKey = flags.PsqlQueryKey
 	}
-	if *flags.FlagPsqlRetrieveQuery != "" {
+	if *flags.PsqlRetrieveQuery != "" {
 		rq := &schema.SqlQuery{
-			Query:  *flags.FlagPsqlRetrieveQuery,
+			Query:  *flags.PsqlRetrieveQuery,
 			Params: rps,
 		}
 		d.RetrieveQuery = rq
 	}
-	if *flags.FlagPsqlClearQuery != "" {
+	if *flags.PsqlClearQuery != "" {
 		cq := &schema.SqlQuery{
-			Query:  *flags.FlagPsqlClearQuery,
+			Query:  *flags.PsqlClearQuery,
 			Params: cps,
 		}
 		d.ClearQuery = cq
 	}
-	if *flags.FlagPsqlFailQuery != "" {
+	if *flags.PsqlFailQuery != "" {
 		fq := &schema.SqlQuery{
-			Query:  *flags.FlagPsqlFailQuery,
+			Query:  *flags.PsqlFailQuery,
 			Params: fps,
 		}
 		d.FailQuery = fq

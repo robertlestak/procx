@@ -25,8 +25,8 @@ func (d *RabbitMQ) LoadEnv(prefix string) error {
 }
 
 func (d *RabbitMQ) LoadFlags() error {
-	d.URL = *flags.FlagRabbitMQURL
-	d.Queue = *flags.FlagRabbitMQQueue
+	d.URL = *flags.RabbitMQURL
+	d.Queue = *flags.RabbitMQQueue
 	return nil
 }
 

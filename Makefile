@@ -1,4 +1,4 @@
-VERSION=v0.0.16
+VERSION=v0.0.17
 
 procx: bin/procx_darwin bin/procx_windows bin/procx_linux
 

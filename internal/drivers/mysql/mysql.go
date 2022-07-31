@@ -89,56 +89,56 @@ func (d *Mysql) LoadEnv(prefix string) error {
 }
 
 func (d *Mysql) LoadFlags() error {
-	pv, err := strconv.Atoi(*flags.FlagMysqlPort)
+	pv, err := strconv.Atoi(*flags.MysqlPort)
 	if err != nil {
 		return err
 	}
 	var rps []any
 	var cps []any
 	var fps []any
-	if *flags.FlagMysqlRetrieveParams != "" {
-		s := strings.Split(*flags.FlagMysqlRetrieveParams, ",")
+	if *flags.MysqlRetrieveParams != "" {
+		s := strings.Split(*flags.MysqlRetrieveParams, ",")
 		for _, v := range s {
 			rps = append(rps, v)
 		}
 	}
-	if *flags.FlagMysqlClearParams != "" {
-		s := strings.Split(*flags.FlagMysqlClearParams, ",")
+	if *flags.MysqlClearParams != "" {
+		s := strings.Split(*flags.MysqlClearParams, ",")
 		for _, v := range s {
 			cps = append(cps, v)
 		}
 	}
-	if *flags.FlagMysqlFailParams != "" {
-		s := strings.Split(*flags.FlagMysqlFailParams, ",")
+	if *flags.MysqlFailParams != "" {
+		s := strings.Split(*flags.MysqlFailParams, ",")
 		for _, v := range s {
 			fps = append(fps, v)
 		}
 	}
-	d.Host = *flags.FlagMysqlHost
+	d.Host = *flags.MysqlHost
 	d.Port = pv
-	d.User = *flags.FlagMysqlUser
-	d.Pass = *flags.FlagMysqlPassword
-	d.Db = *flags.FlagMysqlDatabase
-	if *flags.FlagMysqlQueryKey {
-		d.QueryKey = flags.FlagMysqlQueryKey
+	d.User = *flags.MysqlUser
+	d.Pass = *flags.MysqlPassword
+	d.Db = *flags.MysqlDatabase
+	if *flags.MysqlQueryKey {
+		d.QueryKey = flags.MysqlQueryKey
 	}
-	if *flags.FlagMysqlRetrieveQuery != "" {
+	if *flags.MysqlRetrieveQuery != "" {
 		rq := &schema.SqlQuery{
-			Query:  *flags.FlagMysqlRetrieveQuery,
+			Query:  *flags.MysqlRetrieveQuery,
 			Params: rps,
 		}
 		d.RetrieveQuery = rq
 	}
-	if *flags.FlagMysqlClearQuery != "" {
+	if *flags.MysqlClearQuery != "" {
 		cq := &schema.SqlQuery{
-			Query:  *flags.FlagMysqlClearQuery,
+			Query:  *flags.MysqlClearQuery,
 			Params: cps,
 		}
 		d.ClearQuery = cq
 	}
-	if *flags.FlagMysqlFailQuery != "" {
+	if *flags.MysqlFailQuery != "" {
 		fq := &schema.SqlQuery{
-			Query:  *flags.FlagMysqlFailQuery,
+			Query:  *flags.MysqlFailQuery,
 			Params: fps,
 		}
 		d.FailQuery = fq

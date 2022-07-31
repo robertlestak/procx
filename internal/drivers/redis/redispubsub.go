@@ -35,10 +35,10 @@ func (d *RedisPubSub) LoadEnv(prefix string) error {
 }
 
 func (d *RedisPubSub) LoadFlags() error {
-	d.Host = *flags.FlagRedisHost
-	d.Port = *flags.FlagRedisPort
-	d.Password = *flags.FlagRedisPassword
-	d.Key = *flags.FlagRedisKey
+	d.Host = *flags.RedisHost
+	d.Port = *flags.RedisPort
+	d.Password = *flags.RedisPassword
+	d.Key = *flags.RedisKey
 	return nil
 }
 

@@ -45,6 +45,19 @@ Depending on the path of `INSTALL_DIR` and the permissions of the user running t
 Create a `$HOME/bin` directory in your current user home directory. This will be the default installation directory. Be sure to add this to your `$PATH` environment variable.
 Use `sudo` to run the installation script, to install into `/usr/local/bin` (`curl -SsL https://raw.githubusercontent.com/robertlestak/procx/main/scripts/install.sh | sudo bash -e`).
 
+### Build From Source
+
+```bash
+mkdir -p bin
+go build -o bin/procx cmd/procx/*.go
+```
+
+#### Building for a Specific Driver
+
+By default, the `procx` binary is compiled for all drivers. This is to enable a truly build-once-run-anywhere experience. However some users may want a smaller binary for embedded workloads. To enable this, you can edit `pkg/drivers/drivers.go` and remove the drivers you do not want to include, and recompile.
+
+While building for a specific driver may seem contrary to the ethos of procx, the decoupling between the job queue and work still enables a write-once-run-anywhere experience, and simply requires DevOps to rebuild the image with your new drivers if you are shifting upstream data sources.
+
 ## Usage
 
 ```bash

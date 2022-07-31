@@ -72,19 +72,19 @@ func (d *Mongo) LoadEnv(prefix string) error {
 }
 
 func (d *Mongo) LoadFlags() error {
-	pv, err := strconv.Atoi(*flags.FlagMongoPort)
+	pv, err := strconv.Atoi(*flags.MongoPort)
 	if err != nil {
 		return err
 	}
-	d.Host = *flags.FlagMongoHost
+	d.Host = *flags.MongoHost
 	d.Port = pv
-	d.User = *flags.FlagMongoUser
-	d.Password = *flags.FlagMongoPassword
-	d.DB = *flags.FlagMongoDatabase
-	d.Collection = *flags.FlagMongoCollection
-	d.RetrieveQuery = flags.FlagMongoRetrieveQuery
-	d.ClearQuery = flags.FlagMongoClearQuery
-	d.FailQuery = flags.FlagMongoFailQuery
+	d.User = *flags.MongoUser
+	d.Password = *flags.MongoPassword
+	d.DB = *flags.MongoDatabase
+	d.Collection = *flags.MongoCollection
+	d.RetrieveQuery = flags.MongoRetrieveQuery
+	d.ClearQuery = flags.MongoClearQuery
+	d.FailQuery = flags.MongoFailQuery
 	return nil
 }
 

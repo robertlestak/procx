@@ -74,8 +74,8 @@ func (d *Cassandra) LoadEnv(prefix string) error {
 
 func (d *Cassandra) LoadFlags() error {
 	var hosts []string
-	if *flags.FlagCassandraHosts != "" {
-		s := strings.Split(*flags.FlagCassandraHosts, ",")
+	if *flags.CassandraHosts != "" {
+		s := strings.Split(*flags.CassandraHosts, ",")
 		for _, v := range s {
 			v = strings.TrimSpace(v)
 			if v != "" {
@@ -86,49 +86,49 @@ func (d *Cassandra) LoadFlags() error {
 	var rps []any
 	var cps []any
 	var fps []any
-	if *flags.FlagCassandraRetrieveParams != "" {
-		s := strings.Split(*flags.FlagCassandraRetrieveParams, ",")
+	if *flags.CassandraRetrieveParams != "" {
+		s := strings.Split(*flags.CassandraRetrieveParams, ",")
 		for _, v := range s {
 			rps = append(rps, v)
 		}
 	}
-	if *flags.FlagCassandraClearParams != "" {
-		s := strings.Split(*flags.FlagCassandraClearParams, ",")
+	if *flags.CassandraClearParams != "" {
+		s := strings.Split(*flags.CassandraClearParams, ",")
 		for _, v := range s {
 			cps = append(cps, v)
 		}
 	}
-	if *flags.FlagCassandraFailParams != "" {
-		s := strings.Split(*flags.FlagCassandraFailParams, ",")
+	if *flags.CassandraFailParams != "" {
+		s := strings.Split(*flags.CassandraFailParams, ",")
 		for _, v := range s {
 			fps = append(fps, v)
 		}
 	}
 	d.Hosts = hosts
-	d.User = *flags.FlagCassandraUser
-	d.Password = *flags.FlagCassandraPassword
-	d.Keyspace = *flags.FlagCassandraKeyspace
-	d.Consistency = *flags.FlagCassandraConsistency
-	if *flags.FlagCassandraQueryKey {
-		d.QueryKey = flags.FlagCassandraQueryKey
+	d.User = *flags.CassandraUser
+	d.Password = *flags.CassandraPassword
+	d.Keyspace = *flags.CassandraKeyspace
+	d.Consistency = *flags.CassandraConsistency
+	if *flags.CassandraQueryKey {
+		d.QueryKey = flags.CassandraQueryKey
 	}
-	if *flags.FlagCassandraRetrieveQuery != "" {
+	if *flags.CassandraRetrieveQuery != "" {
 		rq := &schema.SqlQuery{
-			Query:  *flags.FlagCassandraRetrieveQuery,
+			Query:  *flags.CassandraRetrieveQuery,
 			Params: rps,
 		}
 		d.RetrieveQuery = rq
 	}
-	if *flags.FlagCassandraClearQuery != "" {
+	if *flags.CassandraClearQuery != "" {
 		cq := &schema.SqlQuery{
-			Query:  *flags.FlagCassandraClearQuery,
+			Query:  *flags.CassandraClearQuery,
 			Params: cps,
 		}
 		d.ClearQuery = cq
 	}
-	if *flags.FlagCassandraFailQuery != "" {
+	if *flags.CassandraFailQuery != "" {
 		fq := &schema.SqlQuery{
-			Query:  *flags.FlagCassandraFailQuery,
+			Query:  *flags.CassandraFailQuery,
 			Params: fps,
 		}
 		d.FailQuery = fq

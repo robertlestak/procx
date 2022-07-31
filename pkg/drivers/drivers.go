@@ -15,6 +15,7 @@ import (
 	"github.com/robertlestak/procx/internal/drivers/redis"
 )
 
+// DriverName is the unique name of a driver.
 type DriverName string
 
 var (
@@ -32,6 +33,7 @@ var (
 	ErrDriverNotFound                  = errors.New("driver not found")
 )
 
+// GetDriver returns the driver with the given name.
 func GetDriver(name DriverName) Driver {
 	switch name {
 	case DriverAWSSQS:
@@ -58,13 +60,4 @@ func GetDriver(name DriverName) Driver {
 		return &local.Local{}
 	}
 	return nil
-}
-
-type Driver interface {
-	LoadEnv(string) error
-	LoadFlags() error
-	Init() error
-	GetWork() (*string, error)
-	ClearWork() error
-	HandleFailure() error
 }

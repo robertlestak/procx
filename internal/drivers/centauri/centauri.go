@@ -34,12 +34,12 @@ func (d *Centauri) LoadEnv(prefix string) error {
 }
 
 func (d *Centauri) LoadFlags() error {
-	if flags.FlagCentauriKey == nil || (flags.FlagCentauriKey != nil && *flags.FlagCentauriKey == "") {
+	if flags.CentauriKey == nil || (flags.CentauriKey != nil && *flags.CentauriKey == "") {
 		return errors.New("key required")
 	}
-	kd := []byte(*flags.FlagCentauriKey)
-	d.URL = *flags.FlagCentauriPeerURL
-	d.Channel = flags.FlagCentauriChannel
+	kd := []byte(*flags.CentauriKey)
+	d.URL = *flags.CentauriPeerURL
+	d.Channel = flags.CentauriChannel
 	d.PrivateKey = kd
 	return nil
 }
