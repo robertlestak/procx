@@ -245,8 +245,8 @@ qjob \
     -mongo-port 27017 \
     -mongo-user my-user \
     -mongo-password my-password \
-    -mongo-retrieve-query '{ "status": "pending"}' \
-    -mongo-clear-query '{"delete": "my-collection", "deletes": [{"q": {"_id": {"$oid": "{{key}}"}}, "limit": 1}]' \
+    -mongo-retrieve-query '{"status": "pending"}' \
+    -mongo-clear-query '{"delete": "my-collection", "deletes": [{"q": {"_id": {"$oid": "{{key}}"}}, "limit": 1}]}' \
     -mongo-fail-query '{"update":"my-collection","updates":[{"q":{"_id":{"$oid":"{{key}}"}},"u":{"$set": {"failed":true}}}]}' \
     -driver mongodb \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
