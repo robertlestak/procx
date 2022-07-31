@@ -21,7 +21,7 @@ func printVersion() {
 	fmt.Printf("procx version %s\n", Version)
 }
 
-func runOnce() {
+func run() {
 	l := log.WithFields(log.Fields{
 		"app": "procx",
 	})
@@ -45,8 +45,8 @@ func runOnce() {
 		l.Error("no bin specified")
 		os.Exit(1)
 	}
-	if err := j.InitDriver(); err != nil {
-		l.Errorf("failed to init driver: %s", err)
+	if err := j.Driver.Init(); err != nil {
+		l.WithError(err).Error("InitDriver")
 		os.Exit(1)
 	}
 	if err := j.DoWork(); err != nil {
@@ -82,10 +82,10 @@ func main() {
 	if *flagDaemon {
 		l.Debug("running as daemon")
 		for {
-			runOnce()
+			run()
 		}
 	} else {
-		runOnce()
+		run()
 	}
 	l.Debug("exited")
 }

@@ -1,4 +1,4 @@
-package client
+package mongo
 
 import (
 	"context"
@@ -15,27 +15,37 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var (
-	MongoClient *mongo.Client
-)
+type Mongo struct {
+	Client        *mongo.Client
+	Host          string
+	Port          int
+	User          string
+	Password      string
+	DB            string
+	Collection    string
+	RetrieveQuery *string
+	ClearQuery    *string
+	FailQuery     *string
+	Key           *string
+}
 
-func CreateMongoClient(host string, port int, user string, pass string, db string) error {
+func (d *Mongo) Init() error {
 	l := log.WithFields(log.Fields{
 		"package": "cache",
 		"method":  "CreateMongoClient",
 	})
 	l.Debug("Initializing mongo client")
 	var err error
-	uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s", user, pass, host, port, db)
+	uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s", d.User, d.Password, d.Host, d.Port, d.DB)
 	l.Debug("uri: ", uri)
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
 		l.Error(err)
 		return err
 	}
-	MongoClient = client
+	d.Client = client
 	// ping the database to check if it is alive
-	err = MongoClient.Ping(context.TODO(), nil)
+	err = d.Client.Ping(context.TODO(), nil)
 	if err != nil {
 		l.Error(err)
 		return err
@@ -43,26 +53,26 @@ func CreateMongoClient(host string, port int, user string, pass string, db strin
 	return nil
 }
 
-func GetWorkMongo(db, collection, query string) (*string, *string, error) {
+func (d *Mongo) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"package": "cache",
 		"method":  "GetWorkMongo",
 	})
 	l.Debug("Getting work from mongo")
-	if query == "" {
+	if d.RetrieveQuery == nil || *d.RetrieveQuery == "" {
 		l.Error("query is empty")
-		return nil, nil, errors.New("query is empty")
+		return nil, errors.New("query is empty")
 	}
 	var err error
 	var result string
 	var key string
-	coll := MongoClient.Database(db).Collection(collection)
+	coll := d.Client.Database(d.DB).Collection(d.Collection)
 	// unmarshal query string into struct
 	var bsonMap bson.M
-	err = json.Unmarshal([]byte(query), &bsonMap)
+	err = json.Unmarshal([]byte(*d.RetrieveQuery), &bsonMap)
 	if err != nil {
 		l.Error(err)
-		return nil, nil, err
+		return nil, err
 	}
 	var res bson.M
 	// get the first document from the collection that matches the query
@@ -71,10 +81,10 @@ func GetWorkMongo(db, collection, query string) (*string, *string, error) {
 		// if no document is found, return nil
 		if err == mongo.ErrNoDocuments {
 			l.Debug("no documents found")
-			return nil, nil, nil
+			return nil, nil
 		}
 		l.Error(err)
-		return nil, nil, err
+		return nil, err
 	}
 	// get string id
 	id := res["_id"].(primitive.ObjectID).Hex()
@@ -83,30 +93,34 @@ func GetWorkMongo(db, collection, query string) (*string, *string, error) {
 	jd, err := json.Marshal(res)
 	if err != nil {
 		l.Error(err)
-		return nil, nil, err
+		return nil, err
 	}
 	result = string(jd)
-	return &result, &key, nil
+	d.Key = &key
+	return &result, nil
 }
 
-func ClearWorkMongo(db, collection string, query string, key *string) error {
+func (d *Mongo) ClearWork() error {
 	l := log.WithFields(log.Fields{
 		"package": "cache",
 		"method":  "ClearWorkMongo",
-		"query":   query,
+		"query":   d.ClearQuery,
 	})
-	if key != nil {
-		l = l.WithField("key", *key)
+	if d.ClearQuery == nil || *d.ClearQuery == "" {
+		return nil
 	}
-	if key == nil {
+	if d.Key != nil {
+		l = l.WithField("key", *d.Key)
+	}
+	if d.Key == nil {
 		return nil
 	}
 	l.Debug("Clearing work from mongo")
 	var err error
-	dbconn := MongoClient.Database(db)
+	dbconn := d.Client.Database(d.DB)
 	var result bson.M
 	// replace object ID in query string with string id
-	query = strings.Replace(query, "{{key}}", *key, -1)
+	query := strings.Replace(*d.ClearQuery, "{{key}}", *d.Key, -1)
 	l = l.WithField("newQuery", query)
 	var command bson.D
 	err = bson.UnmarshalExtJSON([]byte(query), true, &command)
@@ -115,7 +129,6 @@ func ClearWorkMongo(db, collection string, query string, key *string) error {
 		return err
 	}
 	l.Debug("command: ", command)
-
 	err = dbconn.RunCommand(
 		context.TODO(),
 		command,
@@ -129,23 +142,23 @@ func ClearWorkMongo(db, collection string, query string, key *string) error {
 	return nil
 }
 
-func HandleFailureMongo(db, collection string, query string, key *string) error {
+func (d *Mongo) HandleFailure() error {
 	l := log.WithFields(log.Fields{
 		"package": "cache",
 		"method":  "HandleFailureMongo",
 	})
 	l.Debug("Handling failure from mongo")
-	if key == nil {
+	if d.Key == nil {
 		return nil
 	}
-	if query == "" {
+	if d.FailQuery == nil || *d.FailQuery == "" {
 		return nil
 	}
 	var err error
-	dbconn := MongoClient.Database(db)
+	dbconn := d.Client.Database(d.DB)
 	var result bson.M
 	// replace object ID in query string with string id
-	query = strings.Replace(query, "{{key}}", *key, -1)
+	query := strings.Replace(*d.FailQuery, "{{key}}", *d.Key, -1)
 	l = l.WithField("newQuery", query)
 	var command bson.D
 	err = bson.UnmarshalExtJSON([]byte(query), true, &command)
@@ -154,7 +167,6 @@ func HandleFailureMongo(db, collection string, query string, key *string) error 
 		return err
 	}
 	l.Debug("command: ", command)
-
 	err = dbconn.RunCommand(
 		context.TODO(),
 		command,

@@ -1,4 +1,4 @@
-package client
+package centauri
 
 import (
 	"errors"
@@ -9,38 +9,46 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func CreateCentariClient(url string, privateKey []byte) error {
+type Centauri struct {
+	URL        string
+	PrivateKey []byte
+	Channel    *string
+	Key        *string
+}
+
+func (d *Centauri) Init() error {
 	l := log.WithFields(log.Fields{
 		"package": "cache",
-		"method":  "CreateCentariClient",
+		"method":  "Init",
 	})
-	l.Debug("Initializing centauri client")
-	if privateKey == nil {
+	l.Debug("Initializing centauri driver")
+	if d.PrivateKey == nil {
 		l.Error("private key is nil")
 		return errors.New("private key is nil")
 	}
-	agent.ServerAddrs = []string{url}
-	if err := agent.LoadPrivateKey(privateKey); err != nil {
+	agent.ServerAddrs = []string{d.URL}
+	if err := agent.LoadPrivateKey(d.PrivateKey); err != nil {
 		l.Error(err)
 		return err
 	}
 	return nil
 }
 
-func GetWorkCentauri(channel string) (*string, *string, error) {
+func (d *Centauri) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"package": "cache",
-		"method":  "GetWorkCentauri",
+		"method":  "GetWork",
 	})
 	l.Debug("Getting work from centauri")
-	msgs, err := agent.CheckPendingMessages(channel)
+	l.Debug("Getting work from centauri")
+	msgs, err := agent.CheckPendingMessages(*d.Channel)
 	if err != nil {
 		l.Errorf("error checking pending messages: %v", err)
-		return nil, nil, err
+		return nil, err
 	}
 	if len(msgs) == 0 {
 		l.Debug("no pending messages")
-		return nil, nil, nil
+		return nil, nil
 	}
 	l.Debugf("pending messages: %v", msgs)
 	// sort by created at
@@ -50,39 +58,42 @@ func GetWorkCentauri(channel string) (*string, *string, error) {
 	// get first message
 	msg := msgs[0]
 	id := msg.ID
+	d.Key = &id
 	l.Debugf("message: %v", msg)
-	m, err := agent.GetMessage(channel, id)
+	m, err := agent.GetMessage(*d.Channel, id)
 	if err != nil {
 		l.Errorf("error getting message %s: %v", id, err)
-		return nil, nil, err
+		return nil, err
 	}
 	if m == nil {
 		l.Errorf("message %s not found", id)
-		return nil, nil, errors.New("message not found")
+		return nil, errors.New("message not found")
 	}
 	m, err = agent.DecryptMessageData(m)
 	if err != nil {
 		l.Errorf("error getting message %s: %v", id, err)
-		return nil, nil, err
+		return nil, err
 	}
 	var result string
 	if m.Data != nil {
 		result = string(m.Data)
 	}
-	return &result, &id, nil
+	l.Debugf("message: %v", m)
+	l.Debugf("result: %s", result)
+	return &result, nil
 }
 
-func ClearWorkCentauri(channel string, key *string) error {
+func (d *Centauri) ClearWork() error {
 	l := log.WithFields(log.Fields{
 		"package": "cache",
-		"method":  "ClearWorkCentauri",
+		"method":  "ClearWork",
 	})
 	l.Debug("Clearing work from centauri")
-	if key == nil || *key == "" {
+	if d.Key == nil || *d.Key == "" {
 		l.Error("key is nil")
 		return errors.New("key is nil")
 	}
-	err := agent.ConfirmMessageReceive(channel, *key)
+	err := agent.ConfirmMessageReceive(*d.Channel, *d.Key)
 	if err != nil {
 		l.Errorf("error deleting message: %v", err)
 		return err
@@ -91,16 +102,16 @@ func ClearWorkCentauri(channel string, key *string) error {
 	return nil
 }
 
-func HandleFailureCentauri(channel string, key *string) error {
+func (d *Centauri) HandleFailure() error {
 	l := log.WithFields(log.Fields{
 		"package": "cache",
-		"method":  "HandleFailureCentauri",
+		"method":  "HandleFailure",
 	})
-	l.Debug("handling failure for centauri")
-	if key == nil || *key == "" {
+	l.Debug("Handling failure")
+	if d.Key == nil || *d.Key == "" {
 		l.Error("key is nil")
 		return errors.New("key is nil")
 	}
-	l.Debug("handled failure")
+	l.Debug("Handled failure")
 	return nil
 }
