@@ -1,13 +1,13 @@
-package qjob
+package procx
 
 import (
-	"github.com/robertlestak/qjob/internal/client"
+	"github.com/robertlestak/procx/internal/client"
 	log "github.com/sirupsen/logrus"
 )
 
-func (j *QJob) InitRabbitMQ() error {
+func (j *ProcX) InitRabbitMQ() error {
 	l := log.WithFields(log.Fields{
-		"app": "qjob",
+		"app": "procx",
 	})
 	l.Debug("starting")
 	err := client.CreateRabbitMQClient(j.Driver.RabbitMQ.URL)
@@ -19,7 +19,7 @@ func (j *QJob) InitRabbitMQ() error {
 	return nil
 }
 
-func (j *QJob) getWorkRabbitMQ() (*string, error) {
+func (j *ProcX) getWorkRabbitMQ() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "getWorkRabbitMQ",
 		"driver": j.DriverName,
@@ -40,7 +40,7 @@ func (j *QJob) getWorkRabbitMQ() (*string, error) {
 	return &body, nil
 }
 
-func (j *QJob) clearWorkRabbitMQ() error {
+func (j *ProcX) clearWorkRabbitMQ() error {
 	l := log.WithFields(log.Fields{
 		"action": "clearWorkRabbitMQ",
 		"driver": j.DriverName,

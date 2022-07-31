@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/robertlestak/qjob/pkg/qjob"
+	"github.com/robertlestak/procx/pkg/procx"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,17 +18,17 @@ func init() {
 }
 
 func printVersion() {
-	fmt.Printf("qjob version %s\n", Version)
+	fmt.Printf("procx version %s\n", Version)
 }
 
 func runOnce() {
 	l := log.WithFields(log.Fields{
-		"app": "qjob",
+		"app": "procx",
 	})
 	l.Debug("starting")
 	args := flag.Args()
-	j := &qjob.QJob{
-		DriverName:    qjob.DriverName(*flagDriver),
+	j := &procx.ProcX{
+		DriverName:    procx.DriverName(*flagDriver),
 		HostEnv:       *flagHostEnv,
 		PassWorkAsArg: *flagPassWorkAsArg,
 	}
@@ -57,7 +57,7 @@ func runOnce() {
 
 func main() {
 	l := log.WithFields(log.Fields{
-		"app": "qjob",
+		"app": "procx",
 	})
 	l.Debug("starting")
 	if len(os.Args) < 2 {

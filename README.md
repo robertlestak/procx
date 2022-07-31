@@ -1,16 +1,16 @@
-# qjob - simple job queue worker
+# procx - simple job queue worker
 
-qjob is a small process manager that can wrap around any existing application / script / process, and integrate with a job queue system to enable autoscaling job executions with no native code integration.
+procx is a small process manager that can wrap around any existing application / script / process, and integrate with a job queue system to enable autoscaling job executions with no native code integration.
 
-qjob is a single compiled binary that can be packaged in your existing job code container. qjob is configured with environment variables or command line flags, and is started with the path to the process to execute.
+procx is a single compiled binary that can be packaged in your existing job code container. procx is configured with environment variables or command line flags, and is started with the path to the process to execute.
 
-qjob will retrieve the next job from the queue, and pass it to the process. Upon success (exit code 0), qjob will mark the job as complete. Upon failure (exit code != 0), qjob will mark the job as failed to be requeued.
+procx will retrieve the next job from the queue, and pass it to the process. Upon success (exit code 0), procx will mark the job as complete. Upon failure (exit code != 0), procx will mark the job as failed to be requeued.
 
-qjob will make the job payload available in the `QJOB_PAYLOAD` environment variable. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments.
+procx will make the job payload available in the `PROCX_PAYLOAD` environment variable. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments.
 
-By default, the subprocess spawned by qjob will not have access to the host environment variables. This can be changed by setting the `-hostenv` flag.
+By default, the subprocess spawned by procx will not have access to the host environment variables. This can be changed by setting the `-hostenv` flag.
 
-By default, qjob will connect to the data source, consume a single message, and then exit when the spawned process exits. If the `-daemon` flag is set, qjob will connect to the data source and consume messages until the process is killed, or until a job fails.
+By default, procx will connect to the data source, consume a single message, and then exit when the spawned process exits. If the `-daemon` flag is set, procx will connect to the data source and consume messages until the process is killed, or until a job fails.
 
 ## Drivers
 
@@ -35,7 +35,7 @@ See [Driver Examples](#driver-examples) for more information.
 ## Install
 
 ```bash
-curl -SsL https://raw.githubusercontent.com/robertlestak/qjob/main/scripts/install.sh | bash -e
+curl -SsL https://raw.githubusercontent.com/robertlestak/procx/main/scripts/install.sh | bash -e
 ```
 
 ### A note on permissions
@@ -43,12 +43,12 @@ curl -SsL https://raw.githubusercontent.com/robertlestak/qjob/main/scripts/insta
 Depending on the path of `INSTALL_DIR` and the permissions of the user running the installation script, you may get a Permission Denied error if you are trying to move the binary into a location which your current user does not have access to. This is most often the case when running the script as a non-root user yet trying to install into `/usr/local/bin`. To fix this, you can either:
 
 Create a `$HOME/bin` directory in your current user home directory. This will be the default installation directory. Be sure to add this to your `$PATH` environment variable.
-Use `sudo` to run the installation script, to install into `/usr/local/bin` (`curl -SsL https://raw.githubusercontent.com/robertlestak/qjob/main/scripts/install.sh | sudo bash -e`).
+Use `sudo` to run the installation script, to install into `/usr/local/bin` (`curl -SsL https://raw.githubusercontent.com/robertlestak/procx/main/scripts/install.sh | sudo bash -e`).
 
 ## Usage
 
 ```bash
-qjob [flags] <process path>
+procx [flags] <process path>
   -aws-load-config
     	load AWS config from ~/.aws/config
   -aws-region string
@@ -183,70 +183,70 @@ qjob [flags] <process path>
 
 ### Environment Variables
 
-- `QJOB_AWS_REGION`
-- `QJOB_AWS_SQS_QUEUE_URL`
-- `QJOB_AWS_SQS_ROLE_ARN`
-- `QJOB_CASSANDRA_CLEAR_PARAMS`
-- `QJOB_CASSANDRA_CLEAR_QUERY`
-- `QJOB_CASSANDRA_CONSISTENCY`
-- `QJOB_CASSANDRA_FAIL_PARAMS`
-- `QJOB_CASSANDRA_FAIL_QUERY`
-- `QJOB_CASSANDRA_HOSTS`
-- `QJOB_CASSANDRA_KEYSPACE`
-- `QJOB_CASSANDRA_PASSWORD`
-- `QJOB_CASSANDRA_QUERY_KEY`
-- `QJOB_CASSANDRA_RETRIEVE_PARAMS`
-- `QJOB_CASSANDRA_RETRIEVE_QUERY`
-- `QJOB_CASSANDRA_USER`
-- `QJOB_CENTAURI_CHANNEL`
-- `QJOB_CENTAURI_KEY`
-- `QJOB_CENTAURI_PEER_URL`
-- `QJOB_GCP_PROJECT_ID`
-- `QJOB_GCP_PUBSUB_SUBSCRIPTION`
-- `QJOB_DRIVER`
-- `QJOB_HOSTENV`
-- `QJOB_MONGO_CLEAR_QUERY`
-- `QJOB_MONGO_COLLECTION`
-- `QJOB_MONGO_DATABASE`
-- `QJOB_MONGO_FAIL_QUERY`
-- `QJOB_MONGO_HOST`
-- `QJOB_MONGO_PASSWORD`
-- `QJOB_MONGO_PORT`
-- `QJOB_MONGO_RETRIEVE_QUERY`
-- `QJOB_MONGO_USER`
-- `QJOB_MYSQL_CLEAR_PARAMS`
-- `QJOB_MYSQL_CLEAR_QUERY`
-- `QJOB_MYSQL_DATABASE`
-- `QJOB_MYSQL_FAIL_PARAMS`
-- `QJOB_MYSQL_FAIL_QUERY`
-- `QJOB_MYSQL_HOST`
-- `QJOB_MYSQL_PASSWORD`
-- `QJOB_MYSQL_PORT`
-- `QJOB_MYSQL_QUERY_KEY`
-- `QJOB_MYSQL_RETRIEVE_PARAMS`
-- `QJOB_MYSQL_RETRIEVE_QUERY`
-- `QJOB_MYSQL_USER`
-- `QJOB_PASS_WORK_AS_ARG`
-- `QJOB_PSQL_CLEAR_PARAMS`
-- `QJOB_PSQL_CLEAR_QUERY`
-- `QJOB_PSQL_DATABASE`
-- `QJOB_PSQL_FAIL_PARAMS`
-- `QJOB_PSQL_FAIL_QUERY`
-- `QJOB_PSQL_HOST`
-- `QJOB_PSQL_PASSWORD`
-- `QJOB_PSQL_PORT`
-- `QJOB_PSQL_QUERY_KEY`
-- `QJOB_PSQL_RETRIEVE_PARAMS`
-- `QJOB_PSQL_RETRIEVE_QUERY`
-- `QJOB_PSQL_SSL_MODE`
-- `QJOB_PSQL_USER`
-- `QJOB_RABBITMQ_URL`
-- `QJOB_RABBITMQ_QUEUE`
-- `QJOB_REDIS_HOST`
-- `QJOB_REDIS_PORT`
-- `QJOB_REDIS_PASSWORD`
-- `QJOB_REDIS_KEY`
-- `QJOB_DAEMON`
+- `PROCX_AWS_REGION`
+- `PROCX_AWS_SQS_QUEUE_URL`
+- `PROCX_AWS_SQS_ROLE_ARN`
+- `PROCX_CASSANDRA_CLEAR_PARAMS`
+- `PROCX_CASSANDRA_CLEAR_QUERY`
+- `PROCX_CASSANDRA_CONSISTENCY`
+- `PROCX_CASSANDRA_FAIL_PARAMS`
+- `PROCX_CASSANDRA_FAIL_QUERY`
+- `PROCX_CASSANDRA_HOSTS`
+- `PROCX_CASSANDRA_KEYSPACE`
+- `PROCX_CASSANDRA_PASSWORD`
+- `PROCX_CASSANDRA_QUERY_KEY`
+- `PROCX_CASSANDRA_RETRIEVE_PARAMS`
+- `PROCX_CASSANDRA_RETRIEVE_QUERY`
+- `PROCX_CASSANDRA_USER`
+- `PROCX_CENTAURI_CHANNEL`
+- `PROCX_CENTAURI_KEY`
+- `PROCX_CENTAURI_PEER_URL`
+- `PROCX_GCP_PROJECT_ID`
+- `PROCX_GCP_PUBSUB_SUBSCRIPTION`
+- `PROCX_DRIVER`
+- `PROCX_HOSTENV`
+- `PROCX_MONGO_CLEAR_QUERY`
+- `PROCX_MONGO_COLLECTION`
+- `PROCX_MONGO_DATABASE`
+- `PROCX_MONGO_FAIL_QUERY`
+- `PROCX_MONGO_HOST`
+- `PROCX_MONGO_PASSWORD`
+- `PROCX_MONGO_PORT`
+- `PROCX_MONGO_RETRIEVE_QUERY`
+- `PROCX_MONGO_USER`
+- `PROCX_MYSQL_CLEAR_PARAMS`
+- `PROCX_MYSQL_CLEAR_QUERY`
+- `PROCX_MYSQL_DATABASE`
+- `PROCX_MYSQL_FAIL_PARAMS`
+- `PROCX_MYSQL_FAIL_QUERY`
+- `PROCX_MYSQL_HOST`
+- `PROCX_MYSQL_PASSWORD`
+- `PROCX_MYSQL_PORT`
+- `PROCX_MYSQL_QUERY_KEY`
+- `PROCX_MYSQL_RETRIEVE_PARAMS`
+- `PROCX_MYSQL_RETRIEVE_QUERY`
+- `PROCX_MYSQL_USER`
+- `PROCX_PASS_WORK_AS_ARG`
+- `PROCX_PSQL_CLEAR_PARAMS`
+- `PROCX_PSQL_CLEAR_QUERY`
+- `PROCX_PSQL_DATABASE`
+- `PROCX_PSQL_FAIL_PARAMS`
+- `PROCX_PSQL_FAIL_QUERY`
+- `PROCX_PSQL_HOST`
+- `PROCX_PSQL_PASSWORD`
+- `PROCX_PSQL_PORT`
+- `PROCX_PSQL_QUERY_KEY`
+- `PROCX_PSQL_RETRIEVE_PARAMS`
+- `PROCX_PSQL_RETRIEVE_QUERY`
+- `PROCX_PSQL_SSL_MODE`
+- `PROCX_PSQL_USER`
+- `PROCX_RABBITMQ_URL`
+- `PROCX_RABBITMQ_QUEUE`
+- `PROCX_REDIS_HOST`
+- `PROCX_REDIS_PORT`
+- `PROCX_REDIS_PASSWORD`
+- `PROCX_REDIS_KEY`
+- `PROCX_DAEMON`
 
 ## Driver Examples
 
@@ -254,17 +254,17 @@ qjob [flags] <process path>
 
 The SQS driver will retrieve the next message from the specified queue, and pass it to the process. Upon successful completion of the process, it will delete the message from the queue.
 
-For cross-account access, you must provide the ARN of the role that has access to the queue, and the identity running qjob must be able to assume the target identity.
+For cross-account access, you must provide the ARN of the role that has access to the queue, and the identity running procx must be able to assume the target identity.
 
 If running on a developer workstation, you will most likely want to pass your `~/.aws/config` identity. To do so, pass the `-aws-load-config` flag.
 
 ```bash
-qjob \
+procx \
     -aws-sqs-queue-url https://sqs.us-east-1.amazonaws.com/123456789012/my-queue \
     -aws-sqs-role-arn arn:aws:iam::123456789012:role/my-role \
     -aws-region us-east-1 \
     -driver aws-sqs \
-    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### Cassandra
@@ -272,7 +272,7 @@ qjob \
 The Cassandra driver will retrieve the next message from the specified keyspace table, and pass it to the process. Upon successful completion of the process, it will execute the specified query to update / remove the work from the table.
 
 ```bash
-qjob \
+procx \
     -cassandra-keyspace mykeyspace \
     -cassandra-table mytable \
     -cassandra-consistency QUORUM \
@@ -284,7 +284,7 @@ qjob \
     -cassandra-query-key \
     -cassandra-retrieve-query "SELECT id, work FROM mykeyspace.mytable LIMIT 1" \
     -driver cassandra \
-    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### Centauri
@@ -292,12 +292,12 @@ qjob \
 The `centauri` driver integrates with a [Centauri](https://centauri.sh) network to retrieve the next message from the specified channel, and pass it to the process. Upon successful completion of the process, it will delete the message from the network.
 
 ```bash
-qjob \
+procx \
     -centauri-channel my-channel \
     -centauri-key "$(</path/to/private.key)" \
     -centauri-peer-url https://api.test-peer1.centauri.sh \
     -driver centauri \
-    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### GCP Pub/Sub
@@ -306,11 +306,11 @@ The GCP Pub/Sub driver will retrieve the next message from the specified subscri
 
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
-qjob \
+procx \
     -gcp-project-id my-project \
     -gcp-pubsub-subscription my-subscription \
     -driver gcp-pubsub \
-    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### MongoDB
@@ -318,7 +318,7 @@ qjob \
 The MongoDB driver will retrieve the next message from the specified collection, and pass it to the process. Upon successful completion of the process, it will run the specified mongo command. The Mongo ObjectID `_id` will be passed in for the placeholder `{{key}}`.
 
 ```bash
-qjob \
+procx \
     -mongo-collection my-collection \
     -mongo-database my-database \
     -mongo-host localhost \
@@ -329,7 +329,7 @@ qjob \
     -mongo-clear-query '{"delete": "my-collection", "deletes": [{"q": {"_id": {"$oid": "{{key}}"}}, "limit": 1}]}' \
     -mongo-fail-query '{"update":"my-collection","updates":[{"q":{"_id":{"$oid":"{{key}}"}},"u":{"$set": {"failed":true}}}]}' \
     -driver mongodb \
-    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### MySQL
@@ -337,7 +337,7 @@ qjob \
 The MySQL driver will retrieve the next message from the specified queue, and pass it to the process. By default, the query used to retrieve the message (`-mysql-retrieve-query`) will assume to return a single column, however if you pass `-mysql-query-key` it will assume to return a two-column result, with the first column being the key and the second column being the value. This then allows you to provide a placeholder `{{key}}` param for clearing / failure queries, and this will be replaced with the respective key.
 
 ```bash
-qjob \
+procx \
     -mysql-host localhost \
     -mysql-port 3306 \
     -mysql-database mydb \
@@ -351,7 +351,7 @@ qjob \
     -mysql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = ? and id = ?" \
     -mysql-fail-params "myqueue,{{key}}" \
     -driver mysql \
-    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### PostgreSQL
@@ -359,7 +359,7 @@ qjob \
 The PostgreSQL driver will retrieve the next message from the specified queue, and pass it to the process. By default, the query used to retrieve the message (`-psql-retrieve-query`) will assume to return a single column, however if you pass `-psql-query-key` it will assume to return a two-column result, with the first column being the key and the second column being the value. This then allows you to provide a placeholder `{{key}}` param for clearing / failure queries, and this will be replaced with the respective key.
 
 ```bash
-qjob \
+procx \
     -psql-host localhost \
     -psql-port 5432 \
     -psql-database mydb \
@@ -373,7 +373,7 @@ qjob \
     -psql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = $1 and id = $2" \
     -psql-fail-params "myqueue,{{key}}" \
     -driver postgres \
-    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### RabbitMQ
@@ -381,11 +381,11 @@ qjob \
 The RabbitMQ driver will connect to the specified queue AMQP endpoint and retrieve the next message from the specified queue.
 
 ```bash
-qjob \
+procx \
     -rabbitmq-url amqp://guest:guest@localhost:5672 \
     -rabbitmq-queue my-queue \
     -driver rabbitmq \
-    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### Redis List
@@ -393,12 +393,12 @@ qjob \
 The Redis List driver will connect to the specified Redis server and retrieve the next message from the specified list.
 
 ```bash
-qjob \
+procx \
     -redis-host localhost \
     -redis-port 6379 \
     -redis-key my-list \
     -driver redis-list \
-    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### Redis Pub/Sub
@@ -406,38 +406,38 @@ qjob \
 The Redis Pub/Sub driver will connect to the specified Redis server and retrieve the next message from the specified subscription.
 
 ```bash
-qjob \
+procx \
     -redis-host localhost \
     -redis-port 6379 \
     -redis-key my-subscription \
     -driver redis-pubsub \
-    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### Local
 
-The local driver is a simple wrapper around the process to execute, primarily for local testing. It does not communicate with any queue, and expects the job payload to be manually defined by the operator as a `QJOB_PAYLOAD` environment variable.
+The local driver is a simple wrapper around the process to execute, primarily for local testing. It does not communicate with any queue, and expects the job payload to be manually defined by the operator as a `PROCX_PAYLOAD` environment variable.
 
 This can also be used to read in a file, or to shim in a local pipe for testing.
 
 ```bash
-QJOB_PAYLOAD="$(</path/to/payload.txt)" \
-qjob \
+PROCX_PAYLOAD="$(</path/to/payload.txt)" \
+procx \
     -driver local \
-    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ## Orchestration
 
-qjob is solely focused on the worker-side consumption and clearing of work, and intentionally has no scope to the scheduling or management of work.
+procx is solely focused on the worker-side consumption and clearing of work, and intentionally has no scope to the scheduling or management of work.
 
-This allows you to plug in any scheduling or management system you want, and have qjob consume the work from that system.
+This allows you to plug in any scheduling or management system you want, and have procx consume the work from that system.
 
-If you are running in Kubernetes, the [`qjob-operator`](https://github.com/robertlestak/qjob-operator) is a simple operator that will manage QJob workloads on top of Kubernetes and KEDA.
+If you are running in Kubernetes, the [`procx-operator`](https://github.com/robertlestak/procx-operator) is a simple operator that will manage ProcX workloads on top of Kubernetes and KEDA.
 
 ## Deployment
 
-You will need to install qjob in the container which will be used to run your job. You can either compile qjob from source, or use the latest precompiled binaries available.
+You will need to install procx in the container which will be used to run your job. You can either compile procx from source, or use the latest precompiled binaries available.
 
 ### Example Dockerfile
 
@@ -447,27 +447,27 @@ FROM node:17
 RUN apt-get update && apt-get install -y \
     curl
 
-RUN curl -LO https://github.com/robertlestak/qjob/releases/latest/download/qjob_linux && \
-    chmod +x qjob_linux && \
-    mv qjob_linux /usr/local/bin/qjob
+RUN curl -LO https://github.com/robertlestak/procx/releases/latest/download/procx_linux && \
+    chmod +x procx_linux && \
+    mv procx_linux /usr/local/bin/procx
 
-RUN echo "console.log('the payload is:', process.env.QJOB_PAYLOAD)" > app.js
+RUN echo "console.log('the payload is:', process.env.PROCX_PAYLOAD)" > app.js
 
 CMD ["node", "app.js"]
-ENTRYPOINT ["/usr/local/bin/qjob"]
+ENTRYPOINT ["/usr/local/bin/procx"]
 ```
 
 ```bash
-docker build -t qjob .
+docker build -t procx .
 ```
 
 ```bash
 docker run --rm -it \
     -v ~/.aws:/root/.aws \
-    -e QJOB_AWS_REGION=us-east-1 \
-    -e QJOB_AWS_SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/123456789012/my-queue \
-    -e QJOB_AWS_SQS_ROLE_ARN=arn:aws:iam::123456789012:role/my-role \
-    -e QJOB_DRIVER=aws-sqs \
+    -e PROCX_AWS_REGION=us-east-1 \
+    -e PROCX_AWS_SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/123456789012/my-queue \
+    -e PROCX_AWS_SQS_ROLE_ARN=arn:aws:iam::123456789012:role/my-role \
+    -e PROCX_DRIVER=aws-sqs \
     -e AWS_SDK_LOAD_CONFIG=1 \
-    qjob
+    procx
 ```

@@ -2,11 +2,11 @@
 
 ################################################################################
 #                                                                              #
-#                                qjob Installer                                #
+#                                procx Installer                                #
 #                                                                              #
 ################################################################################
 
-# This script will install the latest version of qjob on your machine from
+# This script will install the latest version of procx on your machine from
 # the precompiled binary releases in the official repository.
 
 # check platform
@@ -18,7 +18,7 @@ else
   PLATFORM="windows"
 fi
 
-BINARIES=${BINARIES:-"qjob"}
+BINARIES=${BINARIES:-"procx"}
 INSTALL_DIR=${INSTALL_DIR:-"$HOME/bin"}
 
 install_dir() {
@@ -36,7 +36,7 @@ install_bin() {
     return 1
   fi
   echo "install_bin: installing $name"
-  LATEST_DOWNLOAD_PREFIX="https://github.com/robertlestak/qjob/releases/latest/download/"
+  LATEST_DOWNLOAD_PREFIX="https://github.com/robertlestak/procx/releases/latest/download/"
   FILE_NAME="${name}_${PLATFORM}"
   DL="${LATEST_DOWNLOAD_PREFIX}${FILE_NAME}"
   echo "install_bin: downloading $DL"

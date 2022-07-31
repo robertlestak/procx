@@ -1,13 +1,13 @@
-package qjob
+package procx
 
 import (
 	"errors"
 
-	"github.com/robertlestak/qjob/internal/client"
+	"github.com/robertlestak/procx/internal/client"
 	log "github.com/sirupsen/logrus"
 )
 
-func (j *QJob) InitPsql() error {
+func (j *ProcX) InitPsql() error {
 	l := log.WithFields(log.Fields{
 		"action": "InitPsql",
 		"driver": j.DriverName,
@@ -28,7 +28,7 @@ func (j *QJob) InitPsql() error {
 	return nil
 }
 
-func (q *QJob) handleFailurePsql() error {
+func (q *ProcX) handleFailurePsql() error {
 	l := log.WithFields(log.Fields{
 		"action": "handleFailurePsql",
 		"driver": q.DriverName,
@@ -49,7 +49,7 @@ func (q *QJob) handleFailurePsql() error {
 	return nil
 }
 
-func (q *QJob) getWorkPsql() (*string, error) {
+func (q *ProcX) getWorkPsql() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "getWorkPsql",
 		"driver": q.DriverName,
@@ -79,7 +79,7 @@ func (q *QJob) getWorkPsql() (*string, error) {
 	return m, nil
 }
 
-func (q *QJob) clearWorkPsql() error {
+func (q *ProcX) clearWorkPsql() error {
 	l := log.WithFields(log.Fields{
 		"action": "clearWorkPsql",
 		"driver": q.DriverName,

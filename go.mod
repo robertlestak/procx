@@ -1,4 +1,4 @@
-module github.com/robertlestak/qjob
+module github.com/robertlestak/procx
 
 go 1.18
 

@@ -39,7 +39,7 @@ func CreateAWSSession(region, roleArn string) (*session.Session, *aws.Config, er
 	if roleArn != "" {
 		l.Debug("CreateAWSSession roleArn=%s requestId=%s", roleArn, reqId)
 		creds := stscreds.NewCredentials(sess, roleArn, func(p *stscreds.AssumeRoleProvider) {
-			p.RoleSessionName = "qjob-" + reqId
+			p.RoleSessionName = "procx-" + reqId
 		})
 		cfg.Credentials = creds
 	}

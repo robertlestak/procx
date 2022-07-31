@@ -1,4 +1,4 @@
-package qjob
+package procx
 
 import (
 	"errors"
@@ -129,7 +129,7 @@ type Driver struct {
 	Redis     *DriverRedis     `json:"redis"`
 }
 
-type QJob struct {
+type ProcX struct {
 	DriverName    DriverName `json:"driverName"`
 	Driver        *Driver    `json:"driver"`
 	PassWorkAsArg bool       `json:"passWorkAsArg"`
@@ -139,7 +139,7 @@ type QJob struct {
 	work          string     `json:"-"`
 }
 
-func (j *QJob) ParseArgs(args []string) {
+func (j *ProcX) ParseArgs(args []string) {
 	if len(args) == 0 {
 		return
 	}
@@ -149,7 +149,7 @@ func (j *QJob) ParseArgs(args []string) {
 	}
 }
 
-func (j *QJob) InitDriver() error {
+func (j *ProcX) InitDriver() error {
 	l := log.WithFields(log.Fields{
 		"action": "InitDriver",
 		"driver": j.DriverName,
@@ -183,7 +183,7 @@ func (j *QJob) InitDriver() error {
 	}
 }
 
-func (j *QJob) GetWorkFromDriver() (*string, error) {
+func (j *ProcX) GetWorkFromDriver() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "GetWorkFromDriver",
 		"driver": j.DriverName,
@@ -207,7 +207,7 @@ func (j *QJob) GetWorkFromDriver() (*string, error) {
 	case DriverRabbit:
 		return j.getWorkRabbitMQ()
 	case DriverLocal:
-		w := os.Getenv("QJOB_PAYLOAD")
+		w := os.Getenv("PROCX_PAYLOAD")
 		return &w, nil
 	case DriverRedisList:
 		return j.getWorkRedisList()
@@ -218,7 +218,7 @@ func (j *QJob) GetWorkFromDriver() (*string, error) {
 	}
 }
 
-func (j *QJob) ClearWorkFromDriver() error {
+func (j *ProcX) ClearWorkFromDriver() error {
 	l := log.WithFields(log.Fields{
 		"action": "ClearWorkFromDriver",
 		"driver": j.DriverName,
@@ -252,7 +252,7 @@ func (j *QJob) ClearWorkFromDriver() error {
 	}
 }
 
-func (j *QJob) HandleFailure() error {
+func (j *ProcX) HandleFailure() error {
 	l := log.WithFields(log.Fields{
 		"action": "HandleFailure",
 		"driver": j.DriverName,
@@ -275,7 +275,7 @@ func (j *QJob) HandleFailure() error {
 	return nil
 }
 
-func (j *QJob) DoWork() error {
+func (j *ProcX) DoWork() error {
 	l := log.WithFields(log.Fields{
 		"action": "DoWork",
 		"driver": j.DriverName,
@@ -314,7 +314,7 @@ func (j *QJob) DoWork() error {
 // io.Writers. If the script exits with a non-zero exit code, an error will be
 // returned. If the script exits with a zero exit code, no error will be
 // returned.
-func (j *QJob) Exec(stdout, stderr io.Writer) error {
+func (j *ProcX) Exec(stdout, stderr io.Writer) error {
 	// create the command
 	if j.PassWorkAsArg {
 		j.Args = append(j.Args, j.work)
@@ -326,7 +326,7 @@ func (j *QJob) Exec(stdout, stderr io.Writer) error {
 	if j.HostEnv {
 		cmd.Env = os.Environ()
 	}
-	cmd.Env = append(cmd.Env, "QJOB_PAYLOAD="+j.work)
+	cmd.Env = append(cmd.Env, "PROCX_PAYLOAD="+j.work)
 	// execute the command
 	return cmd.Run()
 }

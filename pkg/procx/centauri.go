@@ -1,11 +1,11 @@
-package qjob
+package procx
 
 import (
-	"github.com/robertlestak/qjob/internal/client"
+	"github.com/robertlestak/procx/internal/client"
 	log "github.com/sirupsen/logrus"
 )
 
-func (j *QJob) InitCentauri() error {
+func (j *ProcX) InitCentauri() error {
 	l := log.WithFields(log.Fields{
 		"action": "InitCentauri",
 		"driver": j.DriverName,
@@ -22,7 +22,7 @@ func (j *QJob) InitCentauri() error {
 	return nil
 }
 
-func (q *QJob) handleFailureCentauri() error {
+func (q *ProcX) handleFailureCentauri() error {
 	l := log.WithFields(log.Fields{
 		"action": "handleFailureCentauri",
 		"driver": q.DriverName,
@@ -35,7 +35,7 @@ func (q *QJob) handleFailureCentauri() error {
 	return nil
 }
 
-func (q *QJob) getWorkCentauri() (*string, error) {
+func (q *ProcX) getWorkCentauri() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "getWorkCentauri",
 		"driver": q.DriverName,
@@ -59,7 +59,7 @@ func (q *QJob) getWorkCentauri() (*string, error) {
 	return m, nil
 }
 
-func (q *QJob) clearWorkCentauri() error {
+func (q *ProcX) clearWorkCentauri() error {
 	l := log.WithFields(log.Fields{
 		"action": "clearWorkCentauri",
 		"driver": q.DriverName,

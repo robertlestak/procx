@@ -4,8 +4,8 @@ WORKDIR /src
 
 COPY . .
 
-RUN apk add make openssl && make bin/qjob_hostarch
+RUN apk add make openssl && make bin/procx_hostarch
 
 FROM alpine:3.6 as runtime
 
-COPY --from=builder /src/bin/qjob_hostarch /bin/qjob
+COPY --from=builder /src/bin/procx_hostarch /bin/procx

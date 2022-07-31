@@ -1,13 +1,13 @@
-package qjob
+package procx
 
 import (
-	"github.com/robertlestak/qjob/internal/client"
+	"github.com/robertlestak/procx/internal/client"
 	log "github.com/sirupsen/logrus"
 )
 
-func (j *QJob) InitAWSSQS() error {
+func (j *ProcX) InitAWSSQS() error {
 	l := log.WithFields(log.Fields{
-		"app": "qjob",
+		"app": "procx",
 	})
 	l.Debug("starting")
 	c, err := client.CreateSQSClient(j.Driver.AWS.Region, j.Driver.AWS.RoleARN)
@@ -20,7 +20,7 @@ func (j *QJob) InitAWSSQS() error {
 	return nil
 }
 
-func (j *QJob) getWorkSQS() (*string, error) {
+func (j *ProcX) getWorkSQS() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "getWorkSQS",
 		"driver": j.DriverName,
@@ -41,7 +41,7 @@ func (j *QJob) getWorkSQS() (*string, error) {
 	return m.Body, nil
 }
 
-func (j *QJob) clearWorkSQS() error {
+func (j *ProcX) clearWorkSQS() error {
 	l := log.WithFields(log.Fields{
 		"action": "clearWorkSQS",
 		"driver": j.DriverName,

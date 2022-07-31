@@ -1,13 +1,13 @@
-package qjob
+package procx
 
 import (
-	"github.com/robertlestak/qjob/internal/client"
+	"github.com/robertlestak/procx/internal/client"
 	log "github.com/sirupsen/logrus"
 )
 
-func (j *QJob) InitGCPPubSub() error {
+func (j *ProcX) InitGCPPubSub() error {
 	l := log.WithFields(log.Fields{
-		"app": "qjob",
+		"app": "procx",
 	})
 	l.Debug("starting")
 	err := client.CreateGCPPubSubClient(j.Driver.GCP.ProjectID)
@@ -18,7 +18,7 @@ func (j *QJob) InitGCPPubSub() error {
 	return nil
 }
 
-func (j *QJob) getWorkGCPPubSub() (*string, error) {
+func (j *ProcX) getWorkGCPPubSub() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "getWorkGCPPubSub",
 		"driver": j.DriverName,
@@ -40,7 +40,7 @@ func (j *QJob) getWorkGCPPubSub() (*string, error) {
 	return &body, nil
 }
 
-func (j *QJob) clearWorkGCPPubSub() error {
+func (j *ProcX) clearWorkGCPPubSub() error {
 	l := log.WithFields(log.Fields{
 		"action": "clearWorkGCPPubSub",
 		"driver": j.DriverName,

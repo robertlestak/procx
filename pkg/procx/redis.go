@@ -1,11 +1,11 @@
-package qjob
+package procx
 
 import (
-	"github.com/robertlestak/qjob/internal/client"
+	"github.com/robertlestak/procx/internal/client"
 	log "github.com/sirupsen/logrus"
 )
 
-func (j *QJob) InitRedis() error {
+func (j *ProcX) InitRedis() error {
 	l := log.WithFields(log.Fields{
 		"action": "InitRedis",
 		"driver": j.DriverName,
@@ -19,7 +19,7 @@ func (j *QJob) InitRedis() error {
 	return nil
 }
 
-func (q *QJob) handleFailureRedisList() error {
+func (q *ProcX) handleFailureRedisList() error {
 	l := log.WithFields(log.Fields{
 		"action": "handleFailureRedisList",
 		"driver": q.DriverName,
@@ -32,7 +32,7 @@ func (q *QJob) handleFailureRedisList() error {
 	return nil
 }
 
-func (q *QJob) getWorkRedisList() (*string, error) {
+func (q *ProcX) getWorkRedisList() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "getWorkRedisList",
 		"driver": q.DriverName,
@@ -52,7 +52,7 @@ func (q *QJob) getWorkRedisList() (*string, error) {
 	return &m, nil
 }
 
-func (q *QJob) getWorkRedisSubscription() (*string, error) {
+func (q *ProcX) getWorkRedisSubscription() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "getWorkRedisSubscription",
 		"driver": q.DriverName,

@@ -1,13 +1,13 @@
-package qjob
+package procx
 
 import (
 	"errors"
 
-	"github.com/robertlestak/qjob/internal/client"
+	"github.com/robertlestak/procx/internal/client"
 	log "github.com/sirupsen/logrus"
 )
 
-func (j *QJob) InitMysql() error {
+func (j *ProcX) InitMysql() error {
 	l := log.WithFields(log.Fields{
 		"action": "InitMysql",
 		"driver": j.DriverName,
@@ -27,7 +27,7 @@ func (j *QJob) InitMysql() error {
 	return nil
 }
 
-func (q *QJob) HandleFailureMysql() error {
+func (q *ProcX) HandleFailureMysql() error {
 	l := log.WithFields(log.Fields{
 		"action": "HandleFailureMysql",
 		"driver": q.DriverName,
@@ -48,7 +48,7 @@ func (q *QJob) HandleFailureMysql() error {
 	return nil
 }
 
-func (q *QJob) GetWorkMysql() (*string, error) {
+func (q *ProcX) GetWorkMysql() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "GetWorkMysql",
 		"driver": q.DriverName,
@@ -78,7 +78,7 @@ func (q *QJob) GetWorkMysql() (*string, error) {
 	return m, nil
 }
 
-func (q *QJob) ClearWorkMysql() error {
+func (q *ProcX) ClearWorkMysql() error {
 	l := log.WithFields(log.Fields{
 		"action": "ClearWorkMysql",
 		"driver": q.DriverName,

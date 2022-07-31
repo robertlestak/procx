@@ -5,15 +5,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/robertlestak/qjob/pkg/qjob"
+	"github.com/robertlestak/procx/pkg/procx"
 	log "github.com/sirupsen/logrus"
 )
 
-func initAWSDriver(j *qjob.QJob) {
+func initAWSDriver(j *procx.ProcX) {
 	if flagSQSQueueURL != nil && *flagSQSQueueURL != "" {
-		j.Driver = &qjob.Driver{
-			Name: qjob.DriverAWSSQS,
-			AWS: &qjob.DriverAWS{
+		j.Driver = &procx.Driver{
+			Name: procx.DriverAWSSQS,
+			AWS: &procx.DriverAWS{
 				Region:      *flagAWSRegion,
 				RoleARN:     *flagSQSRoleARN,
 				SQSQueueURL: *flagSQSQueueURL,
@@ -22,15 +22,15 @@ func initAWSDriver(j *qjob.QJob) {
 	}
 }
 
-func initCentauriDriver(j *qjob.QJob) error {
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverCentauriNet {
+func initCentauriDriver(j *procx.ProcX) error {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverCentauriNet {
 		if flagCentauriKey == nil || (flagCentauriKey != nil && *flagCentauriKey == "") {
 			return errors.New("key required")
 		}
 		kd := []byte(*flagCentauriKey)
-		j.Driver = &qjob.Driver{
-			Name: qjob.DriverCentauriNet,
-			Centauri: &qjob.DriverCentauri{
+		j.Driver = &procx.Driver{
+			Name: procx.DriverCentauriNet,
+			Centauri: &procx.DriverCentauri{
 				PeerURL:    *flagCentauriPeerURL,
 				Channel:    flagCentauriChannel,
 				PrivateKey: kd,
@@ -40,11 +40,11 @@ func initCentauriDriver(j *qjob.QJob) error {
 	return nil
 }
 
-func initRabbitDriver(j *qjob.QJob) {
+func initRabbitDriver(j *procx.ProcX) {
 	if flagRabbitMQURL != nil && *flagRabbitMQURL != "" {
-		j.Driver = &qjob.Driver{
-			Name: qjob.DriverRabbit,
-			RabbitMQ: &qjob.DriverRabbitMQ{
+		j.Driver = &procx.Driver{
+			Name: procx.DriverRabbit,
+			RabbitMQ: &procx.DriverRabbitMQ{
 				URL:   *flagRabbitMQURL,
 				Queue: *flagRabbitMQQueue,
 			},
@@ -52,11 +52,11 @@ func initRabbitDriver(j *qjob.QJob) {
 	}
 }
 
-func initRedisDriver(j *qjob.QJob) {
+func initRedisDriver(j *procx.ProcX) {
 	if flagRedisHost != nil && *flagRedisHost != "" {
-		j.Driver = &qjob.Driver{
-			Name: qjob.DriverName(*flagDriver),
-			Redis: &qjob.DriverRedis{
+		j.Driver = &procx.Driver{
+			Name: procx.DriverName(*flagDriver),
+			Redis: &procx.DriverRedis{
 				Host:     *flagRedisHost,
 				Port:     *flagRedisPort,
 				Password: *flagRedisPassword,
@@ -66,11 +66,11 @@ func initRedisDriver(j *qjob.QJob) {
 	}
 }
 
-func initGCPDriver(j *qjob.QJob) {
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverGCPPubSub {
-		j.Driver = &qjob.Driver{
-			Name: qjob.DriverGCPPubSub,
-			GCP: &qjob.DriverGCP{
+func initGCPDriver(j *procx.ProcX) {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverGCPPubSub {
+		j.Driver = &procx.Driver{
+			Name: procx.DriverGCPPubSub,
+			GCP: &procx.DriverGCP{
 				ProjectID:        *flagGCPProjectID,
 				SubscriptionName: *flagGCPSubscription,
 			},
@@ -78,15 +78,15 @@ func initGCPDriver(j *qjob.QJob) {
 	}
 }
 
-func initMongoDriver(j *qjob.QJob) error {
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverMongoDB {
+func initMongoDriver(j *procx.ProcX) error {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverMongoDB {
 		pv, err := strconv.Atoi(*flagMongoPort)
 		if err != nil {
 			return err
 		}
-		j.Driver = &qjob.Driver{
-			Name: qjob.DriverMongoDB,
-			Mongo: &qjob.DriverMongo{
+		j.Driver = &procx.Driver{
+			Name: procx.DriverMongoDB,
+			Mongo: &procx.DriverMongo{
 				Host:          *flagMongoHost,
 				Port:          pv,
 				User:          *flagMongoUser,
@@ -102,8 +102,8 @@ func initMongoDriver(j *qjob.QJob) error {
 	return nil
 }
 
-func initPsqlDriver(j *qjob.QJob) error {
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverPostgres {
+func initPsqlDriver(j *procx.ProcX) error {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverPostgres {
 		pv, err := strconv.Atoi(*flagPsqlPort)
 		if err != nil {
 			return err
@@ -129,7 +129,7 @@ func initPsqlDriver(j *qjob.QJob) error {
 				fps = append(fps, v)
 			}
 		}
-		driver := &qjob.DriverPsql{
+		driver := &procx.DriverPsql{
 			Host:     *flagPsqlHost,
 			Port:     pv,
 			User:     *flagPsqlUser,
@@ -141,37 +141,37 @@ func initPsqlDriver(j *qjob.QJob) error {
 			driver.QueryReturnsKey = flagPsqlQueryKey
 		}
 		if *flagPsqlRetrieveQuery != "" {
-			rq := &qjob.SqlQuery{
+			rq := &procx.SqlQuery{
 				Query:  *flagPsqlRetrieveQuery,
 				Params: rps,
 			}
 			driver.RetrieveQuery = rq
 		}
 		if *flagPsqlClearQuery != "" {
-			cq := &qjob.SqlQuery{
+			cq := &procx.SqlQuery{
 				Query:  *flagPsqlClearQuery,
 				Params: cps,
 			}
 			driver.ClearQuery = cq
 		}
 		if *flagPsqlFailQuery != "" {
-			fq := &qjob.SqlQuery{
+			fq := &procx.SqlQuery{
 				Query:  *flagPsqlFailQuery,
 				Params: fps,
 			}
 			driver.FailureQuery = fq
 		}
 
-		j.Driver = &qjob.Driver{
-			Name: qjob.DriverPostgres,
+		j.Driver = &procx.Driver{
+			Name: procx.DriverPostgres,
 			Psql: driver,
 		}
 	}
 	return nil
 }
 
-func initMysqlDriver(j *qjob.QJob) error {
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverMySQL {
+func initMysqlDriver(j *procx.ProcX) error {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverMySQL {
 		pv, err := strconv.Atoi(*flagMysqlPort)
 		if err != nil {
 			return err
@@ -197,7 +197,7 @@ func initMysqlDriver(j *qjob.QJob) error {
 				fps = append(fps, v)
 			}
 		}
-		driver := &qjob.DriverMysql{
+		driver := &procx.DriverMysql{
 			Host:     *flagMysqlHost,
 			Port:     pv,
 			User:     *flagMysqlUser,
@@ -208,37 +208,37 @@ func initMysqlDriver(j *qjob.QJob) error {
 			driver.QueryReturnsKey = flagMysqlQueryKey
 		}
 		if *flagMysqlRetrieveQuery != "" {
-			rq := &qjob.SqlQuery{
+			rq := &procx.SqlQuery{
 				Query:  *flagMysqlRetrieveQuery,
 				Params: rps,
 			}
 			driver.RetrieveQuery = rq
 		}
 		if *flagMysqlClearQuery != "" {
-			cq := &qjob.SqlQuery{
+			cq := &procx.SqlQuery{
 				Query:  *flagMysqlClearQuery,
 				Params: cps,
 			}
 			driver.ClearQuery = cq
 		}
 		if *flagMysqlFailQuery != "" {
-			fq := &qjob.SqlQuery{
+			fq := &procx.SqlQuery{
 				Query:  *flagMysqlFailQuery,
 				Params: fps,
 			}
 			driver.FailureQuery = fq
 		}
 
-		j.Driver = &qjob.Driver{
-			Name:  qjob.DriverMySQL,
+		j.Driver = &procx.Driver{
+			Name:  procx.DriverMySQL,
 			Mysql: driver,
 		}
 	}
 	return nil
 }
 
-func initCassandraDriver(j *qjob.QJob) error {
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverCassandraDB {
+func initCassandraDriver(j *procx.ProcX) error {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverCassandraDB {
 		var hosts []string
 		if *flagCassandraHosts != "" {
 			s := strings.Split(*flagCassandraHosts, ",")
@@ -270,7 +270,7 @@ func initCassandraDriver(j *qjob.QJob) error {
 				fps = append(fps, v)
 			}
 		}
-		driver := &qjob.DriverCassandra{
+		driver := &procx.DriverCassandra{
 			Hosts:       hosts,
 			User:        *flagCassandraUser,
 			Password:    *flagCassandraPassword,
@@ -281,76 +281,76 @@ func initCassandraDriver(j *qjob.QJob) error {
 			driver.QueryReturnsKey = flagCassandraQueryKey
 		}
 		if *flagCassandraRetrieveQuery != "" {
-			rq := &qjob.SqlQuery{
+			rq := &procx.SqlQuery{
 				Query:  *flagCassandraRetrieveQuery,
 				Params: rps,
 			}
 			driver.RetrieveQuery = rq
 		}
 		if *flagCassandraClearQuery != "" {
-			cq := &qjob.SqlQuery{
+			cq := &procx.SqlQuery{
 				Query:  *flagCassandraClearQuery,
 				Params: cps,
 			}
 			driver.ClearQuery = cq
 		}
 		if *flagCassandraFailQuery != "" {
-			fq := &qjob.SqlQuery{
+			fq := &procx.SqlQuery{
 				Query:  *flagCassandraFailQuery,
 				Params: fps,
 			}
 			driver.FailureQuery = fq
 		}
 
-		j.Driver = &qjob.Driver{
-			Name:      qjob.DriverCassandraDB,
+		j.Driver = &procx.Driver{
+			Name:      procx.DriverCassandraDB,
 			Cassandra: driver,
 		}
 	}
 	return nil
 }
 
-func initDriver(j *qjob.QJob) (*qjob.QJob, error) {
+func initDriver(j *procx.ProcX) (*procx.ProcX, error) {
 	l := log.WithFields(log.Fields{
-		"app": "qjob",
+		"app": "procx",
 	})
 	l.Debug("starting")
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverAWSSQS {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverAWSSQS {
 		initAWSDriver(j)
 	}
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverCentauriNet {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverCentauriNet {
 		if err := initCentauriDriver(j); err != nil {
 			return nil, err
 		}
 	}
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverCassandraDB {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverCassandraDB {
 		if err := initCassandraDriver(j); err != nil {
 			return nil, err
 		}
 	}
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverRabbit {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverRabbit {
 		initRabbitDriver(j)
 	}
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverRedisList {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverRedisList {
 		initRedisDriver(j)
 	}
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverRedisSubscription {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverRedisSubscription {
 		initRedisDriver(j)
 	}
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverGCPPubSub {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverGCPPubSub {
 		initGCPDriver(j)
 	}
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverPostgres {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverPostgres {
 		if err := initPsqlDriver(j); err != nil {
 			return nil, err
 		}
 	}
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverMySQL {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverMySQL {
 		if err := initMysqlDriver(j); err != nil {
 			return nil, err
 		}
 	}
-	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverMongoDB {
+	if flagDriver != nil && procx.DriverName(*flagDriver) == procx.DriverMongoDB {
 		if err := initMongoDriver(j); err != nil {
 			return nil, err
 		}

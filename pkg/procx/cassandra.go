@@ -1,13 +1,13 @@
-package qjob
+package procx
 
 import (
 	"errors"
 
-	"github.com/robertlestak/qjob/internal/client"
+	"github.com/robertlestak/procx/internal/client"
 	log "github.com/sirupsen/logrus"
 )
 
-func (j *QJob) InitCassandra() error {
+func (j *ProcX) InitCassandra() error {
 	l := log.WithFields(log.Fields{
 		"action": "InitCassandra",
 		"driver": j.DriverName,
@@ -27,7 +27,7 @@ func (j *QJob) InitCassandra() error {
 	return nil
 }
 
-func (q *QJob) HandleFailureCassandra() error {
+func (q *ProcX) HandleFailureCassandra() error {
 	l := log.WithFields(log.Fields{
 		"action": "HandleFailureCassandra",
 		"driver": q.DriverName,
@@ -48,7 +48,7 @@ func (q *QJob) HandleFailureCassandra() error {
 	return nil
 }
 
-func (q *QJob) GetWorkCassandra() (*string, error) {
+func (q *ProcX) GetWorkCassandra() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "GetWorkCassandra",
 		"driver": q.DriverName,
@@ -78,7 +78,7 @@ func (q *QJob) GetWorkCassandra() (*string, error) {
 	return m, nil
 }
 
-func (q *QJob) ClearWorkCassandra() error {
+func (q *ProcX) ClearWorkCassandra() error {
 	l := log.WithFields(log.Fields{
 		"action": "ClearWorkCassandra",
 		"driver": q.DriverName,

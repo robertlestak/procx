@@ -1,13 +1,13 @@
-package qjob
+package procx
 
 import (
 	"errors"
 
-	"github.com/robertlestak/qjob/internal/client"
+	"github.com/robertlestak/procx/internal/client"
 	log "github.com/sirupsen/logrus"
 )
 
-func (j *QJob) InitMongo() error {
+func (j *ProcX) InitMongo() error {
 	l := log.WithFields(log.Fields{
 		"action": "InitMongo",
 		"driver": j.DriverName,
@@ -27,7 +27,7 @@ func (j *QJob) InitMongo() error {
 	return nil
 }
 
-func (q *QJob) HandleFailureMongo() error {
+func (q *ProcX) HandleFailureMongo() error {
 	l := log.WithFields(log.Fields{
 		"action": "HandleFailureMongo",
 		"driver": q.DriverName,
@@ -49,7 +49,7 @@ func (q *QJob) HandleFailureMongo() error {
 	return nil
 }
 
-func (q *QJob) GetWorkMongo() (*string, error) {
+func (q *ProcX) GetWorkMongo() (*string, error) {
 	l := log.WithFields(log.Fields{
 		"action": "InitMongo",
 		"driver": q.DriverName,
@@ -79,7 +79,7 @@ func (q *QJob) GetWorkMongo() (*string, error) {
 	return m, nil
 }
 
-func (q *QJob) ClearWorkMongo() error {
+func (q *ProcX) ClearWorkMongo() error {
 	l := log.WithFields(log.Fields{
 		"action": "ClearWorkMongo",
 		"driver": q.DriverName,
