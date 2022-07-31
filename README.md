@@ -40,13 +40,31 @@ qjob [flags] <process path>
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-sqs, gcp-pubsub, postgres, mysql, rabbitmq, redis-list, redis-pubsub, local)
+    	driver to use. (aws-sqs, gcp-pubsub, postgres, mongodb, mysql, rabbitmq, redis-list, redis-pubsub, local)
   -gcp-project-id string
     	GCP project ID
   -gcp-pubsub-subscription string
     	GCP Pub/Sub subscription name
   -hostenv
     	use host environment
+  -mongo-clear-query string
+    	MongoDB clear query
+  -mongo-collection string
+    	MongoDB collection
+  -mongo-database string
+    	MongoDB database
+  -mongo-fail-query string
+    	MongoDB fail query
+  -mongo-host string
+    	MongoDB host
+  -mongo-password string
+    	MongoDB password
+  -mongo-port string
+    	MongoDB port (default "27017")
+  -mongo-retrieve-query string
+    	MongoDB retrieve query
+  -mongo-user string
+    	MongoDB user
   -mysql-clear-params string
     	MySQL clear params
   -mysql-clear-query string
@@ -122,6 +140,15 @@ qjob [flags] <process path>
 - `QJOB_GCP_PUBSUB_SUBSCRIPTION`
 - `QJOB_DRIVER`
 - `QJOB_HOSTENV`
+- `QJOB_MONGODB_CLEAR_QUERY`
+- `QJOB_MONGODB_COLLECTION`
+- `QJOB_MONGODB_DATABASE`
+- `QJOB_MONGODB_FAIL_QUERY`
+- `QJOB_MONGODB_HOST`
+- `QJOB_MONGODB_PASSWORD`
+- `QJOB_MONGODB_PORT`
+- `QJOB_MONGODB_RETRIEVE_QUERY`
+- `QJOB_MONGODB_USER`
 - `QJOB_MYSQL_CLEAR_PARAMS`
 - `QJOB_MYSQL_CLEAR_QUERY`
 - `QJOB_MYSQL_DATABASE`
@@ -163,6 +190,7 @@ Currently, the following drivers are supported:
 - AWS SQS (`aws-sqs`)
 - GCP Pub/Sub (`gcp-pubsub`)
 - PostgreSQL (`postgres`)
+- MongoDB (`mongodb`)
 - MySQL (`mysql`)
 - RabbitMQ (`rabbitmq`)
 - Redis List (`redis-list`)
@@ -199,6 +227,26 @@ qjob \
     -gcp-pubsub-subscription my-subscription \
     -driver gcp-pubsub \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
+```
+
+### MongoDB
+
+The MongoDB driver will retrieve the next message from the specified collection, and pass it to the process. Upon successful completion of the process, it will run the specified mongo command. The Mongo ObjectID `_id` will be passed in for the placeholder `{{key}}`.
+
+```bash
+qjob \
+    -mongo-collection my-collection \
+    -mongo-database my-database \
+    -mongo-host localhost \
+    -mongo-port 27017 \
+    -mongo-user my-user \
+    -mongo-password my-password \
+    -mongo-retrieve-query '{ "status": "pending"}' \
+    -mongo-clear-query '{"delete": "my-collection", "deletes": [{"q": {"_id": {"$oid": "{{key}}"}}, "limit": 1}]' \
+    -mongo-fail-query '{"update":"my-collection","updates":[{"q":{"_id":{"$oid":"{{key}}"}},"u":{"$set": {"failed":true}}}]}' \
+    -driver mongodb \
+    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+```
 ```
 
 ### MySQL

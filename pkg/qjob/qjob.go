@@ -14,6 +14,7 @@ var (
 	DriverAWSSQS            DriverName = "aws-sqs"
 	DriverGCPPubSub         DriverName = "gcp-pubsub"
 	DriverPostgres          DriverName = "postgres"
+	DriverMongoDB           DriverName = "mongodb"
 	DriverMySQL             DriverName = "mysql"
 	DriverRabbit            DriverName = "rabbitmq"
 	DriverRedisSubscription DriverName = "redis-pubsub"
@@ -68,6 +69,19 @@ type DriverMysql struct {
 	Key             *string   `json:"key"`
 }
 
+type DriverMongo struct {
+	Host          string  `json:"host"`
+	Port          int     `json:"port"`
+	User          string  `json:"user"`
+	Password      string  `json:"password"`
+	DBName        string  `json:"dbName"`
+	Collection    string  `json:"collection"`
+	RetrieveQuery *string `json:"retrieveQuery"`
+	FailureQuery  *string `json:"failureQuery"`
+	ClearQuery    *string `json:"clearQuery"`
+	Key           *string `json:"key"`
+}
+
 type DriverRabbitMQ struct {
 	URL   string `json:"url"`
 	Queue string `json:"queue"`
@@ -85,6 +99,7 @@ type Driver struct {
 	AWS      *DriverAWS      `json:"aws"`
 	GCP      *DriverGCP      `json:"gcp"`
 	Psql     *DriverPsql     `json:"psql"`
+	Mongo    *DriverMongo    `json:"mongo"`
 	Mysql    *DriverMysql    `json:"mysql"`
 	RabbitMQ *DriverRabbitMQ `json:"rabbitmq"`
 	Redis    *DriverRedis    `json:"redis"`
@@ -123,6 +138,8 @@ func (j *QJob) InitDriver() error {
 		return j.InitGCPPubSub()
 	case DriverPostgres:
 		return j.InitPsql()
+	case DriverMongoDB:
+		return j.InitMongo()
 	case DriverMySQL:
 		return j.InitMysql()
 	case DriverRabbit:
@@ -151,6 +168,8 @@ func (j *QJob) GetWorkFromDriver() (*string, error) {
 		return j.getWorkGCPPubSub()
 	case DriverPostgres:
 		return j.getWorkPsql()
+	case DriverMongoDB:
+		return j.GetWorkMongo()
 	case DriverMySQL:
 		return j.GetWorkMysql()
 	case DriverRabbit:
@@ -178,6 +197,8 @@ func (j *QJob) ClearWorkFromDriver() error {
 		return j.clearWorkSQS()
 	case DriverPostgres:
 		return j.clearWorkPsql()
+	case DriverMongoDB:
+		return j.ClearWorkMongo()
 	case DriverMySQL:
 		return j.ClearWorkMysql()
 	case DriverRabbit:
@@ -208,6 +229,8 @@ func (j *QJob) HandleFailure() error {
 		return j.handleFailurePsql()
 	case DriverMySQL:
 		return j.HandleFailureMysql()
+	case DriverMongoDB:
+		return j.HandleFailureMongo()
 	}
 	return nil
 }

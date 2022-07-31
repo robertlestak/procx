@@ -13,7 +13,7 @@ import (
 
 var (
 	Version                 = "dev"
-	flagDriver              = flag.String("driver", "", "driver to use. (aws-sqs, gcp-pubsub, postgres, mysql, rabbitmq, redis-list, redis-pubsub, local)")
+	flagDriver              = flag.String("driver", "", "driver to use. (aws-sqs, gcp-pubsub, postgres, mongodb, mysql, rabbitmq, redis-list, redis-pubsub, local)")
 	flagHostEnv             = flag.Bool("hostenv", false, "use host environment")
 	flagAWSRegion           = flag.String("aws-region", "", "AWS region")
 	flagAWSLoadConfig       = flag.Bool("aws-load-config", false, "load AWS config from ~/.aws/config")
@@ -35,6 +35,15 @@ var (
 	flagPsqlClearParams     = flag.String("psql-clear-params", "", "PostgreSQL clear params")
 	flagPsqlFailQuery       = flag.String("psql-fail-query", "", "PostgreSQL fail query")
 	flagPsqlFailParams      = flag.String("psql-fail-params", "", "PostgreSQL fail params")
+	flagMongoHost           = flag.String("mongo-host", "", "MongoDB host")
+	flagMongoPort           = flag.String("mongo-port", "27017", "MongoDB port")
+	flagMongoUser           = flag.String("mongo-user", "", "MongoDB user")
+	flagMongoPassword       = flag.String("mongo-password", "", "MongoDB password")
+	flagMongoDatabase       = flag.String("mongo-database", "", "MongoDB database")
+	flagMongoCollection     = flag.String("mongo-collection", "", "MongoDB collection")
+	flagMongoRetrieveQuery  = flag.String("mongo-retrieve-query", "", "MongoDB retrieve query")
+	flagMongoClearQuery     = flag.String("mongo-clear-query", "", "MongoDB clear query")
+	flagMongoFailQuery      = flag.String("mongo-fail-query", "", "MongoDB fail query")
 	flagMysqlHost           = flag.String("mysql-host", "", "MySQL host")
 	flagMysqlPort           = flag.String("mysql-port", "3306", "MySQL port")
 	flagMysqlUser           = flag.String("mysql-user", "", "MySQL user")
@@ -113,6 +122,30 @@ func initGCPDriver(j *qjob.QJob) {
 			},
 		}
 	}
+}
+
+func initMongoDriver(j *qjob.QJob) error {
+	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverMongoDB {
+		pv, err := strconv.Atoi(*flagMongoPort)
+		if err != nil {
+			return err
+		}
+		j.Driver = &qjob.Driver{
+			Name: qjob.DriverMongoDB,
+			Mongo: &qjob.DriverMongo{
+				Host:          *flagMongoHost,
+				Port:          pv,
+				User:          *flagMongoUser,
+				Password:      *flagMongoPassword,
+				DBName:        *flagMongoDatabase,
+				Collection:    *flagMongoCollection,
+				RetrieveQuery: flagMongoRetrieveQuery,
+				ClearQuery:    flagMongoClearQuery,
+				FailureQuery:  flagMongoFailQuery,
+			},
+		}
+	}
+	return nil
 }
 
 func initPsqlDriver(j *qjob.QJob) error {
@@ -274,6 +307,11 @@ func initDriver(j *qjob.QJob) (*qjob.QJob, error) {
 	}
 	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverMySQL {
 		if err := initMysqlDriver(j); err != nil {
+			return nil, err
+		}
+	}
+	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverMongoDB {
+		if err := initMongoDriver(j); err != nil {
 			return nil, err
 		}
 	}

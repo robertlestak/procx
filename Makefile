@@ -1,4 +1,4 @@
-VERSION=v0.0.11
+VERSION=v0.0.12
 
 qjob: bin/qjob_darwin bin/qjob_windows bin/qjob_linux
 
