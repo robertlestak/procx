@@ -4,12 +4,15 @@ import "flag"
 
 var (
 	Version                 = "dev"
-	flagDriver              = flag.String("driver", "", "driver to use. (aws-sqs, gcp-pubsub, postgres, mongodb, mysql, rabbitmq, redis-list, redis-pubsub, local)")
+	flagDriver              = flag.String("driver", "", "driver to use. (aws-sqs, centauri, gcp-pubsub, postgres, mongodb, mysql, rabbitmq, redis-list, redis-pubsub, local)")
 	flagHostEnv             = flag.Bool("hostenv", false, "use host environment")
 	flagAWSRegion           = flag.String("aws-region", "", "AWS region")
 	flagAWSLoadConfig       = flag.Bool("aws-load-config", false, "load AWS config from ~/.aws/config")
 	flagSQSRoleARN          = flag.String("aws-sqs-role-arn", "", "AWS SQS role ARN")
 	flagSQSQueueURL         = flag.String("aws-sqs-queue-url", "", "AWS SQS queue URL")
+	flagCentauriPeerURL     = flag.String("centauri-peer-url", "", "Centauri peer URL")
+	flagCentauriChannel     = flag.String("centauri-channel", "default", "Centauri channel")
+	flagCentauriKey         = flag.String("centauri-key", "", "Centauri key")
 	flagGCPProjectID        = flag.String("gcp-project-id", "", "GCP project ID")
 	flagGCPSubscription     = flag.String("gcp-pubsub-subscription", "", "GCP Pub/Sub subscription name")
 	flagPassWorkAsArg       = flag.Bool("pass-work-as-arg", false, "pass work as an argument")

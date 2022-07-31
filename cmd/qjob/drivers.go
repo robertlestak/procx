@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
@@ -19,6 +20,24 @@ func initAWSDriver(j *qjob.QJob) {
 			},
 		}
 	}
+}
+
+func initCentauriDriver(j *qjob.QJob) error {
+	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverCentauriNet {
+		if flagCentauriKey == nil || (flagCentauriKey != nil && *flagCentauriKey == "") {
+			return errors.New("key required")
+		}
+		kd := []byte(*flagCentauriKey)
+		j.Driver = &qjob.Driver{
+			Name: qjob.DriverCentauriNet,
+			Centauri: &qjob.DriverCentauri{
+				PeerURL:    *flagCentauriPeerURL,
+				Channel:    flagCentauriChannel,
+				PrivateKey: kd,
+			},
+		}
+	}
+	return nil
 }
 
 func initRabbitDriver(j *qjob.QJob) {
@@ -223,13 +242,21 @@ func initDriver(j *qjob.QJob) (*qjob.QJob, error) {
 		"app": "qjob",
 	})
 	l.Debug("starting")
-	if flagSQSQueueURL != nil && *flagSQSQueueURL != "" {
+	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverAWSSQS {
 		initAWSDriver(j)
 	}
-	if flagRabbitMQURL != nil && *flagRabbitMQURL != "" {
+	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverCentauriNet {
+		if err := initCentauriDriver(j); err != nil {
+			return nil, err
+		}
+	}
+	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverRabbit {
 		initRabbitDriver(j)
 	}
-	if flagRedisHost != nil && *flagRedisHost != "" {
+	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverRedisList {
+		initRedisDriver(j)
+	}
+	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverRedisSubscription {
 		initRedisDriver(j)
 	}
 	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverGCPPubSub {

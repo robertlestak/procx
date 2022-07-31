@@ -58,6 +58,21 @@ func parseRabbitFlags() {
 	}
 }
 
+func parseCentauriFlags() {
+	if os.Getenv("QJOB_CENTAURI_PEER_URL") != "" {
+		r := os.Getenv("QJOB_CENTAURI_PEER_URL")
+		flagCentauriPeerURL = &r
+	}
+	if os.Getenv("QJOB_CENTAURI_CHANNEL") != "" {
+		r := os.Getenv("QJOB_CENTAURI_CHANNEL")
+		flagCentauriChannel = &r
+	}
+	if os.Getenv("QJOB_CENTAURI_KEY") != "" {
+		r := os.Getenv("QJOB_CENTAURI_KEY")
+		flagCentauriKey = &r
+	}
+}
+
 func parseRedisFlags() {
 	if os.Getenv("QJOB_REDIS_HOST") != "" {
 		r := os.Getenv("QJOB_REDIS_HOST")
@@ -244,6 +259,7 @@ func parseMysqlFlags() {
 func parseEnvToFlags() {
 	parseBaseFlags()
 	parseAWSFlags()
+	parseCentauriFlags()
 	parseRabbitFlags()
 	parseRedisFlags()
 	parseGCPFlags()

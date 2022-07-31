@@ -12,6 +12,7 @@ import (
 
 var (
 	DriverAWSSQS            DriverName = "aws-sqs"
+	DriverCentauriNet       DriverName = "centauri"
 	DriverGCPPubSub         DriverName = "gcp-pubsub"
 	DriverPostgres          DriverName = "postgres"
 	DriverMongoDB           DriverName = "mongodb"
@@ -40,6 +41,13 @@ type DriverGCP struct {
 type SqlQuery struct {
 	Query  string `json:"query"`
 	Params []any  `json:"params"`
+}
+
+type DriverCentauri struct {
+	PrivateKey []byte  `json:"privateKey"`
+	PeerURL    string  `json:"peerUrl"`
+	Channel    *string `json:"channel"`
+	Key        *string `json:"key"`
 }
 
 type DriverPsql struct {
@@ -97,6 +105,7 @@ type DriverRedis struct {
 type Driver struct {
 	Name     DriverName      `json:"name"`
 	AWS      *DriverAWS      `json:"aws"`
+	Centauri *DriverCentauri `json:"centauri"`
 	GCP      *DriverGCP      `json:"gcp"`
 	Psql     *DriverPsql     `json:"psql"`
 	Mongo    *DriverMongo    `json:"mongo"`
@@ -134,6 +143,8 @@ func (j *QJob) InitDriver() error {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.InitAWSSQS()
+	case DriverCentauriNet:
+		return j.InitCentauri()
 	case DriverGCPPubSub:
 		return j.InitGCPPubSub()
 	case DriverPostgres:
@@ -164,6 +175,8 @@ func (j *QJob) GetWorkFromDriver() (*string, error) {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.getWorkSQS()
+	case DriverCentauriNet:
+		return j.getWorkCentauri()
 	case DriverGCPPubSub:
 		return j.getWorkGCPPubSub()
 	case DriverPostgres:
@@ -195,6 +208,8 @@ func (j *QJob) ClearWorkFromDriver() error {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.clearWorkSQS()
+	case DriverCentauriNet:
+		return j.clearWorkCentauri()
 	case DriverPostgres:
 		return j.clearWorkPsql()
 	case DriverMongoDB:
@@ -223,6 +238,8 @@ func (j *QJob) HandleFailure() error {
 	})
 	l.Debug("HandleFailure")
 	switch j.DriverName {
+	case DriverCentauriNet:
+		return j.handleFailureCentauri()
 	case DriverRedisList:
 		return j.handleFailureRedisList()
 	case DriverPostgres:

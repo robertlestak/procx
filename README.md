@@ -17,6 +17,7 @@ By default, qjob will connect to the data source, consume a single message, and 
 Currently, the following drivers are supported:
 
 - AWS SQS (`aws-sqs`)
+- Centauri (`centauri`)
 - GCP Pub/Sub (`gcp-pubsub`)
 - PostgreSQL (`postgres`)
 - MongoDB (`mongodb`)
@@ -55,10 +56,16 @@ qjob [flags] <process path>
     	AWS SQS queue URL
   -aws-sqs-role-arn string
     	AWS SQS role ARN
+  -centauri-channel string
+    	Centauri channel (default "default")
+  -centauri-key string
+    	Centauri key
+  -centauri-peer-url string
+    	Centauri peer URL
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-sqs, gcp-pubsub, postgres, mongodb, mysql, rabbitmq, redis-list, redis-pubsub, local)
+    	driver to use. (aws-sqs, centauri, gcp-pubsub, postgres, mongodb, mysql, rabbitmq, redis-list, redis-pubsub, local)
   -gcp-project-id string
     	GCP project ID
   -gcp-pubsub-subscription string
@@ -154,6 +161,9 @@ qjob [flags] <process path>
 - `QJOB_AWS_REGION`
 - `QJOB_AWS_SQS_QUEUE_URL`
 - `QJOB_AWS_SQS_ROLE_ARN`
+- `QJOB_CENTAURI_CHANNEL`
+- `QJOB_CENTAURI_KEY`
+- `QJOB_CENTAURI_PEER_URL`
 - `QJOB_GCP_PROJECT_ID`
 - `QJOB_GCP_PUBSUB_SUBSCRIPTION`
 - `QJOB_DRIVER`
@@ -217,6 +227,19 @@ qjob \
     -aws-sqs-role-arn arn:aws:iam::123456789012:role/my-role \
     -aws-region us-east-1 \
     -driver aws-sqs \
+    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+```
+
+### Centauri
+
+The `centauri` driver integrates with a [Centauri](https://centauri.sh) network to retrieve the next message from the specified channel, and pass it to the process. Upon successful completion of the process, it will delete the message from the network.
+
+```bash
+qjob \
+    -centauri-channel my-channel \
+    -centauri-key "$(</path/to/private.key)" \
+    -centauri-peer-url https://api.test-peer1.centauri.sh \
+    -driver centauri \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
 ```
 
