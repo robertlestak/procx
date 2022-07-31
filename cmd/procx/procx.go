@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -78,9 +77,11 @@ func main() {
 		"app": AppName,
 	})
 	l.Debug("start")
-	if os.Args[1] == "--version" || os.Args[1] == "-v" {
-		printVersion()
-		os.Exit(0)
+	if len(os.Args) > 1 {
+		if os.Args[1] == "--version" || os.Args[1] == "-v" {
+			printVersion()
+			os.Exit(0)
+		}
 	}
 	flags.FlagSet.Parse(os.Args[1:])
 	if err := LoadEnv(EnvKeyPrefix); err != nil {
@@ -91,7 +92,7 @@ func main() {
 	args := flags.FlagSet.Args()
 	if len(args) == 0 {
 		printVersion()
-		flag.PrintDefaults()
+		flags.FlagSet.PrintDefaults()
 		os.Exit(1)
 	}
 	if *flags.Daemon {
