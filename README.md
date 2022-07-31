@@ -12,6 +12,24 @@ By default, the subprocess spawned by qjob will not have access to the host envi
 
 By default, qjob will connect to the data source, consume a single message, and then exit when the spawned process exits. If the `-daemon` flag is set, qjob will connect to the data source and consume messages until the process is killed, or until a job fails.
 
+## Drivers
+
+Currently, the following drivers are supported:
+
+- AWS SQS (`aws-sqs`)
+- GCP Pub/Sub (`gcp-pubsub`)
+- PostgreSQL (`postgres`)
+- MongoDB (`mongodb`)
+- MySQL (`mysql`)
+- RabbitMQ (`rabbitmq`)
+- Redis List (`redis-list`)
+- Redis Pub/Sub (`redis-pubsub`)
+- Local (`local`)
+
+Plans to add more drivers in the future, and PRs are welcome.
+
+See [Driver Examples](#driver-examples) for more information.
+
 ## Install
 
 ```bash
@@ -183,21 +201,7 @@ qjob [flags] <process path>
 - `QJOB_REDIS_KEY`
 - `QJOB_DAEMON`
 
-## Drivers
-
-Currently, the following drivers are supported:
-
-- AWS SQS (`aws-sqs`)
-- GCP Pub/Sub (`gcp-pubsub`)
-- PostgreSQL (`postgres`)
-- MongoDB (`mongodb`)
-- MySQL (`mysql`)
-- RabbitMQ (`rabbitmq`)
-- Redis List (`redis-list`)
-- Redis Pub/Sub (`redis-pubsub`)
-- Local (`local`)
-
-Plans to add more drivers in the future, and PRs are welcome.
+## Driver Examples
 
 ### AWS SQS
 
@@ -246,7 +250,6 @@ qjob \
     -mongo-fail-query '{"update":"my-collection","updates":[{"q":{"_id":{"$oid":"{{key}}"}},"u":{"$set": {"failed":true}}}]}' \
     -driver mongodb \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
-```
 ```
 
 ### MySQL
