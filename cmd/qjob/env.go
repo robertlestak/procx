@@ -58,6 +58,58 @@ func parseRabbitFlags() {
 	}
 }
 
+func parseCassandraFlags() {
+	if os.Getenv("QJOB_CASSANDRA_HOSTS") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_HOSTS")
+		flagCassandraHosts = &r
+	}
+	if os.Getenv("QJOB_CASSANDRA_KEYSPACE") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_KEYSPACE")
+		flagCassandraKeyspace = &r
+	}
+	if os.Getenv("QJOB_CASSANDRA_USER") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_USER")
+		flagCassandraUser = &r
+	}
+	if os.Getenv("QJOB_CASSANDRA_PASSWORD") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_PASSWORD")
+		flagCassandraPassword = &r
+	}
+	if os.Getenv("QJOB_CASSANDRA_CONSISTENCY") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_CONSISTENCY")
+		flagCassandraConsistency = &r
+	}
+	if os.Getenv("QJOB_CASSANDRA_RETRIEVE_QUERY") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_RETRIEVE_QUERY")
+		flagCassandraRetrieveQuery = &r
+	}
+	if os.Getenv("QJOB_CASSANDRA_RETRIEVE_PARAMS") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_RETRIEVE_PARAMS")
+		flagCassandraRetrieveParams = &r
+	}
+	if os.Getenv("QJOB_CASSANDRA_CLEAR_QUERY") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_CLEAR_QUERY")
+		flagCassandraClearQuery = &r
+	}
+	if os.Getenv("QJOB_CASSANDRA_CLEAR_PARAMS") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_CLEAR_PARAMS")
+		flagCassandraClearParams = &r
+	}
+	if os.Getenv("QJOB_CASSANDRA_FAIL_QUERY") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_FAIL_QUERY")
+		flagCassandraFailQuery = &r
+	}
+	if os.Getenv("QJOB_CASSANDRA_FAIL_PARAMS") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_FAIL_PARAMS")
+		flagCassandraFailParams = &r
+	}
+	if os.Getenv("QJOB_CASSANDRA_QUERY_KEY") != "" {
+		r := os.Getenv("QJOB_CASSANDRA_QUERY_KEY")
+		t := r == "true"
+		flagCassandraQueryKey = &t
+	}
+}
+
 func parseCentauriFlags() {
 	if os.Getenv("QJOB_CENTAURI_PEER_URL") != "" {
 		r := os.Getenv("QJOB_CENTAURI_PEER_URL")
@@ -259,6 +311,7 @@ func parseMysqlFlags() {
 func parseEnvToFlags() {
 	parseBaseFlags()
 	parseAWSFlags()
+	parseCassandraFlags()
 	parseCentauriFlags()
 	parseRabbitFlags()
 	parseRedisFlags()

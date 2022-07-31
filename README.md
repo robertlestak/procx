@@ -17,6 +17,7 @@ By default, qjob will connect to the data source, consume a single message, and 
 Currently, the following drivers are supported:
 
 - AWS SQS (`aws-sqs`)
+- Cassandra (`cassandra`)
 - Centauri (`centauri`)
 - GCP Pub/Sub (`gcp-pubsub`)
 - PostgreSQL (`postgres`)
@@ -56,6 +57,30 @@ qjob [flags] <process path>
     	AWS SQS queue URL
   -aws-sqs-role-arn string
     	AWS SQS role ARN
+  -cassandra-clear-params string
+    	Cassandra clear params
+  -cassandra-clear-query string
+    	Cassandra clear query
+  -cassandra-consistency string
+    	Cassandra consistency (default "QUORUM")
+  -cassandra-fail-params string
+    	Cassandra fail params
+  -cassandra-fail-query string
+    	Cassandra fail query
+  -cassandra-hosts string
+    	Cassandra hosts
+  -cassandra-keyspace string
+    	Cassandra keyspace
+  -cassandra-password string
+    	Cassandra password
+  -cassandra-query-key
+    	Cassandra query returns key as first column and value as second column
+  -cassandra-retrieve-params string
+    	Cassandra retrieve params
+  -cassandra-retrieve-query string
+    	Cassandra retrieve query
+  -cassandra-user string
+    	Cassandra user
   -centauri-channel string
     	Centauri channel (default "default")
   -centauri-key string
@@ -65,7 +90,7 @@ qjob [flags] <process path>
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-sqs, centauri, gcp-pubsub, postgres, mongodb, mysql, rabbitmq, redis-list, redis-pubsub, local)
+    	driver to use. (aws-sqs, cassandra, centauri, gcp-pubsub, postgres, mongodb, mysql, rabbitmq, redis-list, redis-pubsub, local)
   -gcp-project-id string
     	GCP project ID
   -gcp-pubsub-subscription string
@@ -161,6 +186,18 @@ qjob [flags] <process path>
 - `QJOB_AWS_REGION`
 - `QJOB_AWS_SQS_QUEUE_URL`
 - `QJOB_AWS_SQS_ROLE_ARN`
+- `QJOB_CASSANDRA_CLEAR_PARAMS`
+- `QJOB_CASSANDRA_CLEAR_QUERY`
+- `QJOB_CASSANDRA_CONSISTENCY`
+- `QJOB_CASSANDRA_FAIL_PARAMS`
+- `QJOB_CASSANDRA_FAIL_QUERY`
+- `QJOB_CASSANDRA_HOSTS`
+- `QJOB_CASSANDRA_KEYSPACE`
+- `QJOB_CASSANDRA_PASSWORD`
+- `QJOB_CASSANDRA_QUERY_KEY`
+- `QJOB_CASSANDRA_RETRIEVE_PARAMS`
+- `QJOB_CASSANDRA_RETRIEVE_QUERY`
+- `QJOB_CASSANDRA_USER`
 - `QJOB_CENTAURI_CHANNEL`
 - `QJOB_CENTAURI_KEY`
 - `QJOB_CENTAURI_PEER_URL`
@@ -227,6 +264,26 @@ qjob \
     -aws-sqs-role-arn arn:aws:iam::123456789012:role/my-role \
     -aws-region us-east-1 \
     -driver aws-sqs \
+    bash -c 'echo the payload is: $QJOB_PAYLOAD'
+```
+
+### Cassandra
+
+The Cassandra driver will retrieve the next message from the specified keyspace table, and pass it to the process. Upon successful completion of the process, it will execute the specified query to update / remove the work from the table.
+
+```bash
+qjob \
+    -cassandra-keyspace mykeyspace \
+    -cassandra-table mytable \
+    -cassandra-consistency QUORUM \
+    -cassandra-clear-query "DELETE FROM mykeyspace.mytable WHERE id = ?" \
+    -cassandra-clear-params "{{key}}" \
+    -cassandra-hosts "localhost:9042,another:9042" \
+    -cassandra-fail-query "UPDATE mykeyspace.mytable SET status = 'failed' WHERE id = ?" \
+    -cassandra-fail-params "{{key}}" \
+    -cassandra-query-key \
+    -cassandra-retrieve-query "SELECT id, work FROM mykeyspace.mytable LIMIT 1" \
+    -driver cassandra \
     bash -c 'echo the payload is: $QJOB_PAYLOAD'
 ```
 

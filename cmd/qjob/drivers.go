@@ -237,6 +237,79 @@ func initMysqlDriver(j *qjob.QJob) error {
 	return nil
 }
 
+func initCassandraDriver(j *qjob.QJob) error {
+	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverCassandraDB {
+		var hosts []string
+		if *flagCassandraHosts != "" {
+			s := strings.Split(*flagCassandraHosts, ",")
+			for _, v := range s {
+				v = strings.TrimSpace(v)
+				if v != "" {
+					hosts = append(hosts, v)
+				}
+			}
+		}
+		var rps []any
+		var cps []any
+		var fps []any
+		if *flagCassandraRetrieveParams != "" {
+			s := strings.Split(*flagCassandraRetrieveParams, ",")
+			for _, v := range s {
+				rps = append(rps, v)
+			}
+		}
+		if *flagCassandraClearParams != "" {
+			s := strings.Split(*flagCassandraClearParams, ",")
+			for _, v := range s {
+				cps = append(cps, v)
+			}
+		}
+		if *flagCassandraFailParams != "" {
+			s := strings.Split(*flagCassandraFailParams, ",")
+			for _, v := range s {
+				fps = append(fps, v)
+			}
+		}
+		driver := &qjob.DriverCassandra{
+			Hosts:       hosts,
+			User:        *flagCassandraUser,
+			Password:    *flagCassandraPassword,
+			Keyspace:    *flagCassandraKeyspace,
+			Consistency: *flagCassandraConsistency,
+		}
+		if *flagCassandraQueryKey {
+			driver.QueryReturnsKey = flagCassandraQueryKey
+		}
+		if *flagCassandraRetrieveQuery != "" {
+			rq := &qjob.SqlQuery{
+				Query:  *flagCassandraRetrieveQuery,
+				Params: rps,
+			}
+			driver.RetrieveQuery = rq
+		}
+		if *flagCassandraClearQuery != "" {
+			cq := &qjob.SqlQuery{
+				Query:  *flagCassandraClearQuery,
+				Params: cps,
+			}
+			driver.ClearQuery = cq
+		}
+		if *flagCassandraFailQuery != "" {
+			fq := &qjob.SqlQuery{
+				Query:  *flagCassandraFailQuery,
+				Params: fps,
+			}
+			driver.FailureQuery = fq
+		}
+
+		j.Driver = &qjob.Driver{
+			Name:      qjob.DriverCassandraDB,
+			Cassandra: driver,
+		}
+	}
+	return nil
+}
+
 func initDriver(j *qjob.QJob) (*qjob.QJob, error) {
 	l := log.WithFields(log.Fields{
 		"app": "qjob",
@@ -247,6 +320,11 @@ func initDriver(j *qjob.QJob) (*qjob.QJob, error) {
 	}
 	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverCentauriNet {
 		if err := initCentauriDriver(j); err != nil {
+			return nil, err
+		}
+	}
+	if flagDriver != nil && qjob.DriverName(*flagDriver) == qjob.DriverCassandraDB {
+		if err := initCassandraDriver(j); err != nil {
 			return nil, err
 		}
 	}

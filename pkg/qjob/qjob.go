@@ -12,6 +12,7 @@ import (
 
 var (
 	DriverAWSSQS            DriverName = "aws-sqs"
+	DriverCassandraDB       DriverName = "cassandra"
 	DriverCentauriNet       DriverName = "centauri"
 	DriverGCPPubSub         DriverName = "gcp-pubsub"
 	DriverPostgres          DriverName = "postgres"
@@ -48,6 +49,19 @@ type DriverCentauri struct {
 	PeerURL    string  `json:"peerUrl"`
 	Channel    *string `json:"channel"`
 	Key        *string `json:"key"`
+}
+
+type DriverCassandra struct {
+	Hosts           []string  `json:"hosts"`
+	User            string    `json:"user"`
+	Password        string    `json:"password"`
+	Keyspace        string    `json:"keyspace"`
+	Consistency     string    `json:"consistency"`
+	QueryReturnsKey *bool     `json:"queryReturnsKey"`
+	RetrieveQuery   *SqlQuery `json:"retrieveQuery"`
+	FailureQuery    *SqlQuery `json:"failureQuery"`
+	ClearQuery      *SqlQuery `json:"clearQuery"`
+	Key             *string   `json:"key"`
 }
 
 type DriverPsql struct {
@@ -103,15 +117,16 @@ type DriverRedis struct {
 }
 
 type Driver struct {
-	Name     DriverName      `json:"name"`
-	AWS      *DriverAWS      `json:"aws"`
-	Centauri *DriverCentauri `json:"centauri"`
-	GCP      *DriverGCP      `json:"gcp"`
-	Psql     *DriverPsql     `json:"psql"`
-	Mongo    *DriverMongo    `json:"mongo"`
-	Mysql    *DriverMysql    `json:"mysql"`
-	RabbitMQ *DriverRabbitMQ `json:"rabbitmq"`
-	Redis    *DriverRedis    `json:"redis"`
+	Name      DriverName       `json:"name"`
+	AWS       *DriverAWS       `json:"aws"`
+	Cassandra *DriverCassandra `json:"cassandra"`
+	Centauri  *DriverCentauri  `json:"centauri"`
+	GCP       *DriverGCP       `json:"gcp"`
+	Psql      *DriverPsql      `json:"psql"`
+	Mongo     *DriverMongo     `json:"mongo"`
+	Mysql     *DriverMysql     `json:"mysql"`
+	RabbitMQ  *DriverRabbitMQ  `json:"rabbitmq"`
+	Redis     *DriverRedis     `json:"redis"`
 }
 
 type QJob struct {
@@ -143,6 +158,8 @@ func (j *QJob) InitDriver() error {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.InitAWSSQS()
+	case DriverCassandraDB:
+		return j.InitCassandra()
 	case DriverCentauriNet:
 		return j.InitCentauri()
 	case DriverGCPPubSub:
@@ -175,6 +192,8 @@ func (j *QJob) GetWorkFromDriver() (*string, error) {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.getWorkSQS()
+	case DriverCassandraDB:
+		return j.GetWorkCassandra()
 	case DriverCentauriNet:
 		return j.getWorkCentauri()
 	case DriverGCPPubSub:
@@ -208,6 +227,8 @@ func (j *QJob) ClearWorkFromDriver() error {
 	switch j.DriverName {
 	case DriverAWSSQS:
 		return j.clearWorkSQS()
+	case DriverCassandraDB:
+		return j.ClearWorkCassandra()
 	case DriverCentauriNet:
 		return j.clearWorkCentauri()
 	case DriverPostgres:
@@ -238,6 +259,8 @@ func (j *QJob) HandleFailure() error {
 	})
 	l.Debug("HandleFailure")
 	switch j.DriverName {
+	case DriverCassandraDB:
+		return j.HandleFailureCassandra()
 	case DriverCentauriNet:
 		return j.handleFailureCentauri()
 	case DriverRedisList:
