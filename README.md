@@ -211,7 +211,7 @@ procx [flags] <process path>
 
 - `PROCX_AWS_REGION`
 - `PROCX_AWS_ROLE_ARN`
-- `AWS_DYNAMO_DATA_PATH`
+- `PROCX_AWS_DYNAMO_DATA_PATH`
 - `PROCX_AWS_DYNAMO_TABLE`
 - `PROCX_AWS_DYNAMO_KEY_PATH`
 - `PROCX_AWS_DYNAMO_RETRIEVE_QUERY`
@@ -324,7 +324,6 @@ The Cassandra driver will retrieve the next message from the specified keyspace 
 ```bash
 procx \
     -cassandra-keyspace mykeyspace \
-    -cassandra-table mytable \
     -cassandra-consistency QUORUM \
     -cassandra-clear-query "DELETE FROM mykeyspace.mytable WHERE id = ?" \
     -cassandra-clear-params "{{key}}" \
