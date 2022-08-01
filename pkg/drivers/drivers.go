@@ -3,16 +3,16 @@ package drivers
 import (
 	"errors"
 
-	"github.com/robertlestak/procx/internal/drivers/aws"
-	"github.com/robertlestak/procx/internal/drivers/cassandra"
-	"github.com/robertlestak/procx/internal/drivers/centauri"
-	"github.com/robertlestak/procx/internal/drivers/gcp"
-	"github.com/robertlestak/procx/internal/drivers/local"
-	"github.com/robertlestak/procx/internal/drivers/mongo"
-	"github.com/robertlestak/procx/internal/drivers/mysql"
-	"github.com/robertlestak/procx/internal/drivers/postgres"
-	"github.com/robertlestak/procx/internal/drivers/rabbitmq"
-	"github.com/robertlestak/procx/internal/drivers/redis"
+	"github.com/robertlestak/procx/drivers/aws"
+	"github.com/robertlestak/procx/drivers/cassandra"
+	"github.com/robertlestak/procx/drivers/centauri"
+	"github.com/robertlestak/procx/drivers/gcp"
+	"github.com/robertlestak/procx/drivers/local"
+	"github.com/robertlestak/procx/drivers/mongo"
+	"github.com/robertlestak/procx/drivers/mysql"
+	"github.com/robertlestak/procx/drivers/postgres"
+	"github.com/robertlestak/procx/drivers/rabbitmq"
+	"github.com/robertlestak/procx/drivers/redis"
 )
 
 // DriverName is the unique name of a driver.

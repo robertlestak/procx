@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	_ "github.com/lib/pq"
-	"github.com/robertlestak/procx/internal/flags"
+	"github.com/robertlestak/procx/pkg/flags"
 	"github.com/robertlestak/procx/pkg/schema"
 
 	log "github.com/sirupsen/logrus"

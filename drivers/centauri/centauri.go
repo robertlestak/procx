@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/robertlestak/centauri/pkg/agent"
-	"github.com/robertlestak/procx/internal/flags"
+	"github.com/robertlestak/procx/pkg/flags"
 	log "github.com/sirupsen/logrus"
 )
 

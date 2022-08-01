@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/robertlestak/procx/internal/flags"
+	"github.com/robertlestak/procx/pkg/flags"
 	"github.com/robertlestak/procx/pkg/schema"
 	log "github.com/sirupsen/logrus"
 )

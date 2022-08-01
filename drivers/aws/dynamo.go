@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/google/uuid"
-	"github.com/robertlestak/procx/internal/flags"
+	"github.com/robertlestak/procx/pkg/flags"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )

@@ -4,7 +4,7 @@ import (
 	"os"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/robertlestak/procx/internal/flags"
+	"github.com/robertlestak/procx/pkg/flags"
 	log "github.com/sirupsen/logrus"
 )
 

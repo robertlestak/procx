@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/robertlestak/procx/internal/flags"
 	"github.com/robertlestak/procx/pkg/drivers"
+	"github.com/robertlestak/procx/pkg/flags"
 	"github.com/robertlestak/procx/pkg/procx"
 	log "github.com/sirupsen/logrus"
 )

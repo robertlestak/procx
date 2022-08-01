@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/robertlestak/procx/internal/flags"
+	"github.com/robertlestak/procx/pkg/flags"
 	log "github.com/sirupsen/logrus"
 )
 
