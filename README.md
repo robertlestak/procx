@@ -307,7 +307,7 @@ If running on a developer workstation, you will most likely want to pass your `~
 ```bash
 procx \
     -aws-sqs-queue-url https://sqs.us-east-1.amazonaws.com/123456789012/my-queue \
-    -aws-sqs-role-arn arn:aws:iam::123456789012:role/my-role \
+    -aws-role-arn arn:aws:iam::123456789012:role/my-role \
     -aws-region us-east-1 \
     -driver aws-sqs \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
