@@ -29,6 +29,11 @@ func printVersion() {
 	fmt.Printf(AppName+" version %s\n", Version)
 }
 
+func printUsage() {
+	fmt.Printf("Usage: %s [options] [process]\n", AppName)
+	flags.FlagSet.PrintDefaults()
+}
+
 func LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"DRIVER") != "" {
 		d := os.Getenv(prefix + "DRIVER")
@@ -97,8 +102,7 @@ func main() {
 	l.Debug("parsed flags")
 	args := flags.FlagSet.Args()
 	if len(args) == 0 {
-		printVersion()
-		flags.FlagSet.PrintDefaults()
+		printUsage()
 		os.Exit(1)
 	}
 	j := &procx.ProcX{
