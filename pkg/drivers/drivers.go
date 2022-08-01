@@ -20,6 +20,7 @@ type DriverName string
 
 var (
 	DriverAWSSQS            DriverName = "aws-sqs"
+	DriverAWSDynamoDB       DriverName = "aws-dynamo"
 	DriverCassandraDB       DriverName = "cassandra"
 	DriverCentauriNet       DriverName = "centauri"
 	DriverGCPPubSub         DriverName = "gcp-pubsub"
@@ -38,6 +39,8 @@ func GetDriver(name DriverName) Driver {
 	switch name {
 	case DriverAWSSQS:
 		return &aws.SQS{}
+	case DriverAWSDynamoDB:
+		return &aws.Dynamo{}
 	case DriverCassandraDB:
 		return &cassandra.Cassandra{}
 	case DriverCentauriNet:

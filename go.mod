@@ -13,6 +13,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.4.0
 	github.com/robertlestak/centauri v0.0.2
 	github.com/sirupsen/logrus v1.9.0
+	github.com/tidwall/gjson v1.14.1
 	go.mongodb.org/mongo-driver v1.10.0
 )
 
@@ -44,6 +45,8 @@ require (
 	github.com/onsi/gomega v1.20.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect

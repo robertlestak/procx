@@ -24,24 +24,22 @@ func (d *SQS) LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"AWS_REGION") != "" {
 		d.Region = os.Getenv(prefix + "AWS_REGION")
 	}
-	if os.Getenv(prefix+"AWS_SQS_ROLE_ARN") != "" {
-		d.RoleARN = os.Getenv(prefix + "AWS_SQS_ROLE_ARN")
+	if os.Getenv(prefix+"AWS_ROLE_ARN") != "" {
+		d.RoleARN = os.Getenv(prefix + "AWS_ROLE_ARN")
 	}
 	if os.Getenv(prefix+"AWS_SQS_QUEUE_URL") != "" {
 		d.Queue = os.Getenv(prefix + "AWS_SQS_QUEUE_URL")
 	}
-	if os.Getenv(prefix+"AWS_LOAD_CONFIG") != "" || os.Getenv("SDK_LOAD_CONFIG") != "" {
+	if os.Getenv(prefix+"AWS_LOAD_CONFIG") != "" || os.Getenv("AWS_SDK_LOAD_CONFIG") != "" {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	}
 	return nil
 }
 
 func (d *SQS) LoadFlags() error {
-	if flags.SQSQueueURL != nil && *flags.SQSQueueURL != "" {
-		d.Queue = *flags.SQSQueueURL
-		d.Region = *flags.AWSRegion
-		d.RoleARN = *flags.SQSRoleARN
-	}
+	d.Queue = *flags.SQSQueueURL
+	d.Region = *flags.AWSRegion
+	d.RoleARN = *flags.AWSRoleARN
 	if flags.AWSLoadConfig != nil && *flags.AWSLoadConfig {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	}

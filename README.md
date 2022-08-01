@@ -16,6 +16,7 @@ By default, procx will connect to the data source, consume a single message, and
 
 Currently, the following drivers are supported:
 
+- AWS DynamoDB (`aws-dynamo`)
 - AWS SQS (`aws-sqs`)
 - Cassandra (`cassandra`)
 - Centauri (`centauri`)
@@ -62,14 +63,24 @@ While building for a specific driver may seem contrary to the ethos of procx, th
 
 ```bash
 procx [flags] <process path>
+  -aws-dynamo-clear-query string
+    	AWS DynamoDB clear query
+  -aws-dynamo-fail-query string
+    	AWS DynamoDB fail query
+  -aws-dynamo-key-path string
+    	AWS DynamoDB query key JSON path
+  -aws-dynamo-retrieve-query string
+    	AWS DynamoDB retrieve query
+  -aws-dynamo-table string
+    	AWS DynamoDB table name
   -aws-load-config
     	load AWS config from ~/.aws/config
   -aws-region string
     	AWS region
+  -aws-role-arn string
+    	AWS role ARN
   -aws-sqs-queue-url string
     	AWS SQS queue URL
-  -aws-sqs-role-arn string
-    	AWS SQS role ARN
   -cassandra-clear-params string
     	Cassandra clear params
   -cassandra-clear-query string
@@ -103,7 +114,7 @@ procx [flags] <process path>
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-sqs, cassandra, centauri, gcp-pubsub, postgres, mongodb, mysql, rabbitmq, redis-list, redis-pubsub, local)
+    	driver to use. (aws-sqs, aws-dynamo, cassandra, centauri, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
   -gcp-project-id string
     	GCP project ID
   -gcp-pubsub-subscription string
@@ -197,8 +208,13 @@ procx [flags] <process path>
 ### Environment Variables
 
 - `PROCX_AWS_REGION`
+- `PROCX_AWS_ROLE_ARN`
+- `PROCX_AWS_DYNAMO_TABLE`
+- `PROCX_AWS_DYNAMO_KEY_PATH`
+- `PROCX_AWS_DYNAMO_RETRIEVE_QUERY`
+- `PROCX_AWS_DYNAMO_CLEAR_QUERY`
+- `PROCX_AWS_DYNAMO_FAIL_QUERY`
 - `PROCX_AWS_SQS_QUEUE_URL`
-- `PROCX_AWS_SQS_ROLE_ARN`
 - `PROCX_CASSANDRA_CLEAR_PARAMS`
 - `PROCX_CASSANDRA_CLEAR_QUERY`
 - `PROCX_CASSANDRA_CONSISTENCY`
@@ -262,6 +278,23 @@ procx [flags] <process path>
 - `PROCX_DAEMON`
 
 ## Driver Examples
+
+### AWS DynamoDB
+
+The AWS DynamoDB driver will execute the provided PartiQL query and return the first result. An optional JSON path can be passed in the `-aws-dynamo-key-path` flag, if this is provided it will be used to extract the value from the returned data, and this will replace `{{key}}` in subsequent clear and fail handling queries.
+
+```bash
+procx \
+    -driver aws-dynamo \
+    -aws-dynamo-table my-table \
+    -aws-dynamo-key-path 'id.S' \
+    -aws-dynamo-retrieve-query "SELECT id,job,status FROM my-table WHERE status = 'pending'" \
+    -aws-dynamo-clear-query "UPDATE my-table SET status='complete' WHERE id = '{{key}}'" \
+    -aws-dynamo-fail-query "UPDATE my-table SET status='failed' WHERE id = '{{key}}'" \
+    -aws-region us-east-1 \
+    -aws-role-arn arn:aws:iam::123456789012:role/my-role \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
 
 ### AWS SQS
 
@@ -479,7 +512,7 @@ docker run --rm -it \
     -v ~/.aws:/root/.aws \
     -e PROCX_AWS_REGION=us-east-1 \
     -e PROCX_AWS_SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/123456789012/my-queue \
-    -e PROCX_AWS_SQS_ROLE_ARN=arn:aws:iam::123456789012:role/my-role \
+    -e PROCX_AWS_ROLE_ARN=arn:aws:iam::123456789012:role/my-role \
     -e PROCX_DRIVER=aws-sqs \
     -e AWS_SDK_LOAD_CONFIG=1 \
     procx
