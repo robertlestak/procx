@@ -65,6 +65,8 @@ While building for a specific driver may seem contrary to the ethos of procx, th
 procx [flags] <process path>
   -aws-dynamo-clear-query string
     	AWS DynamoDB clear query
+  -aws-dynamo-data-path string
+    	AWS DynamoDB data JSON path
   -aws-dynamo-fail-query string
     	AWS DynamoDB fail query
   -aws-dynamo-key-path string
@@ -114,7 +116,7 @@ procx [flags] <process path>
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-sqs, aws-dynamo, cassandra, centauri, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
+    	driver to use. (aws-dynamo, aws-sqs, cassandra, centauri, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
   -gcp-project-id string
     	GCP project ID
   -gcp-pubsub-subscription string
@@ -209,6 +211,7 @@ procx [flags] <process path>
 
 - `PROCX_AWS_REGION`
 - `PROCX_AWS_ROLE_ARN`
+- `AWS_DYNAMO_DATA_PATH`
 - `PROCX_AWS_DYNAMO_TABLE`
 - `PROCX_AWS_DYNAMO_KEY_PATH`
 - `PROCX_AWS_DYNAMO_RETRIEVE_QUERY`
@@ -281,7 +284,7 @@ procx [flags] <process path>
 
 ### AWS DynamoDB
 
-The AWS DynamoDB driver will execute the provided PartiQL query and return the first result. An optional JSON path can be passed in the `-aws-dynamo-key-path` flag, if this is provided it will be used to extract the value from the returned data, and this will replace `{{key}}` in subsequent clear and fail handling queries.
+The AWS DynamoDB driver will execute the provided PartiQL query and return the first result. An optional JSON path can be passed in the `-aws-dynamo-key-path` flag, if this is provided it will be used to extract the value from the returned data, and this will replace `{{key}}` in subsequent clear and fail handling queries. Additionally, an optional `-aws-dynamo-data-path` flag can be passed in, if this is provided it will be used to extract the data from the returned JSON.
 
 ```bash
 procx \
@@ -289,6 +292,7 @@ procx \
     -aws-dynamo-table my-table \
     -aws-dynamo-key-path 'id.S' \
     -aws-dynamo-retrieve-query "SELECT id,job,status FROM my-table WHERE status = 'pending'" \
+    -aws-dynamo-data-path 'job.S' \
     -aws-dynamo-clear-query "UPDATE my-table SET status='complete' WHERE id = '{{key}}'" \
     -aws-dynamo-fail-query "UPDATE my-table SET status='failed' WHERE id = '{{key}}'" \
     -aws-region us-east-1 \

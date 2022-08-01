@@ -22,6 +22,7 @@ type Dynamo struct {
 	Region           string
 	RoleARN          string
 	QueryKeyJSONPath *string
+	DataJSONPath     *string
 	RetrieveQuery    *string
 	ClearQuery       *string
 	FailQuery        *string
@@ -54,6 +55,10 @@ func (d *Dynamo) LoadEnv(prefix string) error {
 		q := os.Getenv(prefix + "AWS_DYNAMO_KEY_PATH")
 		d.QueryKeyJSONPath = &q
 	}
+	if os.Getenv(prefix+"AWS_DYNAMO_DATA_PATH") != "" {
+		q := os.Getenv(prefix + "AWS_DYNAMO_DATA_PATH")
+		d.DataJSONPath = &q
+	}
 	if os.Getenv(prefix+"AWS_LOAD_CONFIG") != "" || os.Getenv("AWS_SDK_LOAD_CONFIG") != "" {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	}
@@ -66,6 +71,7 @@ func (d *Dynamo) LoadFlags() error {
 	d.RoleARN = *flags.AWSRoleARN
 	d.RetrieveQuery = flags.AWSDynamoRetrieveQuery
 	d.QueryKeyJSONPath = flags.AWSDynamoQueryKeyPath
+	d.DataJSONPath = flags.AWSDynamoDataPath
 	d.ClearQuery = flags.AWSDynamoClearQuery
 	d.FailQuery = flags.AWSDynamoFailQuery
 	if flags.AWSLoadConfig != nil && *flags.AWSLoadConfig {
@@ -150,6 +156,14 @@ func (d *Dynamo) GetWork() (*string, error) {
 		if err := d.extractKey(rd); err != nil {
 			l.Errorf("%+v", err)
 			return nil, err
+		}
+	}
+	if d.DataJSONPath != nil {
+		value := gjson.Get(*rd, *d.DataJSONPath)
+		if value.Exists() {
+			l.Debugf("extractKey value=%s", value.String())
+			k := value.String()
+			rd = &k
 		}
 	}
 	return rd, nil
