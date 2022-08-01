@@ -32,7 +32,7 @@ func (j *ProcX) ParseArgs(args []string) {
 
 func (j *ProcX) Init(envKeyPrefix string) error {
 	l := log.WithFields(log.Fields{
-		"action": "Init",
+		"fn": "Init",
 	})
 	l.Debug("Init")
 	if j.DriverName == "" {
@@ -63,7 +63,7 @@ func (j *ProcX) Init(envKeyPrefix string) error {
 
 func (j *ProcX) DoWork() error {
 	l := log.WithFields(log.Fields{
-		"action": "DoWork",
+		"fn":     "DoWork",
 		"driver": j.DriverName,
 	})
 	l.Debug("DoWork")

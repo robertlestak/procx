@@ -8,4 +8,5 @@ type Driver interface {
 	GetWork() (*string, error)
 	ClearWork() error
 	HandleFailure() error
+	Cleanup() error
 }

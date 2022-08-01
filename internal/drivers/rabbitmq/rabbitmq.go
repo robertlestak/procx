@@ -15,6 +15,11 @@ type RabbitMQ struct {
 }
 
 func (d *RabbitMQ) LoadEnv(prefix string) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "rabbitmq",
+		"fn":  "LoadEnv",
+	})
+	l.Debug("LoadEnv")
 	if os.Getenv(prefix+"RABBITMQ_URL") != "" {
 		d.URL = os.Getenv(prefix + "RABBITMQ_URL")
 	}
@@ -25,6 +30,11 @@ func (d *RabbitMQ) LoadEnv(prefix string) error {
 }
 
 func (d *RabbitMQ) LoadFlags() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "rabbitmq",
+		"fn":  "LoadFlags",
+	})
+	l.Debug("LoadFlags")
 	d.URL = *flags.RabbitMQURL
 	d.Queue = *flags.RabbitMQQueue
 	return nil
@@ -32,8 +42,8 @@ func (d *RabbitMQ) LoadFlags() error {
 
 func (d *RabbitMQ) Init() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "Init",
+		"pkg": "rabbitmq",
+		"fn":  "Init",
 	})
 	l.Debug("Initializing rabbitmq driver")
 	conn, err := amqp.Dial(d.URL)
@@ -46,8 +56,8 @@ func (d *RabbitMQ) Init() error {
 
 func (d *RabbitMQ) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "GetWork",
+		"pkg": "rabbitmq",
+		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from rabbitmq")
 	ch, err := d.Client.Channel()
@@ -74,8 +84,8 @@ func (d *RabbitMQ) GetWork() (*string, error) {
 
 func (d *RabbitMQ) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "ClearWork",
+		"pkg": "rabbitmq",
+		"fn":  "ClearWork",
 	})
 	l.Debug("Clearing work from rabbitmq")
 	return nil
@@ -83,9 +93,21 @@ func (d *RabbitMQ) ClearWork() error {
 
 func (d *RabbitMQ) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "ClearWork",
+		"pkg": "rabbitmq",
+		"fn":  "HandleFailure",
 	})
 	l.Debug("Clearing work from rabbitmq")
+	return nil
+}
+
+func (d *RabbitMQ) Cleanup() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "rabbitmq",
+		"fn":  "Cleanup",
+	})
+	l.Debug("Cleaning up rabbitmq driver")
+	if err := d.Client.Close(); err != nil {
+		return err
+	}
 	return nil
 }

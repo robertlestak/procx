@@ -21,6 +21,11 @@ type SQS struct {
 }
 
 func (d *SQS) LoadEnv(prefix string) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "aws",
+		"fn":  "LoadEnv",
+	})
+	l.Debug("LoadEnv")
 	if os.Getenv(prefix+"AWS_REGION") != "" {
 		d.Region = os.Getenv(prefix + "AWS_REGION")
 	}
@@ -37,6 +42,11 @@ func (d *SQS) LoadEnv(prefix string) error {
 }
 
 func (d *SQS) LoadFlags() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "aws",
+		"fn":  "LoadFlags",
+	})
+	l.Debug("LoadFlags")
 	d.Queue = *flags.SQSQueueURL
 	d.Region = *flags.AWSRegion
 	d.RoleARN = *flags.AWSRoleARN
@@ -49,7 +59,8 @@ func (d *SQS) LoadFlags() error {
 func (d *SQS) Init() error {
 	l := log.WithFields(
 		log.Fields{
-			"action": "CreateAWSSession",
+			"pkg": "aws",
+			"fn":  "CreateAWSSession",
 		},
 	)
 	l.Debug("CreateAWSSession")
@@ -80,7 +91,8 @@ func (d *SQS) Init() error {
 
 func (d *SQS) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
-		"action": "GetWork",
+		"pkg": "aws",
+		"fn":  "GetWork",
 	})
 	l.Debug("GetWork")
 	var an []*string
@@ -113,7 +125,8 @@ func (d *SQS) GetWork() (*string, error) {
 
 func (d *SQS) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"action": "ClearWork",
+		"pkg": "aws",
+		"fn":  "ClearWork",
 	})
 	l.Debug("ClearWork")
 	di := &sqs.DeleteMessageInput{
@@ -128,5 +141,19 @@ func (d *SQS) ClearWork() error {
 }
 
 func (d *SQS) HandleFailure() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "aws",
+		"fn":  "HandleFailure",
+	})
+	l.Debug("HandleFailure")
+	return nil
+}
+
+func (d *SQS) Cleanup() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "aws",
+		"fn":  "Cleanup",
+	})
+	l.Debug("Cleanup")
 	return nil
 }

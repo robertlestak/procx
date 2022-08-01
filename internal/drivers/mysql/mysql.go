@@ -29,6 +29,11 @@ type Mysql struct {
 }
 
 func (d *Mysql) LoadEnv(prefix string) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "mysql",
+		"fn":  "LoadEnv",
+	})
+	l.Debug("Loading environment variables")
 	if os.Getenv(prefix+"MYSQL_HOST") != "" {
 		d.Host = os.Getenv(prefix + "MYSQL_HOST")
 	}
@@ -89,6 +94,11 @@ func (d *Mysql) LoadEnv(prefix string) error {
 }
 
 func (d *Mysql) LoadFlags() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "mysql",
+		"fn":  "LoadFlags",
+	})
+	l.Debug("Loading flags")
 	pv, err := strconv.Atoi(*flags.MysqlPort)
 	if err != nil {
 		return err
@@ -148,8 +158,8 @@ func (d *Mysql) LoadFlags() error {
 
 func (d *Mysql) Init() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "CreateMySqlClient",
+		"pkg": "mysql",
+		"fn":  "Init",
 	})
 	l.Debug("Initializing mysql client")
 	var err error
@@ -173,8 +183,8 @@ func (d *Mysql) Init() error {
 
 func (d *Mysql) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "GetWorkMysql",
+		"pkg": "mysql",
+		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from mysql")
 	var err error
@@ -205,8 +215,8 @@ func (d *Mysql) GetWork() (*string, error) {
 
 func (d *Mysql) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "ClearWorkMysql",
+		"pkg": "mysql",
+		"fn":  "ClearWork",
 	})
 	l.Debug("Clearing work from mysql")
 	var err error
@@ -232,8 +242,8 @@ func (d *Mysql) ClearWork() error {
 
 func (d *Mysql) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "HandleFailure",
+		"pkg": "mysql",
+		"fn":  "HandleFailure",
 	})
 	l.Debug("Handling failed work from mysql")
 	var err error
@@ -254,5 +264,20 @@ func (d *Mysql) HandleFailure() error {
 		return err
 	}
 	l.Debug("Cleared work")
+	return nil
+}
+
+func (d *Mysql) Cleanup() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "mysql",
+		"fn":  "Cleanup",
+	})
+	l.Debug("Cleaning up mysql client")
+	err := d.Client.Close()
+	if err != nil {
+		l.Error(err)
+		return err
+	}
+	l.Debug("Cleaned up mysql client")
 	return nil
 }

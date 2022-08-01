@@ -19,6 +19,11 @@ type RedisList struct {
 }
 
 func (d *RedisList) LoadEnv(prefix string) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "redis",
+		"fn":  "LoadEnv",
+	})
+	l.Debug("Loading environment variables")
 	if os.Getenv(prefix+"REDIS_HOST") != "" {
 		d.Host = os.Getenv(prefix + "REDIS_HOST")
 	}
@@ -35,6 +40,11 @@ func (d *RedisList) LoadEnv(prefix string) error {
 }
 
 func (d *RedisList) LoadFlags() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "redis",
+		"fn":  "LoadFlags",
+	})
+	l.Debug("Loading flags")
 	d.Host = *flags.RedisHost
 	d.Port = *flags.RedisPort
 	d.Password = *flags.RedisPassword
@@ -44,8 +54,8 @@ func (d *RedisList) LoadFlags() error {
 
 func (d *RedisList) Init() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "Init",
+		"pkg": "redis",
+		"fn":  "Init",
 	})
 	l.Debug("Initializing redis list driver")
 	d.Client = redis.NewClient(&redis.Options{
@@ -66,8 +76,8 @@ func (d *RedisList) Init() error {
 
 func (d *RedisList) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "GetWork",
+		"pkg": "redis",
+		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from redis list")
 	msg, err := d.Client.LPop(d.Key).Result()
@@ -86,8 +96,8 @@ func (d *RedisList) GetWork() (*string, error) {
 
 func (d *RedisList) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "ClearWork",
+		"pkg": "redis",
+		"fn":  "ClearWork",
 	})
 	l.Debug("Clearing work from redis list")
 	return nil
@@ -95,9 +105,22 @@ func (d *RedisList) ClearWork() error {
 
 func (d *RedisList) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "HandleFailure",
+		"pkg": "redis",
+		"fn":  "HandleFailure",
 	})
 	l.Debug("Handling failure")
+	return nil
+}
+
+func (d *RedisList) Cleanup() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "redis",
+		"fn":  "Cleanup",
+	})
+	l.Debug("Cleaning up")
+	if err := d.Client.Close(); err != nil {
+		l.WithError(err).Error("Failed to close redis client")
+		return err
+	}
 	return nil
 }

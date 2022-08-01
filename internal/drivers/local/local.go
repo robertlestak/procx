@@ -10,17 +10,27 @@ type Local struct {
 }
 
 func (d *Local) LoadEnv(prefix string) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "local",
+		"fn":  "LoadEnv",
+	})
+	l.Debug("Loading environment")
 	return nil
 }
 
 func (d *Local) LoadFlags() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "local",
+		"fn":  "LoadFlags",
+	})
+	l.Debug("Loading flags")
 	return nil
 }
 
 func (d *Local) Init() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "Init",
+		"pkg": "local",
+		"fn":  "Init",
 	})
 	l.Debug("Initializing rabbitmq driver")
 	return nil
@@ -28,8 +38,8 @@ func (d *Local) Init() error {
 
 func (d *Local) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "GetWork",
+		"pkg": "local",
+		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from rabbitmq")
 	w := os.Getenv("PROCX_PAYLOAD")
@@ -41,8 +51,8 @@ func (d *Local) GetWork() (*string, error) {
 
 func (d *Local) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "ClearWork",
+		"pkg": "local",
+		"fn":  "ClearWork",
 	})
 	l.Debug("Clearing work from rabbitmq")
 	return nil
@@ -50,9 +60,13 @@ func (d *Local) ClearWork() error {
 
 func (d *Local) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "ClearWork",
+		"pkg": "local",
+		"fn":  "ClearWork",
 	})
 	l.Debug("Clearing work from rabbitmq")
+	return nil
+}
+
+func (d *Local) Cleanup() error {
 	return nil
 }

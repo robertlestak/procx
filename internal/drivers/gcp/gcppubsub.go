@@ -16,6 +16,11 @@ type GCPPubSub struct {
 }
 
 func (d *GCPPubSub) LoadEnv(prefix string) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "gcp",
+		"fn":  "LoadEnv",
+	})
+	l.Debug("LoadEnv")
 	if os.Getenv(prefix+"GCP_PROJECT_ID") != "" {
 		d.ProjectID = os.Getenv(prefix + "GCP_PROJECT_ID")
 	}
@@ -26,6 +31,11 @@ func (d *GCPPubSub) LoadEnv(prefix string) error {
 }
 
 func (d *GCPPubSub) LoadFlags() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "gcp",
+		"fn":  "LoadFlags",
+	})
+	l.Debug("LoadFlags")
 	d.ProjectID = *flags.GCPProjectID
 	d.SubscriptionName = *flags.GCPSubscription
 	return nil
@@ -33,8 +43,8 @@ func (d *GCPPubSub) LoadFlags() error {
 
 func (d *GCPPubSub) Init() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "Init",
+		"pkg": "gcp",
+		"fn":  "Init",
 	})
 	l.Debug("Initializing gcp pubsub driver")
 	ctx := context.Background()
@@ -47,6 +57,11 @@ func (d *GCPPubSub) Init() error {
 }
 
 func (d *GCPPubSub) GetWork() (*string, error) {
+	l := log.WithFields(log.Fields{
+		"pkg": "gcp",
+		"fn":  "GetWork",
+	})
+	l.Debug("Getting work from gcp pubsub driver")
 	ctx := context.Background()
 	sub := d.Client.Subscription(d.SubscriptionName)
 	var msgData *pubsub.Message
@@ -70,9 +85,28 @@ func (d *GCPPubSub) GetWork() (*string, error) {
 }
 
 func (d *GCPPubSub) ClearWork() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "gcp",
+		"fn":  "ClearWork",
+	})
+	l.Debug("Clearing work from gcp pubsub driver")
 	return nil
 }
 
 func (d *GCPPubSub) HandleFailure() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "gcp",
+		"fn":  "HandleFailure",
+	})
+	l.Debug("Handling failure in gcp pubsub driver")
+	return nil
+}
+
+func (d *GCPPubSub) Cleanup() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "gcp",
+		"fn":  "Cleanup",
+	})
+	l.Debug("Cleaning up gcp pubsub driver")
 	return nil
 }

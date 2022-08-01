@@ -31,7 +31,11 @@ type Postgres struct {
 }
 
 func (d *Postgres) LoadEnv(prefix string) error {
-
+	l := log.WithFields(log.Fields{
+		"pkg": "postgres",
+		"fn":  "LoadEnv",
+	})
+	l.Debug("Loading environment variables")
 	if os.Getenv(prefix+"PSQL_HOST") != "" {
 		d.Host = os.Getenv(prefix + "PSQL_HOST")
 	}
@@ -95,6 +99,11 @@ func (d *Postgres) LoadEnv(prefix string) error {
 }
 
 func (d *Postgres) LoadFlags() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "postgres",
+		"fn":  "LoadFlags",
+	})
+	l.Debug("Loading flags")
 	pv, err := strconv.Atoi(*flags.PsqlPort)
 	if err != nil {
 		return err
@@ -155,8 +164,8 @@ func (d *Postgres) LoadFlags() error {
 
 func (d *Postgres) Init() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "CreatePsqlClient",
+		"pkg": "postgres",
+		"fn":  "Init",
 	})
 	l.Debug("Initializing psql client")
 	var err error
@@ -178,8 +187,8 @@ func (d *Postgres) Init() error {
 
 func (d *Postgres) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "GetWorkPsql",
+		"pkg": "postgres",
+		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from psql")
 	var err error
@@ -210,8 +219,8 @@ func (d *Postgres) GetWork() (*string, error) {
 
 func (d *Postgres) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "ClearWorkPsql",
+		"pkg": "postgres",
+		"fn":  "ClearWork",
 	})
 	l.Debug("Clearing work from psql")
 	var err error
@@ -237,8 +246,8 @@ func (d *Postgres) ClearWork() error {
 
 func (d *Postgres) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "HandleFailurePsql",
+		"pkg": "postgres",
+		"fn":  "HandleFailure",
 	})
 	l.Debug("Handling failure in psql")
 	var err error
@@ -259,5 +268,20 @@ func (d *Postgres) HandleFailure() error {
 		return err
 	}
 	l.Debug("Handled failure")
+	return nil
+}
+
+func (d *Postgres) Cleanup() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "postgres",
+		"fn":  "Cleanup",
+	})
+	l.Debug("Cleaning up psql")
+	err := d.Client.Close()
+	if err != nil {
+		l.Error(err)
+		return err
+	}
+	l.Debug("Cleaned up")
 	return nil
 }

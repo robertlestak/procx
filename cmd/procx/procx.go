@@ -52,29 +52,35 @@ func LoadEnv(prefix string) error {
 	return nil
 }
 
-func run() {
+func run(j *procx.ProcX) {
 	l := log.WithFields(log.Fields{
 		"app": AppName,
+		"fn":  "run",
 	})
 	l.Debug("start")
-	j := &procx.ProcX{
-		DriverName:    drivers.DriverName(*flags.Driver),
-		HostEnv:       *flags.HostEnv,
-		PassWorkAsArg: *flags.PassWorkAsArg,
-	}
-	if err := j.Init(EnvKeyPrefix); err != nil {
-		l.WithError(err).Error("InitDriver")
-		os.Exit(1)
-	}
 	if err := j.DoWork(); err != nil {
 		l.Errorf("failed to do work: %s", err)
 		os.Exit(1)
 	}
 }
 
+func cleanup(j *procx.ProcX) error {
+	l := log.WithFields(log.Fields{
+		"app": AppName,
+		"fn":  "cleanup",
+	})
+	l.Debug("cleanup")
+	if err := j.Driver.Cleanup(); err != nil {
+		l.Error(err)
+		return err
+	}
+	return nil
+}
+
 func main() {
 	l := log.WithFields(log.Fields{
 		"app": AppName,
+		"fn":  "main",
 	})
 	l.Debug("start")
 	if len(os.Args) > 1 {
@@ -95,13 +101,26 @@ func main() {
 		flags.FlagSet.PrintDefaults()
 		os.Exit(1)
 	}
+	j := &procx.ProcX{
+		DriverName:    drivers.DriverName(*flags.Driver),
+		HostEnv:       *flags.HostEnv,
+		PassWorkAsArg: *flags.PassWorkAsArg,
+	}
+	if err := j.Init(EnvKeyPrefix); err != nil {
+		l.WithError(err).Error("InitDriver")
+		os.Exit(1)
+	}
 	if *flags.Daemon {
 		l.Debug("running as daemon")
 		for {
-			run()
+			run(j)
 		}
 	} else {
-		run()
+		run(j)
+	}
+	if err := cleanup(j); err != nil {
+		l.WithError(err).Error("cleanup")
+		os.Exit(1)
 	}
 	l.Debug("exited")
 }

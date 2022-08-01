@@ -30,6 +30,11 @@ type Dynamo struct {
 }
 
 func (d *Dynamo) LoadEnv(prefix string) error {
+	l := log.WithFields(log.Fields{
+		"fn":  "LoadEnv",
+		"pkg": "aws",
+	})
+	l.Debug("LoadEnv")
 	if os.Getenv(prefix+"AWS_REGION") != "" {
 		d.Region = os.Getenv(prefix + "AWS_REGION")
 	}
@@ -66,6 +71,11 @@ func (d *Dynamo) LoadEnv(prefix string) error {
 }
 
 func (d *Dynamo) LoadFlags() error {
+	l := log.WithFields(log.Fields{
+		"fn":  "LoadFlags",
+		"pkg": "aws",
+	})
+	l.Debug("LoadFlags")
 	d.Table = *flags.AWSDynamoTable
 	d.Region = *flags.AWSRegion
 	d.RoleARN = *flags.AWSRoleARN
@@ -83,7 +93,8 @@ func (d *Dynamo) LoadFlags() error {
 func (d *Dynamo) Init() error {
 	l := log.WithFields(
 		log.Fields{
-			"action": "CreateAWSSession",
+			"fn":  "CreateAWSSession",
+			"pkg": "aws",
 		},
 	)
 	l.Debug("CreateAWSSession")
@@ -114,7 +125,8 @@ func (d *Dynamo) Init() error {
 
 func (d *Dynamo) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
-		"action": "GetWork",
+		"fn":  "GetWork",
+		"pkg": "aws",
 	})
 	l.Debug("GetWork")
 	if d.RetrieveQuery == nil {
@@ -171,7 +183,8 @@ func (d *Dynamo) GetWork() (*string, error) {
 
 func (d *Dynamo) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"action": "ClearWork",
+		"fn":  "ClearWork",
+		"pkg": "aws",
 	})
 	l.Debug("ClearWork")
 	if d.ClearQuery == nil || *d.ClearQuery == "" {
@@ -196,7 +209,8 @@ func (d *Dynamo) ClearWork() error {
 
 func (d *Dynamo) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"action": "HandleFailure",
+		"fn":  "HandleFailure",
+		"pkg": "aws",
 	})
 	l.Debug("HandleFailure")
 	if d.FailQuery == nil || *d.FailQuery == "" {
@@ -221,7 +235,8 @@ func (d *Dynamo) HandleFailure() error {
 
 func (d *Dynamo) extractKey(data *string) error {
 	l := log.WithFields(log.Fields{
-		"action": "extractKey",
+		"fn":  "extractKey",
+		"pkg": "aws",
 	})
 	l.Debug("extractKey")
 	if d.QueryKeyJSONPath == nil {
@@ -242,5 +257,14 @@ func (d *Dynamo) extractKey(data *string) error {
 		k := value.String()
 		d.Key = &k
 	}
+	return nil
+}
+
+func (d *Dynamo) Cleanup() error {
+	l := log.WithFields(log.Fields{
+		"fn":  "Cleanup",
+		"pkg": "aws",
+	})
+	l.Debug("Cleanup")
 	return nil
 }

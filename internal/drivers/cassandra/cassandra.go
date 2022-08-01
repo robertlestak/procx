@@ -26,6 +26,11 @@ type Cassandra struct {
 }
 
 func (d *Cassandra) LoadEnv(prefix string) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "cassandra",
+		"fn":  "LoadEnv",
+	})
+	l.Debug("loading env")
 	if os.Getenv(prefix+"CASSANDRA_HOSTS") != "" {
 		d.Hosts = strings.Split(os.Getenv(prefix+"CASSANDRA_HOSTS"), ",")
 	}
@@ -73,6 +78,11 @@ func (d *Cassandra) LoadEnv(prefix string) error {
 }
 
 func (d *Cassandra) LoadFlags() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "cassandra",
+		"fn":  "LoadFlags",
+	})
+	l.Debug("loading flags")
 	var hosts []string
 	if *flags.CassandraHosts != "" {
 		s := strings.Split(*flags.CassandraHosts, ",")
@@ -138,8 +148,8 @@ func (d *Cassandra) LoadFlags() error {
 
 func (d *Cassandra) Init() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "CreateCassandraClient",
+		"pkg": "cassandra",
+		"fn":  "Init",
 	})
 	l.Debug("Initializing cassandra client")
 
@@ -165,8 +175,8 @@ func (d *Cassandra) Init() error {
 
 func (d *Cassandra) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "GetWork",
+		"pkg": "cassandra",
+		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from cassandra")
 	var err error
@@ -191,8 +201,8 @@ func (d *Cassandra) GetWork() (*string, error) {
 
 func (d *Cassandra) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "ClearWorkCassandra",
+		"pkg": "cassandra",
+		"fn":  "ClearWork",
 	})
 	l.Debug("Clearing work from cassandra")
 	var err error
@@ -221,8 +231,8 @@ func (d *Cassandra) ClearWork() error {
 
 func (d *Cassandra) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "HandleFailureCassandra",
+		"pkg": "cassandra",
+		"fn":  "HandleFailure",
 	})
 	l.Debug("handling failure for cassandra")
 	var err error
@@ -246,5 +256,16 @@ func (d *Cassandra) HandleFailure() error {
 		return err
 	}
 	l.Debug("handled failure")
+	return nil
+}
+
+func (d *Cassandra) Cleanup() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "cassandra",
+		"fn":  "Cleanup",
+	})
+	l.Debug("cleaning up cassandra")
+	d.Client.Close()
+	l.Debug("cleaned up cassandra")
 	return nil
 }

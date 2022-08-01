@@ -19,6 +19,11 @@ type Centauri struct {
 }
 
 func (d *Centauri) LoadEnv(prefix string) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "centauri",
+		"fn":  "LoadEnv",
+	})
+	l.Debug("Loading environment")
 	if os.Getenv(prefix+"CENTAURI_PEER_URL") != "" {
 		d.URL = os.Getenv(prefix + "CENTAURI_PEER_URL")
 	}
@@ -34,6 +39,11 @@ func (d *Centauri) LoadEnv(prefix string) error {
 }
 
 func (d *Centauri) LoadFlags() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "centauri",
+		"fn":  "LoadFlags",
+	})
+	l.Debug("Loading flags")
 	if flags.CentauriKey == nil || (flags.CentauriKey != nil && *flags.CentauriKey == "") {
 		return errors.New("key required")
 	}
@@ -46,8 +56,8 @@ func (d *Centauri) LoadFlags() error {
 
 func (d *Centauri) Init() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "Init",
+		"pkg": "centauri",
+		"fn":  "Init",
 	})
 	l.Debug("Initializing centauri driver")
 	if d.PrivateKey == nil {
@@ -64,8 +74,8 @@ func (d *Centauri) Init() error {
 
 func (d *Centauri) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "GetWork",
+		"pkg": "centauri",
+		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from centauri")
 	l.Debug("Getting work from centauri")
@@ -113,8 +123,8 @@ func (d *Centauri) GetWork() (*string, error) {
 
 func (d *Centauri) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "ClearWork",
+		"pkg": "centauri",
+		"fn":  "ClearWork",
 	})
 	l.Debug("Clearing work from centauri")
 	if d.Key == nil || *d.Key == "" {
@@ -132,8 +142,8 @@ func (d *Centauri) ClearWork() error {
 
 func (d *Centauri) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "HandleFailure",
+		"pkg": "centauri",
+		"fn":  "HandleFailure",
 	})
 	l.Debug("Handling failure")
 	if d.Key == nil || *d.Key == "" {
@@ -141,5 +151,15 @@ func (d *Centauri) HandleFailure() error {
 		return errors.New("key is nil")
 	}
 	l.Debug("Handled failure")
+	return nil
+}
+
+func (d *Centauri) Cleanup() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "centauri",
+		"fn":  "Cleanup",
+	})
+	l.Debug("Cleaning up")
+	l.Debug("Cleaned up")
 	return nil
 }

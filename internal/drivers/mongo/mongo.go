@@ -33,6 +33,11 @@ type Mongo struct {
 }
 
 func (d *Mongo) LoadEnv(prefix string) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "mongo",
+		"fn":  "LoadEnv",
+	})
+	l.Debug("Loading environment variables")
 	if os.Getenv(prefix+"MONGO_HOST") != "" {
 		d.Host = os.Getenv(prefix + "MONGO_HOST")
 	}
@@ -72,6 +77,11 @@ func (d *Mongo) LoadEnv(prefix string) error {
 }
 
 func (d *Mongo) LoadFlags() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "mongo",
+		"fn":  "LoadFlags",
+	})
+	l.Debug("Loading flags")
 	pv, err := strconv.Atoi(*flags.MongoPort)
 	if err != nil {
 		return err
@@ -90,8 +100,8 @@ func (d *Mongo) LoadFlags() error {
 
 func (d *Mongo) Init() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "CreateMongoClient",
+		"pkg": "mongo",
+		"fn":  "Init",
 	})
 	l.Debug("Initializing mongo client")
 	var err error
@@ -114,8 +124,8 @@ func (d *Mongo) Init() error {
 
 func (d *Mongo) GetWork() (*string, error) {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "GetWorkMongo",
+		"pkg": "mongo",
+		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from mongo")
 	if d.RetrieveQuery == nil || *d.RetrieveQuery == "" {
@@ -161,9 +171,9 @@ func (d *Mongo) GetWork() (*string, error) {
 
 func (d *Mongo) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "ClearWorkMongo",
-		"query":   d.ClearQuery,
+		"pkg":   "mongo",
+		"fn":    "ClearWork",
+		"query": d.ClearQuery,
 	})
 	if d.ClearQuery == nil || *d.ClearQuery == "" {
 		return nil
@@ -203,8 +213,8 @@ func (d *Mongo) ClearWork() error {
 
 func (d *Mongo) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"package": "cache",
-		"method":  "HandleFailureMongo",
+		"pkg": "mongo",
+		"fn":  "HandleFailure",
 	})
 	l.Debug("Handling failure from mongo")
 	if d.Key == nil {
@@ -235,5 +245,23 @@ func (d *Mongo) HandleFailure() error {
 		return err
 	}
 	l.Debug("handled failed work")
+	return nil
+}
+
+func (d *Mongo) Cleanup() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "mongo",
+		"fn":  "Cleanup",
+	})
+	l.Debug("Cleaning up mongo")
+	if d.Client == nil {
+		return nil
+	}
+	err := d.Client.Disconnect(context.TODO())
+	if err != nil {
+		l.Error(err)
+		return err
+	}
+	l.Debug("Cleaned up mongo")
 	return nil
 }
