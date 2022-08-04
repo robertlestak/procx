@@ -19,6 +19,7 @@ By default, procx will export the payload as an environment variable `PROCX_PAYL
 Currently, the following drivers are supported:
 
 - AWS DynamoDB (`aws-dynamo`)
+- AWS S3 (`aws-s3`)
 - AWS SQS (`aws-sqs`)
 - Cassandra (`cassandra`)
 - Centauri (`centauri`)
@@ -83,6 +84,30 @@ Usage: procx [options] [process]
     	AWS region
   -aws-role-arn string
     	AWS role ARN
+  -aws-s3-bucket string
+    	AWS S3 bucket
+  -aws-s3-clear-bucket string
+    	AWS S3 clear bucket, if clear op is mv
+  -aws-s3-clear-key string
+    	AWS S3 clear key, if clear op is mv. default is origional key name.
+  -aws-s3-clear-key-template string
+    	AWS S3 clear key template, if clear op is mv.
+  -aws-s3-clear-op string
+    	AWS S3 clear operation. Valid values: mv, rm
+  -aws-s3-fail-bucket string
+    	AWS S3 fail bucket, if fail op is mv
+  -aws-s3-fail-key string
+    	AWS S3 fail key, if fail op is mv. default is original key name.
+  -aws-s3-fail-key-template string
+    	AWS S3 fail key template, if fail op is mv.
+  -aws-s3-fail-op string
+    	AWS S3 fail operation. Valid values: mv, rm
+  -aws-s3-key string
+    	AWS S3 key
+  -aws-s3-key-prefix string
+    	AWS S3 key prefix
+  -aws-s3-key-regex string
+    	AWS S3 key regex
   -aws-sqs-queue-url string
     	AWS SQS queue URL
   -cassandra-clear-params string
@@ -118,7 +143,7 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-dynamo, aws-sqs, cassandra, centauri, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
+    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
   -gcp-project-id string
     	GCP project ID
   -gcp-pubsub-subscription string
@@ -223,6 +248,18 @@ Usage: procx [options] [process]
 - `PROCX_AWS_DYNAMO_RETRIEVE_QUERY`
 - `PROCX_AWS_DYNAMO_CLEAR_QUERY`
 - `PROCX_AWS_DYNAMO_FAIL_QUERY`
+- `PROCX_AWS_S3_BUCKET`
+- `PROCX_AWS_S3_KEY`
+- `PROCX_AWS_S3_KEY_PREFIX`
+- `PROCX_AWS_S3_KEY_REGEX`
+- `PROCX_AWS_S3_CLEAR_BUCKET`
+- `PROCX_AWS_S3_CLEAR_KEY`
+- `PROCX_AWS_S3_CLEAR_KEY_TEMPLATE`
+- `PROCX_AWS_S3_CLEAR_OP`
+- `PROCX_AWS_S3_FAIL_BUCKET`
+- `PROCX_AWS_S3_FAIL_KEY`
+- `PROCX_AWS_S3_FAIL_KEY_TEMPLATE`
+- `PROCX_AWS_S3_FAIL_OP`
 - `PROCX_AWS_SQS_QUEUE_URL`
 - `PROCX_CASSANDRA_CLEAR_PARAMS`
 - `PROCX_CASSANDRA_CLEAR_QUERY`
@@ -306,6 +343,25 @@ procx \
     -aws-region us-east-1 \
     -aws-role-arn arn:aws:iam::123456789012:role/my-role \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### AWS S3
+
+The S3 driver will retrieve the first object which matches the specified input within the bucket. If `-aws-s3-key` is provided, this exact key will be retrieved. If `-aws-s3-key-prefix` is provided, this will be used as a prefix to select the first matching object. Finally, if `-aws-s3-key-regex` is provided, this will be used as a regular expression to select the first matching object. Upon completion of the work, the object can either be deleted from the bucket, or moved to a different bucket, with `-aws-s3-clear-op=[mv|rm]` and `-aws-s3-clear-bucket` flags. Similarly for failed executions, the object can either be deleted from the bucket, or moved to a different bucket, with `-aws-s3-fail-op=[mv|rm]` and `-aws-s3-fail-bucket` flags. By default, if the object is moved the key will be the same as the source key, this can be overridden with the `-aws-s3-clear-key` and `-aws-s3-fail-key` flags. You can also provide a `-aws-s3-clear-key-template` and/or `-aws-s3-fail-key-template` flag to use a templated key - this is useful if you have used the prefix or regex selector and want to retain the object key but rename the file.
+
+```bash
+procx \
+    -driver aws-s3 \
+    -payload-file my-payload.json \
+    -aws-s3-bucket my-bucket \
+    -aws-s3-key-regex 'jobs-.*?[a-z]' \
+    -aws-s3-clear-op=mv \
+    -aws-s3-clear-bucket my-bucket-completed \
+    -aws-s3-clear-key-template 'success/{{key}}' \
+    -aws-s3-fail-op=mv \
+    -aws-s3-fail-bucket my-bucket-completed \
+    -aws-s3-fail-key-template 'fail/{{key}}' \
+    bash -c 'echo the payload is: $(cat my-payload.json)'
 ```
 
 ### AWS SQS
