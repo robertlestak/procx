@@ -1,6 +1,7 @@
-VERSION=v0.0.22
+VERSION=v0.0.23
 
-procx: bin/procx_darwin bin/procx_windows bin/procx_linux
+.PHONY: procx
+procx: clean bin/procx_darwin bin/procx_windows bin/procx_linux
 
 bin/procx_darwin:
 	mkdir -p bin
@@ -21,3 +22,14 @@ bin/procx_windows:
 	mkdir -p bin
 	GOOS=windows GOARCH=amd64 go build -ldflags="-X 'main.Version=$(VERSION)'" -o bin/procx_windows cmd/procx/*.go
 	openssl sha512 bin/procx_windows > bin/procx_windows.sha512
+
+clean:
+	rm -rf bin
+
+.PHONY=slim
+slim:
+	bash scripts/build_drivers.sh build $(drivers)
+
+.PHONY=listdrivers
+listdrivers:
+	bash scripts/build_drivers.sh list

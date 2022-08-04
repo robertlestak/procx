@@ -8,7 +8,7 @@ import (
 	"github.com/robertlestak/procx/drivers/centauri"
 	"github.com/robertlestak/procx/drivers/gcp"
 	"github.com/robertlestak/procx/drivers/local"
-	"github.com/robertlestak/procx/drivers/mongo"
+	"github.com/robertlestak/procx/drivers/mongodb"
 	"github.com/robertlestak/procx/drivers/mysql"
 	"github.com/robertlestak/procx/drivers/nfs"
 	"github.com/robertlestak/procx/drivers/postgres"
@@ -53,7 +53,7 @@ func GetDriver(name DriverName) Driver {
 	case DriverGCPPubSub:
 		return &gcp.GCPPubSub{}
 	case DriverMongoDB:
-		return &mongo.Mongo{}
+		return &mongodb.Mongo{}
 	case DriverMySQL:
 		return &mysql.Mysql{}
 	case DriverNFS:

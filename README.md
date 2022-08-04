@@ -59,7 +59,7 @@ go build -o bin/procx cmd/procx/*.go
 
 #### Building for a Specific Driver
 
-By default, the `procx` binary is compiled for all drivers. This is to enable a truly build-once-run-anywhere experience. However some users may want a smaller binary for embedded workloads. To enable this, you can edit `pkg/drivers/drivers.go` and remove the drivers you do not want to include, and recompile.
+By default, the `procx` binary is compiled for all drivers. This is to enable a truly build-once-run-anywhere experience. However some users may want a smaller binary for embedded workloads. To enable this, you can run `make listdrivers` to get the full list of available drivers, and `make slim drivers="driver1 driver2 driver3 ..."` - listing each driver separated by a space - to build a slim binary with just the specified driver(s).
 
 While building for a specific driver may seem contrary to the ethos of procx, the decoupling between the job queue and work still enables a write-once-run-anywhere experience, and simply requires DevOps to rebuild the image with your new drivers if you are shifting upstream data sources.
 
