@@ -18,20 +18,20 @@ By default, procx will export the payload as an environment variable `PROCX_PAYL
 
 Currently, the following drivers are supported:
 
-- AWS DynamoDB (`aws-dynamo`)
-- AWS S3 (`aws-s3`)
-- AWS SQS (`aws-sqs`)
-- Cassandra (`cassandra`)
-- Centauri (`centauri`)
-- GCP Pub/Sub (`gcp-pubsub`)
-- PostgreSQL (`postgres`)
-- MongoDB (`mongodb`)
-- MySQL (`mysql`)
-- NFS (`nfs`)
-- RabbitMQ (`rabbitmq`)
-- Redis List (`redis-list`)
-- Redis Pub/Sub (`redis-pubsub`)
-- Local (`local`)
+- [AWS DynamoDB](#aws-dynamodb) (`aws-dynamo`)
+- [AWS S3](#aws-s3) (`aws-s3`)
+- [AWS SQS](#aws-sqs) (`aws-sqs`)
+- [Cassandra](#cassandra) (`cassandra`)
+- [Centauri](#centauri) (`centauri`)
+- [GCP Pub/Sub](#gcp-pubsub) (`gcp-pubsub`)
+- [PostgreSQL](#postgresql) (`postgres`)
+- [MongoDB](#mongodb) (`mongodb`)
+- [MySQL](#mysql) (`mysql`)
+- [NFS](#nfs) (`nfs`)
+- [RabbitMQ](#rabbitmq) (`rabbitmq`)
+- [Redis List](#redis-list) (`redis-list`)
+- [Redis Pub/Sub](#redis-pubsub) (`redis-pubsub`)
+- [Local](#local) (`local`)
 
 Plans to add more drivers in the future, and PRs are welcome.
 
@@ -394,7 +394,11 @@ procx \
 
 ### AWS S3
 
-The S3 driver will retrieve the first object which matches the specified input within the bucket. If `-aws-s3-key` is provided, this exact key will be retrieved. If `-aws-s3-key-prefix` is provided, this will be used as a prefix to select the first matching object. Finally, if `-aws-s3-key-regex` is provided, this will be used as a regular expression to select the first matching object. Upon completion of the work, the object can either be deleted from the bucket, or moved to a different bucket, with `-aws-s3-clear-op=[mv|rm]` and `-aws-s3-clear-bucket` flags. Similarly for failed executions, the object can either be deleted from the bucket, or moved to a different bucket, with `-aws-s3-fail-op=[mv|rm]` and `-aws-s3-fail-bucket` flags. By default, if the object is moved the key will be the same as the source key, this can be overridden with the `-aws-s3-clear-key` and `-aws-s3-fail-key` flags. You can also provide a `-aws-s3-clear-key-template` and/or `-aws-s3-fail-key-template` flag to use a templated key - this is useful if you have used the prefix or regex selector and want to retain the object key but rename the file.
+The S3 driver will retrieve the first object which matches the specified input within the bucket. If `-aws-s3-key` is provided, this exact key will be retrieved. If `-aws-s3-key-prefix` is provided, this will be used as a prefix to select the first matching object. Finally, if `-aws-s3-key-regex` is provided, this will be used as a regular expression to select the first matching object. 
+
+Upon completion of the work, the object can either be deleted from the bucket, or moved to a different bucket, with `-aws-s3-clear-op=[mv|rm]` and `-aws-s3-clear-bucket` flags. Similarly for failed executions, the object can either be deleted from the bucket, or moved to a different bucket, with `-aws-s3-fail-op=[mv|rm]` and `-aws-s3-fail-bucket` flags. 
+
+By default, if the object is moved the key will be the same as the source key, this can be overridden with the `-aws-s3-clear-key` and `-aws-s3-fail-key` flags. You can also provide a `-aws-s3-clear-key-template` and/or `-aws-s3-fail-key-template` flag to use a templated key - this is useful if you have used the prefix or regex selector and want to retain the object key but rename the file.
 
 ```bash
 procx \
@@ -516,7 +520,9 @@ procx \
 
 ### NFS
 
-The NFS driver will mount the specified NFS directory, and retrieve the first file which matches the specified key. Similar to the AWS S3 driver, the NFS driver supports `-nfs-key`, `-nfs-key-prefix`, and `-nfs-key-regex` selection flags. Upon completion, the file can either be moved to a different folder in the NFS, or it can be deleted, with the `-nfs-clear-op` and `-nfs-fail-op` flags (`mv` or `rm`). You can specify the target folder with the `-nfs-clear-folder` and `-nfs-fail-folder` flags, and the `-nfs-clear-key` and `-nfs-fail-key` flags let you rename the file on move. You can also use the `-nfs-clear-key-template` and `-nfs-fail-key-template` flags to specify a template for the key, which will be replaced with the key.
+The NFS driver will mount the specified NFS directory, and retrieve the first file which matches the specified key. Similar to the AWS S3 driver, the NFS driver supports `-nfs-key`, `-nfs-key-prefix`, and `-nfs-key-regex` selection flags. 
+
+Upon completion, the file can either be moved to a different folder in the NFS, or it can be deleted, with the `-nfs-clear-op` and `-nfs-fail-op` flags (`mv` or `rm`). You can specify the target folder with the `-nfs-clear-folder` and `-nfs-fail-folder` flags, and the `-nfs-clear-key` and `-nfs-fail-key` flags let you rename the file on move. You can also use the `-nfs-clear-key-template` and `-nfs-fail-key-template` flags to specify a template for the key, which will be replaced with the key.
 
 ```bash
 procx \
