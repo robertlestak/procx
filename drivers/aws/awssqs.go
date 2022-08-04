@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/google/uuid"
 	"github.com/robertlestak/procx/pkg/flags"
 	log "github.com/sirupsen/logrus"
@@ -86,6 +87,17 @@ func (d *SQS) Init() error {
 	}
 	if err != nil {
 		l.Errorf("%+v", err)
+		// get caller identity
+		streq := &sts.GetCallerIdentityInput{}
+		sc := sts.New(sess)
+		r, err := sc.GetCallerIdentity(streq)
+		if err != nil {
+			l.Errorf("%+v", err)
+		} else {
+			l.Debugf("%+v", r)
+		}
+		return err
+
 	}
 	d.Client = sqs.New(sess, cfg)
 	return err
