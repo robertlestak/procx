@@ -34,6 +34,7 @@ type S3Op struct {
 
 type S3 struct {
 	Client    *s3.S3
+	sts       *STSSession
 	Bucket    string
 	Key       string
 	KeyRegex  string
@@ -42,6 +43,28 @@ type S3 struct {
 	RoleARN   string
 	ClearOp   *S3Op
 	FailOp    *S3Op
+}
+
+func (d *S3) LogIdentity() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "aws",
+		"fn":  "LogIdentity",
+	})
+	l.Debug("LogIdentity")
+	streq := &sts.GetCallerIdentityInput{}
+	var sc *sts.STS
+	if d.sts.Config != nil {
+		sc = sts.New(d.sts.Session, d.sts.Config)
+	} else {
+		sc = sts.New(d.sts.Session)
+	}
+	r, err := sc.GetCallerIdentity(streq)
+	if err != nil {
+		l.Errorf("%+v", err)
+	} else {
+		l.Debugf("%+v", r)
+	}
+	return nil
 }
 
 func (o *S3Op) GetKey() string {
@@ -171,19 +194,17 @@ func (d *S3) Init() error {
 	}
 	if err != nil {
 		l.Errorf("%+v", err)
-		// get caller identity
-		streq := &sts.GetCallerIdentityInput{}
-		sc := sts.New(sess)
-		r, err := sc.GetCallerIdentity(streq)
-		if err != nil {
+		if err := d.LogIdentity(); err != nil {
 			l.Errorf("%+v", err)
-		} else {
-			l.Debugf("%+v", r)
 		}
 		return err
 
 	}
 	d.Client = s3.New(sess, cfg)
+	d.sts = &STSSession{
+		Session: sess,
+		Config:  cfg,
+	}
 	return err
 }
 
@@ -227,6 +248,9 @@ func (d *S3) getObject() (io.Reader, error) {
 	resp, err := d.Client.GetObject(g)
 	if err != nil {
 		l.Errorf("%+v", err)
+		if err := d.LogIdentity(); err != nil {
+			l.Errorf("%+v", err)
+		}
 		return nil, err
 	}
 	return resp.Body, nil
@@ -264,6 +288,9 @@ func (d *S3) findObjectByPrefix() (io.Reader, error) {
 	ns, err := d.Client.GetObject(ng)
 	if err != nil {
 		l.Errorf("%+v", err)
+		if err := d.LogIdentity(); err != nil {
+			l.Errorf("%+v", err)
+		}
 		return nil, err
 	}
 	return ns.Body, nil
@@ -328,6 +355,9 @@ FindKey:
 	resp, err := d.Client.GetObject(g)
 	if err != nil {
 		l.Errorf("%+v", err)
+		if err := d.LogIdentity(); err != nil {
+			l.Errorf("%+v", err)
+		}
 		return nil, err
 	}
 	return resp.Body, nil
@@ -346,6 +376,9 @@ func (d *S3) deleteObject() error {
 	_, err := d.Client.DeleteObject(g)
 	if err != nil {
 		l.Errorf("%+v", err)
+		if err := d.LogIdentity(); err != nil {
+			l.Errorf("%+v", err)
+		}
 		return err
 	}
 	return nil
@@ -375,6 +408,9 @@ func (d *S3) mvObject(destBucket string, destKey string) error {
 	}
 	if err := d.deleteObject(); err != nil {
 		l.Errorf("%+v", err)
+		if err := d.LogIdentity(); err != nil {
+			l.Errorf("%+v", err)
+		}
 		return err
 	}
 	return nil

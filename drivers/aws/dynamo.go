@@ -20,6 +20,7 @@ import (
 
 type Dynamo struct {
 	Client           *dynamodb.DynamoDB
+	sts              *STSSession
 	Table            string
 	Region           string
 	RoleARN          string
@@ -29,6 +30,28 @@ type Dynamo struct {
 	ClearQuery       *string
 	FailQuery        *string
 	Key              *string
+}
+
+func (d *Dynamo) LogIdentity() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "aws",
+		"fn":  "LogIdentity",
+	})
+	l.Debug("LogIdentity")
+	streq := &sts.GetCallerIdentityInput{}
+	var sc *sts.STS
+	if d.sts.Config != nil {
+		sc = sts.New(d.sts.Session, d.sts.Config)
+	} else {
+		sc = sts.New(d.sts.Session)
+	}
+	r, err := sc.GetCallerIdentity(streq)
+	if err != nil {
+		l.Errorf("%+v", err)
+	} else {
+		l.Debugf("%+v", r)
+	}
+	return nil
 }
 
 func (d *Dynamo) LoadEnv(prefix string) error {
@@ -120,19 +143,17 @@ func (d *Dynamo) Init() error {
 	}
 	if err != nil {
 		l.Errorf("%+v", err)
-		// get caller identity
-		streq := &sts.GetCallerIdentityInput{}
-		sc := sts.New(sess)
-		r, err := sc.GetCallerIdentity(streq)
-		if err != nil {
+		if err := d.LogIdentity(); err != nil {
 			l.Errorf("%+v", err)
-		} else {
-			l.Debugf("%+v", r)
 		}
 		return err
 
 	}
 	d.Client = dynamodb.New(sess, cfg)
+	d.sts = &STSSession{
+		Session: sess,
+		Config:  cfg,
+	}
 	return err
 }
 
@@ -153,6 +174,9 @@ func (d *Dynamo) GetWork() (io.Reader, error) {
 	resp, err := d.Client.ExecuteStatement(&statement)
 	if err != nil {
 		l.Errorf("%+v", err)
+		if err := d.LogIdentity(); err != nil {
+			l.Errorf("%+v", err)
+		}
 		return nil, err
 	}
 	l.Debug("GetWork response=%+v", resp)
@@ -215,6 +239,9 @@ func (d *Dynamo) ClearWork() error {
 	_, err := d.Client.ExecuteStatement(&statement)
 	if err != nil {
 		l.Errorf("%+v", err)
+		if err := d.LogIdentity(); err != nil {
+			l.Errorf("%+v", err)
+		}
 		return err
 	}
 	return nil
@@ -241,6 +268,9 @@ func (d *Dynamo) HandleFailure() error {
 	_, err := d.Client.ExecuteStatement(&statement)
 	if err != nil {
 		l.Errorf("%+v", err)
+		if err := d.LogIdentity(); err != nil {
+			l.Errorf("%+v", err)
+		}
 		return err
 	}
 	return nil
