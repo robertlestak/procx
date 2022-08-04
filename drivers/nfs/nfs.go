@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/robertlestak/procx/pkg/flags"
 	log "github.com/sirupsen/logrus"
 	"github.com/vmware/go-nfs-client/nfs"
@@ -144,6 +145,18 @@ func (d *NFS) LoadFlags() error {
 	return nil
 }
 
+func hostname() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"pkg": "aws",
+			"fn":  "hostname",
+		}).Error("Failed to get hostname")
+		return uuid.New().String()
+	}
+	return hostname
+}
+
 func (d *NFS) Init() error {
 	l := log.WithFields(
 		log.Fields{
@@ -156,7 +169,7 @@ func (d *NFS) Init() error {
 	if err != nil {
 		log.Fatalf("unable to dial MOUNT service: %v", err)
 	}
-	auth := rpc.NewAuthUnix("hasselhoff", 1001, 1001)
+	auth := rpc.NewAuthUnix(hostname(), 1001, 1001)
 	v, err := mount.Mount(d.Target, auth.Auth())
 	if err != nil {
 		log.Fatalf("unable to mount volume: %v", err)

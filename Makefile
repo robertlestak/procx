@@ -1,4 +1,4 @@
-VERSION=v0.0.23
+VERSION=v0.0.24
 
 .PHONY: procx
 procx: clean bin/procx_darwin bin/procx_windows bin/procx_linux
