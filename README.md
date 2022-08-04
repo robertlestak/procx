@@ -27,6 +27,7 @@ Currently, the following drivers are supported:
 - PostgreSQL (`postgres`)
 - MongoDB (`mongodb`)
 - MySQL (`mysql`)
+- NFS (`nfs`)
 - RabbitMQ (`rabbitmq`)
 - Redis List (`redis-list`)
 - Redis Pub/Sub (`redis-pubsub`)
@@ -194,6 +195,36 @@ Usage: procx [options] [process]
     	MySQL retrieve query
   -mysql-user string
     	MySQL user
+  -nfs-clear-folder string
+    	NFS clear folder, if clear op is mv
+  -nfs-clear-key string
+    	NFS clear key, if clear op is mv. default is origional key name.
+  -nfs-clear-key-template string
+    	NFS clear key template, if clear op is mv.
+  -nfs-clear-op string
+    	NFS clear operation. Valid values: mv, rm
+  -nfs-fail-folder string
+    	NFS fail folder, if fail op is mv
+  -nfs-fail-key string
+    	NFS fail key, if fail op is mv. default is original key name.
+  -nfs-fail-key-template string
+    	NFS fail key template, if fail op is mv.
+  -nfs-fail-op string
+    	NFS fail operation. Valid values: mv, rm
+  -nfs-folder string
+    	NFS folder
+  -nfs-host string
+    	NFS host
+  -nfs-key string
+    	NFS key
+  -nfs-key-prefix string
+    	NFS key prefix
+  -nfs-key-regex string
+    	NFS key regex
+  -nfs-mount-path string
+    	NFS mount path
+  -nfs-target string
+    	NFS target
   -pass-work-as-arg
     	pass work as an argument
   -payload-file string
@@ -302,6 +333,22 @@ Usage: procx [options] [process]
 - `PROCX_MYSQL_RETRIEVE_PARAMS`
 - `PROCX_MYSQL_RETRIEVE_QUERY`
 - `PROCX_MYSQL_USER`
+- `PROCX_NFS_FAIL_OP`
+- `PROCX_NFS_FOLDER`
+- `PROCX_NFS_HOST`
+- `PROCX_NFS_KEY`
+- `PROCX_NFS_KEY_PREFIX`
+- `PROCX_NFS_KEY_REGEX`
+- `PROCX_NFS_MOUNT_PATH`
+- `PROCX_NFS_TARGET`
+- `PROCX_NFS_CLEAR_OP`
+- `PROCX_NFS_FAIL_OP`
+- `PROCX_NFS_CLEAR_FOLDER`
+- `PROCX_NFS_FAIL_FOLDER`
+- `PROCX_NFS_CLEAR_KEY`
+- `PROCX_NFS_FAIL_KEY`
+- `PROCX_NFS_CLEAR_KEY_TEMPLATE`
+- `PROCX_NFS_FAIL_KEY_TEMPLATE`
 - `PROCX_PASS_WORK_AS_ARG`
 - `PROCX_PAYLOAD_FILE`
 - `PROCX_PSQL_CLEAR_PARAMS`
@@ -464,6 +511,25 @@ procx \
     -mysql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = ? and id = ?" \
     -mysql-fail-params "myqueue,{{key}}" \
     -driver mysql \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### NFS
+
+The NFS driver will mount the specified NFS directory, and retrieve the first file which matches the specified key. Similar to the AWS S3 driver, the NFS driver supports `-nfs-key`, `-nfs-key-prefix`, and `-nfs-key-regex` selection flags. Upon completion, the file can either be moved to a different folder in the NFS, or it can be deleted, with the `-nfs-clear-op` and `-nfs-fail-op` flags (`mv` or `rm`). You can specify the target folder with the `-nfs-clear-folder` and `-nfs-fail-folder` flags, and the `-nfs-clear-key` and `-nfs-fail-key` flags let you rename the file on move. You can also use the `-nfs-clear-key-template` and `-nfs-fail-key-template` flags to specify a template for the key, which will be replaced with the key.
+
+```bash
+procx \
+    -nfs-host nfs.example.com \
+    -nfs-target /path/to/nfs \
+    -nfs-key-prefix "my-prefix" \
+    -nfs-clear-op mv \
+    -nfs-clear-folder cleared \
+    -nfs-clear-key-template "cleared_{{key}}" \
+    -nfs-fail-op mv \
+    -nfs-fail-folder failed \
+    -nfs-fail-key-template "failed_{{key}}" \
+    -driver nfs \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 

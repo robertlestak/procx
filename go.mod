@@ -14,6 +14,7 @@ require (
 	github.com/robertlestak/centauri v0.0.2
 	github.com/sirupsen/logrus v1.9.0
 	github.com/tidwall/gjson v1.14.1
+	github.com/vmware/go-nfs-client v0.0.0-20190605212624-d43b92724c1b
 	go.mongodb.org/mongo-driver v1.10.0
 )
 
@@ -44,6 +45,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.20.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
