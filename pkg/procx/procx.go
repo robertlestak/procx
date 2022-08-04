@@ -3,6 +3,7 @@ package procx
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 
@@ -105,12 +106,12 @@ func (j *ProcX) DoWork() error {
 }
 
 func (j *ProcX) PayloadString() string {
-	var buf bytes.Buffer
-	_, err := io.Copy(&buf, j.work)
+	d, err := ioutil.ReadAll(j.work)
 	if err != nil {
 		return ""
 	}
-	return buf.String()
+	j.work = ioutil.NopCloser(bytes.NewBuffer(d))
+	return string(d)
 }
 
 // Exec will execute the given script, streaming the output to the provided
