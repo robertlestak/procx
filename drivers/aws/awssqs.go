@@ -122,6 +122,10 @@ func (d *SQS) Init() error {
 
 	}
 	d.Client = sqs.New(sess, cfg)
+	d.sts = &STSSession{
+		Session: sess,
+		Config:  cfg,
+	}
 	return err
 }
 

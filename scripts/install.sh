@@ -40,7 +40,7 @@ install_bin() {
   FILE_NAME="${name}_${PLATFORM}"
   DL="${LATEST_DOWNLOAD_PREFIX}${FILE_NAME}"
   echo "install_bin: downloading $DL"
-  CURL -s -L $DL > $FILE_NAME
+  curl -s -L $DL > $FILE_NAME
   chmod +x $FILE_NAME
   mv $FILE_NAME $(install_dir)/$name
 }
