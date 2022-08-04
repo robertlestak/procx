@@ -15,8 +15,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type STSSession struct {
+	Session *session.Session
+	Config  *aws.Config
+}
+
 type SQS struct {
 	Client        *sqs.SQS
+	sts           *STSSession
 	Queue         string
 	ReceiptHandle string
 	Region        string
@@ -59,6 +65,28 @@ func (d *SQS) LoadFlags() error {
 	return nil
 }
 
+func (d *SQS) LogIdentity() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "aws",
+		"fn":  "LogIdentity",
+	})
+	l.Debug("LogIdentity")
+	streq := &sts.GetCallerIdentityInput{}
+	var sc *sts.STS
+	if d.sts.Config != nil {
+		sc = sts.New(d.sts.Session, d.sts.Config)
+	} else {
+		sc = sts.New(d.sts.Session)
+	}
+	r, err := sc.GetCallerIdentity(streq)
+	if err != nil {
+		l.Errorf("%+v", err)
+	} else {
+		l.Debugf("%+v", r)
+	}
+	return nil
+}
+
 func (d *SQS) Init() error {
 	l := log.WithFields(
 		log.Fields{
@@ -87,14 +115,8 @@ func (d *SQS) Init() error {
 	}
 	if err != nil {
 		l.Errorf("%+v", err)
-		// get caller identity
-		streq := &sts.GetCallerIdentityInput{}
-		sc := sts.New(sess)
-		r, err := sc.GetCallerIdentity(streq)
-		if err != nil {
+		if err := d.LogIdentity(); err != nil {
 			l.Errorf("%+v", err)
-		} else {
-			l.Debugf("%+v", r)
 		}
 		return err
 
@@ -127,6 +149,9 @@ func (d *SQS) GetWork() (io.Reader, error) {
 	}
 	m, err := d.Client.ReceiveMessage(rmi)
 	if err != nil {
+		if err := d.LogIdentity(); err != nil {
+			l.Errorf("%+v", err)
+		}
 		return nil, err
 	}
 	if len(m.Messages) < 1 {
@@ -149,6 +174,9 @@ func (d *SQS) ClearWork() error {
 	}
 	_, err := d.Client.DeleteMessage(di)
 	if err != nil {
+		if err := d.LogIdentity(); err != nil {
+			l.Errorf("%+v", err)
+		}
 		return err
 	}
 	return nil
