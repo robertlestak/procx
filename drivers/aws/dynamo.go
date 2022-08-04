@@ -3,6 +3,7 @@ package aws
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"strings"
 
@@ -123,7 +124,7 @@ func (d *Dynamo) Init() error {
 	return err
 }
 
-func (d *Dynamo) GetWork() (*string, error) {
+func (d *Dynamo) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"fn":  "GetWork",
 		"pkg": "aws",
@@ -178,7 +179,7 @@ func (d *Dynamo) GetWork() (*string, error) {
 			rd = &k
 		}
 	}
-	return rd, nil
+	return strings.NewReader(*rd), nil
 }
 
 func (d *Dynamo) ClearWork() error {

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -181,7 +182,7 @@ func (d *Mysql) Init() error {
 	return nil
 }
 
-func (d *Mysql) GetWork() (*string, error) {
+func (d *Mysql) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "mysql",
 		"fn":  "GetWork",
@@ -210,7 +211,7 @@ func (d *Mysql) GetWork() (*string, error) {
 	}
 	d.Key = &key
 	l.Debug("Got work")
-	return &result, nil
+	return strings.NewReader(result), nil
 }
 
 func (d *Mysql) ClearWork() error {

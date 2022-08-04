@@ -2,7 +2,9 @@ package redis
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -74,7 +76,7 @@ func (d *RedisPubSub) Init() error {
 	return nil
 }
 
-func (d *RedisPubSub) GetWork() (*string, error) {
+func (d *RedisPubSub) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "redis",
 		"fn":  "GetWork",
@@ -95,7 +97,7 @@ func (d *RedisPubSub) GetWork() (*string, error) {
 			continue
 		}
 		l.Debug("Received message")
-		return &msg.Payload, nil
+		return strings.NewReader(msg.Payload), nil
 	}
 }
 

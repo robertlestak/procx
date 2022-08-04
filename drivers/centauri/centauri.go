@@ -1,7 +1,9 @@
 package centauri
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"os"
 	"sort"
 
@@ -72,7 +74,7 @@ func (d *Centauri) Init() error {
 	return nil
 }
 
-func (d *Centauri) GetWork() (*string, error) {
+func (d *Centauri) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "centauri",
 		"fn":  "GetWork",
@@ -112,13 +114,9 @@ func (d *Centauri) GetWork() (*string, error) {
 		l.Errorf("error getting message %s: %v", id, err)
 		return nil, err
 	}
-	var result string
-	if m.Data != nil {
-		result = string(m.Data)
-	}
 	l.Debugf("message: %v", m)
-	l.Debugf("result: %s", result)
-	return &result, nil
+	l.Debugf("result: %s", string(m.Data))
+	return bytes.NewReader(m.Data), nil
 }
 
 func (d *Centauri) ClearWork() error {

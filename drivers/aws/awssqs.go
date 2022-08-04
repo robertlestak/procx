@@ -1,7 +1,9 @@
 package aws
 
 import (
+	"io"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
@@ -89,7 +91,7 @@ func (d *SQS) Init() error {
 	return err
 }
 
-func (d *SQS) GetWork() (*string, error) {
+func (d *SQS) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "aws",
 		"fn":  "GetWork",
@@ -120,7 +122,7 @@ func (d *SQS) GetWork() (*string, error) {
 	}
 	md := m.Messages[0]
 	d.ReceiptHandle = *md.ReceiptHandle
-	return md.Body, nil
+	return strings.NewReader(*md.Body), nil
 }
 
 func (d *SQS) ClearWork() error {

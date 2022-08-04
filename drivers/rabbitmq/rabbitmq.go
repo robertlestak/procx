@@ -1,6 +1,8 @@
 package rabbitmq
 
 import (
+	"bytes"
+	"io"
 	"os"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -54,7 +56,7 @@ func (d *RabbitMQ) Init() error {
 	return nil
 }
 
-func (d *RabbitMQ) GetWork() (*string, error) {
+func (d *RabbitMQ) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "rabbitmq",
 		"fn":  "GetWork",
@@ -78,8 +80,7 @@ func (d *RabbitMQ) GetWork() (*string, error) {
 	if msg.Body == nil {
 		return nil, nil
 	}
-	sd := string(msg.Body)
-	return &sd, nil
+	return bytes.NewReader(msg.Body), nil
 }
 
 func (d *RabbitMQ) ClearWork() error {

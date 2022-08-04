@@ -6,11 +6,13 @@ procx is a single compiled binary that can be packaged in your existing job code
 
 procx will retrieve the next job from the queue, and pass it to the process. Upon success (exit code 0), procx will mark the job as complete. Upon failure (exit code != 0), procx will mark the job as failed to be requeued.
 
-procx will make the job payload available in the `PROCX_PAYLOAD` environment variable. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments.
-
 By default, the subprocess spawned by procx will not have access to the host environment variables. This can be changed by setting the `-hostenv` flag.
 
 By default, procx will connect to the data source, consume a single message, and then exit when the spawned process exits. If the `-daemon` flag is set, procx will connect to the data source and consume messages until the process is killed, or until a job fails.
+
+## Payload
+
+By default, procx will export the payload as an environment variable `PROCX_PAYLOAD`. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments, and if the `-payload-file` flag is set, the payload will be written to the specified file path. procx will clean up the file at the end of the job, unless you pass `-keep-payload-file`.
 
 ## Drivers
 
@@ -62,7 +64,7 @@ While building for a specific driver may seem contrary to the ethos of procx, th
 ## Usage
 
 ```bash
-procx [flags] <process path>
+Usage: procx [options] [process]
   -aws-dynamo-clear-query string
     	AWS DynamoDB clear query
   -aws-dynamo-data-path string
@@ -123,6 +125,8 @@ procx [flags] <process path>
     	GCP Pub/Sub subscription name
   -hostenv
     	use host environment
+  -keep-payload-file
+    	keep payload file after processing
   -mongo-clear-query string
     	MongoDB clear query
   -mongo-collection string
@@ -167,6 +171,8 @@ procx [flags] <process path>
     	MySQL user
   -pass-work-as-arg
     	pass work as an argument
+  -payload-file string
+    	file to write payload to
   -psql-clear-params string
     	PostgreSQL clear params
   -psql-clear-query string
@@ -237,6 +243,7 @@ procx [flags] <process path>
 - `PROCX_GCP_PUBSUB_SUBSCRIPTION`
 - `PROCX_DRIVER`
 - `PROCX_HOSTENV`
+- `PROCX_KEEP_PAYLOAD_FILE`
 - `PROCX_MONGO_CLEAR_QUERY`
 - `PROCX_MONGO_COLLECTION`
 - `PROCX_MONGO_DATABASE`
@@ -259,6 +266,7 @@ procx [flags] <process path>
 - `PROCX_MYSQL_RETRIEVE_QUERY`
 - `PROCX_MYSQL_USER`
 - `PROCX_PASS_WORK_AS_ARG`
+- `PROCX_PAYLOAD_FILE`
 - `PROCX_PSQL_CLEAR_PARAMS`
 - `PROCX_PSQL_CLEAR_QUERY`
 - `PROCX_PSQL_DATABASE`

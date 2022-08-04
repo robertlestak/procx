@@ -1,10 +1,12 @@
 package mongo
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -122,7 +124,7 @@ func (d *Mongo) Init() error {
 	return nil
 }
 
-func (d *Mongo) GetWork() (*string, error) {
+func (d *Mongo) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "mongo",
 		"fn":  "GetWork",
@@ -133,7 +135,6 @@ func (d *Mongo) GetWork() (*string, error) {
 		return nil, errors.New("query is empty")
 	}
 	var err error
-	var result string
 	var key string
 	coll := d.Client.Database(d.DB).Collection(d.Collection)
 	// unmarshal query string into struct
@@ -164,9 +165,8 @@ func (d *Mongo) GetWork() (*string, error) {
 		l.Error(err)
 		return nil, err
 	}
-	result = string(jd)
 	d.Key = &key
-	return &result, nil
+	return bytes.NewReader(jd), nil
 }
 
 func (d *Mongo) ClearWork() error {

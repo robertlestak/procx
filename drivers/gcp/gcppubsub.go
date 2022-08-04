@@ -1,7 +1,9 @@
 package gcp
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"os"
 
 	"cloud.google.com/go/pubsub"
@@ -56,7 +58,7 @@ func (d *GCPPubSub) Init() error {
 	return nil
 }
 
-func (d *GCPPubSub) GetWork() (*string, error) {
+func (d *GCPPubSub) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "gcp",
 		"fn":  "GetWork",
@@ -80,8 +82,7 @@ func (d *GCPPubSub) GetWork() (*string, error) {
 	if msgData == nil {
 		return nil, nil
 	}
-	sd := string(msgData.Data)
-	return &sd, nil
+	return bytes.NewReader(msgData.Data), nil
 }
 
 func (d *GCPPubSub) ClearWork() error {

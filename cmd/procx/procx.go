@@ -54,6 +54,15 @@ func LoadEnv(prefix string) error {
 		t := r == "true"
 		flags.Daemon = &t
 	}
+	if os.Getenv(prefix+"PAYLOAD_FILE") != "" {
+		r := os.Getenv(prefix + "PAYLOAD_FILE")
+		flags.PayloadFile = &r
+	}
+	if os.Getenv(prefix+"KEEP_PAYLOAD_FILE") != "" {
+		r := os.Getenv(prefix + "KEEP_PAYLOAD_FILE")
+		t := r == "true"
+		flags.KeepPayloadFile = &t
+	}
 	return nil
 }
 
@@ -66,6 +75,12 @@ func run(j *procx.ProcX) {
 	if err := j.DoWork(); err != nil {
 		l.Errorf("failed to do work: %s", err)
 		os.Exit(1)
+	}
+	if j.PayloadFile != "" && !j.KeepPayloadFile {
+		l.Debug("removing payload file")
+		if err := os.Remove(j.PayloadFile); err != nil {
+			l.WithError(err).Error("failed to remove payload file")
+		}
 	}
 }
 
@@ -106,9 +121,11 @@ func main() {
 		os.Exit(1)
 	}
 	j := &procx.ProcX{
-		DriverName:    drivers.DriverName(*flags.Driver),
-		HostEnv:       *flags.HostEnv,
-		PassWorkAsArg: *flags.PassWorkAsArg,
+		DriverName:      drivers.DriverName(*flags.Driver),
+		HostEnv:         *flags.HostEnv,
+		PassWorkAsArg:   *flags.PassWorkAsArg,
+		PayloadFile:     *flags.PayloadFile,
+		KeepPayloadFile: *flags.KeepPayloadFile,
 	}
 	if err := j.Init(EnvKeyPrefix); err != nil {
 		l.WithError(err).Error("InitDriver")

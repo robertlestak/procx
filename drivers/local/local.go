@@ -1,7 +1,9 @@
 package local
 
 import (
+	"io"
 	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -32,21 +34,21 @@ func (d *Local) Init() error {
 		"pkg": "local",
 		"fn":  "Init",
 	})
-	l.Debug("Initializing rabbitmq driver")
+	l.Debug("Initializing local driver")
 	return nil
 }
 
-func (d *Local) GetWork() (*string, error) {
+func (d *Local) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "local",
 		"fn":  "GetWork",
 	})
-	l.Debug("Getting work from rabbitmq")
+	l.Debug("Getting work from local")
 	w := os.Getenv("PROCX_PAYLOAD")
 	if w == "" {
 		return nil, nil
 	}
-	return &w, nil
+	return strings.NewReader(w), nil
 }
 
 func (d *Local) ClearWork() error {
@@ -54,7 +56,7 @@ func (d *Local) ClearWork() error {
 		"pkg": "local",
 		"fn":  "ClearWork",
 	})
-	l.Debug("Clearing work from rabbitmq")
+	l.Debug("Clearing work from local")
 	return nil
 }
 
@@ -63,7 +65,7 @@ func (d *Local) HandleFailure() error {
 		"pkg": "local",
 		"fn":  "ClearWork",
 	})
-	l.Debug("Clearing work from rabbitmq")
+	l.Debug("Clearing work from local")
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -185,7 +186,7 @@ func (d *Postgres) Init() error {
 	return nil
 }
 
-func (d *Postgres) GetWork() (*string, error) {
+func (d *Postgres) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "postgres",
 		"fn":  "GetWork",
@@ -214,7 +215,7 @@ func (d *Postgres) GetWork() (*string, error) {
 	}
 	d.Key = &key
 	l.Debug("Got work")
-	return &result, nil
+	return strings.NewReader(result), nil
 }
 
 func (d *Postgres) ClearWork() error {

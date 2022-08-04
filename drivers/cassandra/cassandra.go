@@ -1,6 +1,7 @@
 package cassandra
 
 import (
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -173,7 +174,7 @@ func (d *Cassandra) Init() error {
 	return nil
 }
 
-func (d *Cassandra) GetWork() (*string, error) {
+func (d *Cassandra) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "cassandra",
 		"fn":  "GetWork",
@@ -196,7 +197,7 @@ func (d *Cassandra) GetWork() (*string, error) {
 	}
 	l.Debug("Got work")
 	d.Key = &key
-	return &result, nil
+	return strings.NewReader(result), nil
 }
 
 func (d *Cassandra) ClearWork() error {
