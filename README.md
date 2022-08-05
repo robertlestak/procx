@@ -23,6 +23,7 @@ Currently, the following drivers are supported:
 - [AWS SQS](#aws-sqs) (`aws-sqs`)
 - [Cassandra](#cassandra) (`cassandra`)
 - [Centauri](#centauri) (`centauri`)
+- [GCP GCS](#gcp-gcs) (`gcp-gcs`)
 - [GCP Pub/Sub](#gcp-pubsub) (`gcp-pubsub`)
 - [PostgreSQL](#postgresql) (`postgres`)
 - [MongoDB](#mongodb) (`mongodb`)
@@ -48,7 +49,12 @@ curl -SsL https://raw.githubusercontent.com/robertlestak/procx/main/scripts/inst
 Depending on the path of `INSTALL_DIR` and the permissions of the user running the installation script, you may get a Permission Denied error if you are trying to move the binary into a location which your current user does not have access to. This is most often the case when running the script as a non-root user yet trying to install into `/usr/local/bin`. To fix this, you can either:
 
 Create a `$HOME/bin` directory in your current user home directory. This will be the default installation directory. Be sure to add this to your `$PATH` environment variable.
-Use `sudo` to run the installation script, to install into `/usr/local/bin` (`curl -SsL https://raw.githubusercontent.com/robertlestak/procx/main/scripts/install.sh | sudo bash -e`).
+
+Use `sudo` to run the installation script, to install into `/usr/local/bin` 
+
+```bash
+curl -SsL https://raw.githubusercontent.com/robertlestak/procx/main/scripts/install.sh | sudo bash -e
+```
 
 ### Build From Source
 
@@ -144,7 +150,31 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
+    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, gcp-gcs, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
+  -gcp-gcs-bucket string
+    	GCP GCS bucket
+  -gcp-gcs-clear-bucket string
+    	GCP GCS clear bucket, if clear op is mv
+  -gcp-gcs-clear-key string
+    	GCP GCS clear key, if clear op is mv. default is origional key name.
+  -gcp-gcs-clear-key-template string
+    	GCP GCS clear key template, if clear op is mv.
+  -gcp-gcs-clear-op string
+    	GCP GCS clear operation. Valid values: mv, rm
+  -gcp-gcs-fail-bucket string
+    	GCP GCS fail bucket, if fail op is mv
+  -gcp-gcs-fail-key string
+    	GCP GCS fail key, if fail op is mv. default is original key name.
+  -gcp-gcs-fail-key-template string
+    	GCP GCS fail key template, if fail op is mv.
+  -gcp-gcs-fail-op string
+    	GCP GCS fail operation. Valid values: mv, rm
+  -gcp-gcs-key string
+    	GCP GCS key
+  -gcp-gcs-key-prefix string
+    	GCP GCS key prefix
+  -gcp-gcs-key-regex string
+    	GCP GCS key regex
   -gcp-project-id string
     	GCP project ID
   -gcp-pubsub-subscription string
@@ -308,6 +338,18 @@ Usage: procx [options] [process]
 - `PROCX_CENTAURI_KEY`
 - `PROCX_CENTAURI_PEER_URL`
 - `PROCX_GCP_PROJECT_ID`
+- `PROCX_GCP_GCS_BUCKET`
+- `PROCX_GCP_GCS_KEY`
+- `PROCX_GCP_GCS_KEY_PREFIX`
+- `PROCX_GCP_GCS_KEY_REGEX`
+- `PROCX_GCP_GCS_CLEAR_BUCKET`
+- `PROCX_GCP_GCS_CLEAR_KEY`
+- `PROCX_GCP_GCS_CLEAR_KEY_TEMPLATE`
+- `PROCX_GCP_GCS_CLEAR_OP`
+- `PROCX_GCP_GCS_FAIL_BUCKET`
+- `PROCX_GCP_GCS_FAIL_KEY`
+- `PROCX_GCP_GCS_FAIL_KEY_TEMPLATE`
+- `PROCX_GCP_GCS_FAIL_OP`
 - `PROCX_GCP_PUBSUB_SUBSCRIPTION`
 - `PROCX_DRIVER`
 - `PROCX_HOSTENV`
@@ -462,6 +504,27 @@ procx \
     -centauri-peer-url https://api.test-peer1.centauri.sh \
     -driver centauri \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### GCP GCS (Cloud Storage)
+
+The GCS driver will retrieve the first object which matches the specified input within the bucket. If `-gcp-gcs-key` is provided, this exact key will be retrieved. If `-gcp-gcs-key-prefix` is provided, this will be used as a prefix to select the first matching object. Finally, if `-gcp-gcs-key-regex` is provided, this will be used as a regular expression to select the first matching object.
+
+Upon completion of the work, the object can either be deleted from the bucket, or moved to a different bucket, with `-gcp-gcs-clear-op=[mv|rm]` and `-gcp-gcs-clear-bucket` flags. Similarly for failed executions, the object can either be deleted from the bucket, or moved to a different bucket, with `-gcp-gcs-fail-op=[mv|rm]` and `-gcp-gcs-fail-bucket` flags. 
+
+By default, if the object is moved the key will be the same as the source key, this can be overridden with the `-gcp-gcs-clear-key` and `-gcp-gcs-fail-key` flags. You can also provide a `-gcp-gcs-clear-key-template` and/or `-gcp-gcs-fail-key-template` flag to use a templated key - this is useful if you have used the prefix or regex selector and want to retain the object key but rename the file.
+
+```bash
+procx \
+    -driver gcp-gcs \
+    -payload-file my-payload.json \
+    -gcp-gcs-bucket my-bucket \
+    -gcp-gcs-key-regex 'jobs-.*?[a-z]' \
+    -gcp-gcs-clear-op=rm \
+    -gcp-gcs-fail-op=mv \
+    -gcp-gcs-fail-bucket my-bucket-completed \
+    -gcp-gcs-fail-key-template 'fail/{{key}}' \
+    bash -c 'echo the payload is: $(cat my-payload.json)'
 ```
 
 ### GCP Pub/Sub

@@ -425,6 +425,9 @@ func (d *S3) ClearWork() error {
 	if d.ClearOp == nil {
 		return nil
 	}
+	if d.ClearOp.Operation == "" {
+		return nil
+	}
 	switch d.ClearOp.Operation {
 	case S3OperationRM:
 		return d.deleteObject()
@@ -446,6 +449,9 @@ func (d *S3) HandleFailure() error {
 	})
 	l.Debug("HandleFailure")
 	if d.FailOp == nil {
+		return nil
+	}
+	if d.FailOp.Operation == "" {
 		return nil
 	}
 	switch d.FailOp.Operation {
