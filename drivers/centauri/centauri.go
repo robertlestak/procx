@@ -2,6 +2,7 @@ package centauri
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"io"
 	"os"
@@ -35,7 +36,16 @@ func (d *Centauri) LoadEnv(prefix string) error {
 	}
 	if os.Getenv(prefix+"CENTAURI_KEY") != "" {
 		v := os.Getenv(prefix + "CENTAURI_KEY")
-		d.Key = &v
+		d.PrivateKey = []byte(v)
+	}
+	if os.Getenv(prefix+"CENTAURI_KEY_BASE64") != "" {
+		v := os.Getenv(prefix + "CENTAURI_KEY_BASE64")
+		dec, err := base64.StdEncoding.DecodeString(v)
+		if err != nil {
+			l.Errorf("error decoding base64: %v", err)
+			return err
+		}
+		d.PrivateKey = dec
 	}
 	return nil
 }
@@ -46,13 +56,22 @@ func (d *Centauri) LoadFlags() error {
 		"fn":  "LoadFlags",
 	})
 	l.Debug("Loading flags")
-	if flags.CentauriKey == nil || (flags.CentauriKey != nil && *flags.CentauriKey == "") {
-		return errors.New("key required")
-	}
-	kd := []byte(*flags.CentauriKey)
 	d.URL = *flags.CentauriPeerURL
 	d.Channel = flags.CentauriChannel
-	d.PrivateKey = kd
+	if flags.CentauriKeyBase64 != nil {
+		kd, err := base64.StdEncoding.DecodeString(*flags.CentauriKeyBase64)
+		if err != nil {
+			l.Errorf("error decoding base64: %v", err)
+			return err
+		}
+		d.PrivateKey = kd
+	} else if flags.CentauriKey != nil {
+		if flags.CentauriKey == nil || (flags.CentauriKey != nil && *flags.CentauriKey == "") {
+			return errors.New("key required")
+		}
+		kd := []byte(*flags.CentauriKey)
+		d.PrivateKey = kd
+	}
 	return nil
 }
 

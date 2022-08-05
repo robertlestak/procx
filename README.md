@@ -146,6 +146,8 @@ Usage: procx [options] [process]
     	Centauri channel (default "default")
   -centauri-key string
     	Centauri key
+  -centauri-key-base64 string
+    	Centauri key base64
   -centauri-peer-url string
     	Centauri peer URL
   -daemon
@@ -347,6 +349,7 @@ Usage: procx [options] [process]
 - `PROCX_CASSANDRA_USER`
 - `PROCX_CENTAURI_CHANNEL`
 - `PROCX_CENTAURI_KEY`
+- `PROCX_CENTAURI_KEY_BASE64`
 - `PROCX_CENTAURI_PEER_URL`
 - `PROCX_GCP_PROJECT_ID`
 - `PROCX_GCP_BQ_CLEAR_QUERY`
@@ -511,7 +514,7 @@ procx \
 
 ### Centauri
 
-The `centauri` driver integrates with a [Centauri](https://centauri.sh) network to retrieve the next message from the specified channel, and pass it to the process. Upon successful completion of the process, it will delete the message from the network.
+The `centauri` driver integrates with a [Centauri](https://centauri.sh) network to retrieve the next message from the specified channel, and pass it to the process. Upon successful completion of the process, it will delete the message from the network. You can provide your private key either as `-centauri-key`, or as `-centauri-key-base64`.
 
 ```bash
 procx \
