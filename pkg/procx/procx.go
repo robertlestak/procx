@@ -125,23 +125,12 @@ func (j *ProcX) Exec(stdout, stderr io.Writer) error {
 		"driver": j.DriverName,
 	})
 	l.Debug("Exec")
-	// if the payload file is set, write the payload to the file
+	// if passing work as arg, add it to args
 	if j.PassWorkAsArg {
 		l.Debug("passing work as arg")
 		j.Args = append(j.Args, j.PayloadString())
 	}
 	cmd := exec.Command(j.Bin, j.Args...)
-	if j.PassWorkAsStdin {
-		stdin, err := cmd.StdinPipe()
-		if err != nil {
-			l.Error(err)
-			return err
-		}
-		go func() {
-			defer stdin.Close()
-			io.Copy(stdin, j.work)
-		}()
-	}
 	// set the stdout and stderr pipes
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
@@ -149,6 +138,7 @@ func (j *ProcX) Exec(stdout, stderr io.Writer) error {
 		l.Debug("setting host env")
 		cmd.Env = os.Environ()
 	}
+	// if the payload file is set, set the work to the file contents
 	if j.PayloadFile != "" {
 		l.Debug("writing payload to file")
 		f, err := os.Create(j.PayloadFile)
@@ -162,8 +152,22 @@ func (j *ProcX) Exec(stdout, stderr io.Writer) error {
 			l.Error(err)
 			return err
 		}
-	} else {
-		l.Debug("no payload file, exporting work")
+	}
+	if j.PassWorkAsStdin {
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			l.Error(err)
+			return err
+		}
+		go func() {
+			defer stdin.Close()
+			io.Copy(stdin, j.work)
+		}()
+	}
+	// if there is no payload file, and the payload is not passed as an arg nor stdin,
+	// pass the payload as env var
+	if j.PayloadFile == "" && !j.PassWorkAsArg && !j.PassWorkAsStdin {
+		l.Debug("exporting work")
 		// do not export payload to environment if output is file
 		// to prevent buffer overflow in the environment on large payloads
 		cmd.Env = append(cmd.Env, "PROCX_PAYLOAD="+j.PayloadString())
