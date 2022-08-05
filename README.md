@@ -23,7 +23,8 @@ Currently, the following drivers are supported:
 - [AWS SQS](#aws-sqs) (`aws-sqs`)
 - [Cassandra](#cassandra) (`cassandra`)
 - [Centauri](#centauri) (`centauri`)
-- [GCP GCS](#gcp-gcs) (`gcp-gcs`)
+- [GCP Big Query](#gcp-bq) (`gcp-bq`)
+- [GCP Cloud Storage](#gcp-gcs) (`gcp-gcs`)
 - [GCP Pub/Sub](#gcp-pubsub) (`gcp-pubsub`)
 - [PostgreSQL](#postgresql) (`postgres`)
 - [MongoDB](#mongodb) (`mongodb`)
@@ -150,7 +151,15 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, gcp-gcs, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
+    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, gcp-bq, gcp-gcs, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
+  -gcp-bq-clear-query string
+    	GCP BQ clear query
+  -gcp-bq-fail-query string
+    	GCP BQ fail query
+  -gcp-bq-query-key
+    	GCP BQ query returns key as first column and value as second column
+  -gcp-bq-retrieve-query string
+    	GCP BQ retrieve query
   -gcp-gcs-bucket string
     	GCP GCS bucket
   -gcp-gcs-clear-bucket string
@@ -340,6 +349,10 @@ Usage: procx [options] [process]
 - `PROCX_CENTAURI_KEY`
 - `PROCX_CENTAURI_PEER_URL`
 - `PROCX_GCP_PROJECT_ID`
+- `PROCX_GCP_BQ_CLEAR_QUERY`
+- `PROCX_GCP_BQ_FAIL_QUERY`
+- `PROCX_GCP_BQ_QUERY_KEY`
+- `PROCX_GCP_BQ_RETRIEVE_QUERY`
 - `PROCX_GCP_GCS_BUCKET`
 - `PROCX_GCP_GCS_KEY`
 - `PROCX_GCP_GCS_KEY_PREFIX`
@@ -506,6 +519,24 @@ procx \
     -centauri-key "$(</path/to/private.key)" \
     -centauri-peer-url https://api.test-peer1.centauri.sh \
     -driver centauri \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### GCP BQ
+
+The `gcp-bq` driver will retrieve the next message from the specified BigQuery table, and pass it to the process. Upon successful completion of the process, it will execute the specified query to update / remove the work from the table. By default, it is assumed that a single value (single column and row) is returned by `-gcp-bq-retrieve-query`. You can optionally set `-gcp-bq-query-key` and return a unique key column and work value as the second column. This then enables you to template your `-gcp-bq-clear-query` and `-gcp-bq-fail-query` queries with the `{{key}}` placeholder.
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/credentials.json"
+procx \
+    -gcp-bq-project my-project \
+    -gcp-bq-dataset my-dataset \
+    -gcp-bq-table my-table \
+    -gcp-bq-retrieve-query "SELECT id, work FROM mydatatest.mytable LIMIT 1" \
+    -gcp-bq-query-key \
+    -gcp-bq-clear-query "DELETE FROM my-table WHERE id = '{{key}}'" \
+    -gcp-bq-fail-query "UPDATE my-table SET status = 'failed' WHERE id = '{{key}}'" \
+    -driver gcp-bq \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 

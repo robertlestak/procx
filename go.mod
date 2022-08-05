@@ -3,6 +3,7 @@ module github.com/robertlestak/procx
 go 1.18
 
 require (
+	cloud.google.com/go/bigquery v1.8.0
 	cloud.google.com/go/pubsub v1.24.0
 	cloud.google.com/go/storage v1.22.1
 	github.com/aws/aws-sdk-go v1.44.61

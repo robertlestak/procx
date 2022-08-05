@@ -25,6 +25,7 @@ var (
 	DriverAWSDynamoDB       DriverName = "aws-dynamo"
 	DriverCassandraDB       DriverName = "cassandra"
 	DriverCentauriNet       DriverName = "centauri"
+	DriverGCPBQ             DriverName = "gcp-bq"
 	DriverGCPGCS            DriverName = "gcp-gcs"
 	DriverGCPPubSub         DriverName = "gcp-pubsub"
 	DriverPostgres          DriverName = "postgres"
@@ -51,6 +52,8 @@ func GetDriver(name DriverName) Driver {
 		return &cassandra.Cassandra{}
 	case DriverCentauriNet:
 		return &centauri.Centauri{}
+	case DriverGCPBQ:
+		return &gcp.BQ{}
 	case DriverGCPGCS:
 		return &gcp.GCS{}
 	case DriverGCPPubSub:

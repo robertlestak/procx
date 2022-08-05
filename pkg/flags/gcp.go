@@ -16,4 +16,9 @@ var (
 	GCPGCSFailBucket       = FlagSet.String("gcp-gcs-fail-bucket", "", "GCP GCS fail bucket, if fail op is mv")
 	GCPGCSFailKey          = FlagSet.String("gcp-gcs-fail-key", "", "GCP GCS fail key, if fail op is mv. default is original key name.")
 	GCPGCSFailKeyTemplate  = FlagSet.String("gcp-gcs-fail-key-template", "", "GCP GCS fail key template, if fail op is mv.")
+
+	GCPBQQueryKey      = FlagSet.Bool("gcp-bq-query-key", false, "GCP BQ query returns key as first column and value as second column")
+	GCPBQRetrieveQuery = FlagSet.String("gcp-bq-retrieve-query", "", "GCP BQ retrieve query")
+	GCPBQClearQuery    = FlagSet.String("gcp-bq-clear-query", "", "GCP BQ clear query")
+	GCPBQFailQuery     = FlagSet.String("gcp-bq-fail-query", "", "GCP BQ fail query")
 )
