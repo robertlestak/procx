@@ -49,6 +49,11 @@ func LoadEnv(prefix string) error {
 		t := r == "true"
 		flags.PassWorkAsArg = &t
 	}
+	if os.Getenv(prefix+"PASS_WORK_AS_STDIN") != "" {
+		r := os.Getenv(prefix + "PASS_WORK_AS_STDIN")
+		t := r == "true"
+		flags.PassWorkAsStdin = &t
+	}
 	if os.Getenv(prefix+"DAEMON") != "" {
 		r := os.Getenv(prefix + "DAEMON")
 		t := r == "true"
@@ -124,6 +129,7 @@ func main() {
 		DriverName:      drivers.DriverName(*flags.Driver),
 		HostEnv:         *flags.HostEnv,
 		PassWorkAsArg:   *flags.PassWorkAsArg,
+		PassWorkAsStdin: *flags.PassWorkAsStdin,
 		PayloadFile:     *flags.PayloadFile,
 		KeepPayloadFile: *flags.KeepPayloadFile,
 	}

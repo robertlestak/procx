@@ -12,7 +12,7 @@ By default, procx will connect to the data source, consume a single message, and
 
 ## Payload
 
-By default, procx will export the payload as an environment variable `PROCX_PAYLOAD`. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments, and if the `-payload-file` flag is set, the payload will be written to the specified file path. procx will clean up the file at the end of the job, unless you pass `-keep-payload-file`.
+By default, procx will export the payload as an environment variable `PROCX_PAYLOAD`. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments, and if the `-payload-file` flag is set, the payload will be written to the specified file path. procx will clean up the file at the end of the job, unless you pass `-keep-payload-file`. Finally, if `-pass-work-as-stdin` is set, the job payload will be piped to stdin of the process.
 
 ## Drivers
 
@@ -257,6 +257,8 @@ Usage: procx [options] [process]
     	NFS target
   -pass-work-as-arg
     	pass work as an argument
+  -pass-work-as-stdin
+    	pass work as stdin
   -payload-file string
     	file to write payload to
   -psql-clear-params string
@@ -392,6 +394,7 @@ Usage: procx [options] [process]
 - `PROCX_NFS_CLEAR_KEY_TEMPLATE`
 - `PROCX_NFS_FAIL_KEY_TEMPLATE`
 - `PROCX_PASS_WORK_AS_ARG`
+- `PROCX_PASS_WORK_AS_STDIN`
 - `PROCX_PAYLOAD_FILE`
 - `PROCX_PSQL_CLEAR_PARAMS`
 - `PROCX_PSQL_CLEAR_QUERY`

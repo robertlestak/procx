@@ -16,6 +16,7 @@ type ProcX struct {
 	DriverName      drivers.DriverName `json:"driverName"`
 	Driver          drivers.Driver     `json:"driver"`
 	PassWorkAsArg   bool               `json:"passWorkAsArg"`
+	PassWorkAsStdin bool               `json:"passWorkAsStdin"`
 	PayloadFile     string             `json:"payloadFile"`
 	KeepPayloadFile bool               `json:"KeepPayloadFile"`
 	HostEnv         bool               `json:"hostEnv"`
@@ -130,6 +131,17 @@ func (j *ProcX) Exec(stdout, stderr io.Writer) error {
 		j.Args = append(j.Args, j.PayloadString())
 	}
 	cmd := exec.Command(j.Bin, j.Args...)
+	if j.PassWorkAsStdin {
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			l.Error(err)
+			return err
+		}
+		go func() {
+			defer stdin.Close()
+			io.Copy(stdin, j.work)
+		}()
+	}
 	// set the stdout and stderr pipes
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
@@ -157,5 +169,15 @@ func (j *ProcX) Exec(stdout, stderr io.Writer) error {
 		cmd.Env = append(cmd.Env, "PROCX_PAYLOAD="+j.PayloadString())
 	}
 	// execute the command
-	return cmd.Run()
+	err := cmd.Start()
+	if err != nil {
+		l.Error(err)
+		return err
+	}
+	err = cmd.Wait()
+	if err != nil {
+		l.Error(err)
+		return err
+	}
+	return nil
 }
