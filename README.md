@@ -506,7 +506,7 @@ procx \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
-### GCP GCS (Cloud Storage)
+### GCP GCS
 
 The GCS driver will retrieve the first object which matches the specified input within the bucket. If `-gcp-gcs-key` is provided, this exact key will be retrieved. If `-gcp-gcs-key-prefix` is provided, this will be used as a prefix to select the first matching object. Finally, if `-gcp-gcs-key-regex` is provided, this will be used as a regular expression to select the first matching object.
 
@@ -515,6 +515,7 @@ Upon completion of the work, the object can either be deleted from the bucket, o
 By default, if the object is moved the key will be the same as the source key, this can be overridden with the `-gcp-gcs-clear-key` and `-gcp-gcs-fail-key` flags. You can also provide a `-gcp-gcs-clear-key-template` and/or `-gcp-gcs-fail-key-template` flag to use a templated key - this is useful if you have used the prefix or regex selector and want to retain the object key but rename the file.
 
 ```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
 procx \
     -driver gcp-gcs \
     -payload-file my-payload.json \
