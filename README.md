@@ -581,6 +581,7 @@ procx \
     -elasticsearch-fail-index my-index-failed \
     -driver elasticsearch \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
 
 ### GCP BQ
 
