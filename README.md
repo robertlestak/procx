@@ -27,6 +27,7 @@ Currently, the following drivers are supported:
 - [GCP Big Query](#gcp-bq) (`gcp-bq`)
 - [GCP Cloud Storage](#gcp-gcs) (`gcp-gcs`)
 - [GCP Pub/Sub](#gcp-pubsub) (`gcp-pubsub`)
+- [Kafka](#kafka) (`kafka`)
 - [PostgreSQL](#postgresql) (`postgres`)
 - [MongoDB](#mongodb) (`mongodb`)
 - [MySQL](#mysql) (`mysql`)
@@ -154,7 +155,7 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
+    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -217,6 +218,30 @@ Usage: procx [options] [process]
     	GCP Pub/Sub subscription name
   -hostenv
     	use host environment
+  -kafka-brokers string
+    	Kafka brokers, comma separated
+  -kafka-ca-file string
+    	Kafka CA file
+  -kafka-cert-file string
+    	Kafka cert file
+  -kafka-enable-sasl
+    	Enable SASL
+  -kafka-enable-tls
+    	Enable TLS
+  -kafka-group string
+    	Kafka group
+  -kafka-key-file string
+    	Kafka key file
+  -kafka-sasl-password string
+    	Kafka SASL password
+  -kafka-sasl-type string
+    	Kafka SASL type. Can be either 'scram' or 'plain'
+  -kafka-sasl-username string
+    	Kafka SASL user
+  -kafka-tls-insecure
+    	Enable TLS insecure
+  -kafka-topic string
+    	Kafka topic
   -keep-payload-file
     	keep payload file after processing
   -mongo-clear-query string
@@ -406,6 +431,18 @@ Usage: procx [options] [process]
 - `PROCX_GCP_GCS_FAIL_KEY_TEMPLATE`
 - `PROCX_GCP_GCS_FAIL_OP`
 - `PROCX_GCP_PUBSUB_SUBSCRIPTION`
+- `PROCX_KAFKA_BROKERS`
+- `PROCX_KAFKA_GROUP`
+- `PROCX_KAFKA_TOPIC`
+- `PROCX_KAFKA_CA_FILE`
+- `PROCX_KAFKA_CERT_FILE`
+- `PROCX_KAFKA_KEY_FILE`
+- `PROCX_KAFKA_ENABLE_TLS`
+- `PROCX_KAFKA_ENABLE_SASL`
+- `PROCX_KAFKA_SASL_USERNAME`
+- `PROCX_KAFKA_SASL_PASSWORD`
+- `PROCX_KAFKA_SASL_TYPE`
+- `PROCX_KAFKA_TLS_INSECURE`
 - `PROCX_DRIVER`
 - `PROCX_HOSTENV`
 - `PROCX_KEEP_PAYLOAD_FILE`
@@ -633,6 +670,27 @@ procx \
     -gcp-project-id my-project \
     -gcp-pubsub-subscription my-subscription \
     -driver gcp-pubsub \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### Kafka
+
+The Kafka driver will retrieve the next message from the specified topic, and pass it to the process. If a group is passed, this will be used to ensure that the message is only retrieved from the topic once across distributed workers and subsequent executions. Similar to the Pub/Sub drivers, if there are no messages in the topic when the process starts, it will wait for the first message. TLS and SASL authentication are optional.
+
+```bash
+procx \
+    -kafka-brokers localhost:9092 \
+    -kafka-topic my-topic \
+    -kafka-group my-group \
+    -kafka-enable-tls \
+    -kafka-ca-file /path/to/ca.pem \
+    -kafka-cert-file /path/to/cert.pem \
+    -kafka-key-file /path/to/key.pem \
+    -kafka-enable-sasl \
+    -kafka-sasl-mechanism plain \
+    -kafka-sasl-username my-username \
+    -kafka-sasl-password my-password \
+    -driver kafka \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
