@@ -164,6 +164,8 @@ Usage: procx [options] [process]
     	Elasticsearch clear op. Valid values are: delete, put, merge-put, move
   -elasticsearch-clear-query string
     	Elasticsearch clear query
+  -elasticsearch-enable-tls
+    	Elasticsearch enable TLS
   -elasticsearch-fail-index string
     	Elasticsearch fail index
   -elasticsearch-fail-op string
@@ -176,6 +178,12 @@ Usage: procx [options] [process]
     	Elasticsearch retrieve index
   -elasticsearch-retrieve-query string
     	Elasticsearch retrieve query
+  -elasticsearch-tls-ca-file string
+    	Elasticsearch TLS CA file
+  -elasticsearch-tls-cert-file string
+    	Elasticsearch TLS cert file
+  -elasticsearch-tls-key-file string
+    	Elasticsearch TLS key file
   -elasticsearch-tls-skip-verify
     	Elasticsearch TLS skip verify
   -elasticsearch-username string
@@ -220,26 +228,26 @@ Usage: procx [options] [process]
     	use host environment
   -kafka-brokers string
     	Kafka brokers, comma separated
-  -kafka-ca-file string
-    	Kafka CA file
-  -kafka-cert-file string
-    	Kafka cert file
   -kafka-enable-sasl
     	Enable SASL
   -kafka-enable-tls
     	Enable TLS
   -kafka-group string
     	Kafka group
-  -kafka-key-file string
-    	Kafka key file
   -kafka-sasl-password string
     	Kafka SASL password
   -kafka-sasl-type string
     	Kafka SASL type. Can be either 'scram' or 'plain'
   -kafka-sasl-username string
     	Kafka SASL user
+  -kafka-tls-ca-file string
+    	Kafka TLS CA file
+  -kafka-tls-cert-file string
+    	Kafka TLS cert file
   -kafka-tls-insecure
     	Enable TLS insecure
+  -kafka-tls-key-file string
+    	Kafka TLS key file
   -kafka-topic string
     	Kafka topic
   -keep-payload-file
@@ -413,6 +421,10 @@ Usage: procx [options] [process]
 - `PROCX_ELASTICSEARCH_FAIL_QUERY`
 - `PROCX_ELASTICSEARCH_FAIL_INDEX`
 - `PROCX_ELASTICSEARCH_FAIL_OP`
+- `PROCX_ELASTICSEARCH_ENABLE_TLS`
+- `PROCX_ELASTICSEARCH_TLS_CA_FILE`
+- `PROCX_ELASTICSEARCH_TLS_CERT_FILE`
+- `PROCX_ELASTICSEARCH_TLS_KEY_FILE`
 - `PROCX_GCP_PROJECT_ID`
 - `PROCX_GCP_BQ_CLEAR_QUERY`
 - `PROCX_GCP_BQ_FAIL_QUERY`
@@ -434,9 +446,9 @@ Usage: procx [options] [process]
 - `PROCX_KAFKA_BROKERS`
 - `PROCX_KAFKA_GROUP`
 - `PROCX_KAFKA_TOPIC`
-- `PROCX_KAFKA_CA_FILE`
-- `PROCX_KAFKA_CERT_FILE`
-- `PROCX_KAFKA_KEY_FILE`
+- `PROCX_KAFKA_TLS_CA_FILE`
+- `PROCX_KAFKA_TLS_CERT_FILE`
+- `PROCX_KAFKA_TLS_KEY_FILE`
 - `PROCX_KAFKA_ENABLE_TLS`
 - `PROCX_KAFKA_ENABLE_SASL`
 - `PROCX_KAFKA_SASL_USERNAME`
@@ -683,9 +695,9 @@ procx \
     -kafka-topic my-topic \
     -kafka-group my-group \
     -kafka-enable-tls \
-    -kafka-ca-file /path/to/ca.pem \
-    -kafka-cert-file /path/to/cert.pem \
-    -kafka-key-file /path/to/key.pem \
+    -kafka-tls-ca-file /path/to/ca.pem \
+    -kafka-tls-cert-file /path/to/cert.pem \
+    -kafka-tls-key-file /path/to/key.pem \
     -kafka-enable-sasl \
     -kafka-sasl-mechanism plain \
     -kafka-sasl-username my-username \

@@ -34,9 +34,9 @@ type Kafka struct {
 	// TLS
 	EnableTLS   *bool
 	TLSInsecure *bool
-	Cert        *string
-	Key         *string
-	CA          *string
+	TLSCert     *string
+	TLSKey      *string
+	TLSCA       *string
 	// SASL
 	EnableSASL *bool
 	SaslType   *SaslType
@@ -69,17 +69,17 @@ func (d *Kafka) LoadEnv(prefix string) error {
 		v := os.Getenv(prefix+"KAFKA_TLS_INSECURE") == "true"
 		d.TLSInsecure = &v
 	}
-	if os.Getenv(prefix+"KAFKA_CERT_FILE") != "" {
-		v := os.Getenv(prefix + "KAFKA_CERT_FILE")
-		d.Cert = &v
+	if os.Getenv(prefix+"KAFKA_TLS_CERT_FILE") != "" {
+		v := os.Getenv(prefix + "KAFKA_TLS_CERT_FILE")
+		d.TLSCert = &v
 	}
-	if os.Getenv(prefix+"KAFKA_KEY_FILE") != "" {
-		v := os.Getenv(prefix + "KAFKA_KEY_FILE")
-		d.Key = &v
+	if os.Getenv(prefix+"KAFKA_TLS_KEY_FILE") != "" {
+		v := os.Getenv(prefix + "KAFKA_TLS_KEY_FILE")
+		d.TLSKey = &v
 	}
-	if os.Getenv(prefix+"KAFKA_CA_FILE") != "" {
-		v := os.Getenv(prefix + "KAFKA_CA_FILE")
-		d.CA = &v
+	if os.Getenv(prefix+"KAFKA_TLS_CA_FILE") != "" {
+		v := os.Getenv(prefix + "KAFKA_TLS_CA_FILE")
+		d.TLSCA = &v
 	}
 	if os.Getenv(prefix+"KAFKA_ENABLE_SASL") != "" {
 		v := os.Getenv(prefix+"KAFKA_ENABLE_SASL") == "true"
@@ -115,9 +115,9 @@ func (d *Kafka) LoadFlags() error {
 	d.Topic = flags.KafkaTopic
 	d.EnableTLS = flags.KafkaEnableTLS
 	d.TLSInsecure = flags.KafkaTLSInsecure
-	d.Cert = flags.KafkaCertFile
-	d.Key = flags.KafkaKeyFile
-	d.CA = flags.KafkaCAFile
+	d.TLSCert = flags.KafkaCertFile
+	d.TLSKey = flags.KafkaKeyFile
+	d.TLSCA = flags.KafkaCAFile
 	d.EnableSASL = flags.KafkaEnableSasl
 	if flags.KafkaSaslType != nil {
 		t := SaslType(*flags.KafkaSaslType)
@@ -134,15 +134,15 @@ func (d *Kafka) tlsConfig() (*tls.Config, error) {
 	if d.TLSInsecure != nil && *d.TLSInsecure {
 		tc.InsecureSkipVerify = true
 	}
-	if d.Cert != nil && *d.Cert != "" && d.Key != nil && *d.Key != "" {
-		cert, err := tls.LoadX509KeyPair(*d.Cert, *d.Key)
+	if d.TLSCert != nil && *d.TLSCert != "" && d.TLSKey != nil && *d.TLSKey != "" {
+		cert, err := tls.LoadX509KeyPair(*d.TLSCert, *d.TLSKey)
 		if err != nil {
 			return nil, err
 		}
 		tc.Certificates = []tls.Certificate{cert}
 	}
-	if d.CA != nil && *d.CA != "" {
-		ca, err := ioutil.ReadFile(*d.CA)
+	if d.TLSCA != nil && *d.TLSCA != "" {
+		ca, err := ioutil.ReadFile(*d.TLSCA)
 		if err != nil {
 			return nil, err
 		}

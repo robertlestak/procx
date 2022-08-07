@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"io"
@@ -28,11 +29,16 @@ var (
 )
 
 type Elasticsearch struct {
-	Client        *elasticsearch8.Client
-	Address       string
-	Username      string
-	Password      string
-	TLSSkipVerify bool
+	Client   *elasticsearch8.Client
+	Address  string
+	Username string
+	Password string
+	// TLS
+	EnableTLS     *bool
+	TLSInsecure   *bool
+	TLSCert       *string
+	TLSKey        *string
+	TLSCA         *string
 	RetrieveIndex *string
 	RetrieveQuery string
 	ClearQuery    string
@@ -61,8 +67,8 @@ func (d *Elasticsearch) LoadEnv(prefix string) error {
 		d.Password = os.Getenv(prefix + "ELASTICSEARCH_PASSWORD")
 	}
 	if os.Getenv(prefix+"ELASTICSEARCH_TLS_SKIP_VERIFY") != "" {
-		v := os.Getenv(prefix + "ELASTICSEARCH_TLS_SKIP_VERIFY")
-		d.TLSSkipVerify = v == "true"
+		v := os.Getenv(prefix+"ELASTICSEARCH_TLS_SKIP_VERIFY") == "true"
+		d.TLSInsecure = &v
 	}
 	if os.Getenv(prefix+"ELASTICSEARCH_RETRIEVE_QUERY") != "" {
 		d.RetrieveQuery = os.Getenv(prefix + "ELASTICSEARCH_RETRIEVE_QUERY")
@@ -91,6 +97,22 @@ func (d *Elasticsearch) LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"ELASTICSEARCH_FAIL_OP") != "" {
 		d.FailOp = CloseOp(os.Getenv(prefix + "ELASTICSEARCH_FAIL_OP"))
 	}
+	if os.Getenv(prefix+"ELASTICSEARCH_ENABLE_TLS") != "" {
+		v := os.Getenv(prefix+"ELASTICSEARCH_ENABLE_TLS") == "true"
+		d.EnableTLS = &v
+	}
+	if os.Getenv(prefix+"ELASTICSEARCH_TLS_CA_FILE") != "" {
+		v := os.Getenv(prefix + "ELASTICSEARCH_TLS_CA_FILE")
+		d.TLSCA = &v
+	}
+	if os.Getenv(prefix+"ELASTICSEARCH_TLS_CERT_FILE") != "" {
+		v := os.Getenv(prefix + "ELASTICSEARCH_TLS_CERT_FILE")
+		d.TLSCert = &v
+	}
+	if os.Getenv(prefix+"ELASTICSEARCH_TLS_KEY_FILE") != "" {
+		v := os.Getenv(prefix + "ELASTICSEARCH_TLS_KEY_FILE")
+		d.TLSKey = &v
+	}
 	return nil
 }
 
@@ -103,7 +125,11 @@ func (d *Elasticsearch) LoadFlags() error {
 	d.Address = *flags.ElasticsearchAddress
 	d.Username = *flags.ElasticsearchUsername
 	d.Password = *flags.ElasticsearchPassword
-	d.TLSSkipVerify = *flags.ElasticsearchTLSSkipVerify
+	d.TLSInsecure = flags.ElasticsearchTLSSkipVerify
+	d.EnableTLS = flags.ElasticsearchEnableTLS
+	d.TLSCert = flags.ElasticsearchCertFile
+	d.TLSKey = flags.ElasticsearchKeyFile
+	d.TLSCA = flags.ElasticsearchCAFile
 	d.RetrieveQuery = *flags.ElasticsearchRetrieveQuery
 	d.RetrieveIndex = flags.ElasticsearchRetrieveIndex
 	d.ClearQuery = *flags.ElasticsearchClearQuery
@@ -115,14 +141,42 @@ func (d *Elasticsearch) LoadFlags() error {
 	return nil
 }
 
+func (d *Elasticsearch) tlsConfig() (*tls.Config, error) {
+	tc := &tls.Config{}
+	if d.TLSInsecure != nil && *d.TLSInsecure {
+		tc.InsecureSkipVerify = true
+	}
+	if d.EnableTLS == nil || !*d.EnableTLS {
+		return tc, nil
+	}
+	if d.TLSCert != nil && *d.TLSCert != "" && d.Key != nil && *d.Key != "" {
+		cert, err := tls.LoadX509KeyPair(*d.TLSCert, *d.Key)
+		if err != nil {
+			return nil, err
+		}
+		tc.Certificates = []tls.Certificate{cert}
+	}
+	if d.TLSCA != nil && *d.TLSCA != "" {
+		ca, err := ioutil.ReadFile(*d.TLSCA)
+		if err != nil {
+			return nil, err
+		}
+		caPool := x509.NewCertPool()
+		caPool.AppendCertsFromPEM(ca)
+		tc.RootCAs = caPool
+	}
+	return tc, nil
+}
+
 func (d *Elasticsearch) Init() error {
 	l := log.WithFields(log.Fields{
 		"pkg": "elasticsearch",
 		"fn":  "Init",
 	})
 	l.Debug("Initializing elasticsearch driver")
-	tc := &tls.Config{
-		InsecureSkipVerify: d.TLSSkipVerify,
+	tc, err := d.tlsConfig()
+	if err != nil {
+		return err
 	}
 	client, err := elasticsearch8.NewClient(elasticsearch8.Config{
 		Transport: &http.Transport{
@@ -153,7 +207,6 @@ func (d *Elasticsearch) GetWork() (io.Reader, error) {
 	if d.RetrieveIndex != nil {
 		search.Index = append(search.Index, *d.RetrieveIndex)
 	}
-
 	searchResponse, err := search.Do(context.Background(), d.Client)
 	if err != nil {
 		// if we get a 404, we have no work to do
