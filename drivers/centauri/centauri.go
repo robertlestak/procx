@@ -8,7 +8,6 @@ import (
 	"os"
 	"sort"
 
-	_ "github.com/lib/pq"
 	"github.com/robertlestak/centauri/pkg/agent"
 	"github.com/robertlestak/procx/pkg/flags"
 	log "github.com/sirupsen/logrus"
@@ -98,7 +97,6 @@ func (d *Centauri) GetWork() (io.Reader, error) {
 		"pkg": "centauri",
 		"fn":  "GetWork",
 	})
-	l.Debug("Getting work from centauri")
 	l.Debug("Getting work from centauri")
 	msgs, err := agent.CheckPendingMessages(*d.Channel)
 	if err != nil {

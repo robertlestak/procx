@@ -23,6 +23,7 @@ Currently, the following drivers are supported:
 - [AWS SQS](#aws-sqs) (`aws-sqs`)
 - [Cassandra](#cassandra) (`cassandra`)
 - [Centauri](#centauri) (`centauri`)
+- [Elasticsearch](#elasticsearch) (`elasticsearch`)
 - [GCP Big Query](#gcp-bq) (`gcp-bq`)
 - [GCP Cloud Storage](#gcp-gcs) (`gcp-gcs`)
 - [GCP Pub/Sub](#gcp-pubsub) (`gcp-pubsub`)
@@ -153,7 +154,31 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, gcp-bq, gcp-gcs, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
+    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
+  -elasticsearch-address string
+    	Elasticsearch address
+  -elasticsearch-clear-index string
+    	Elasticsearch clear index
+  -elasticsearch-clear-op string
+    	Elasticsearch clear op. Valid values are: delete, put, merge-put, move
+  -elasticsearch-clear-query string
+    	Elasticsearch clear query
+  -elasticsearch-fail-index string
+    	Elasticsearch fail index
+  -elasticsearch-fail-op string
+    	Elasticsearch fail op. Valid values are: delete, put, merge-put, move
+  -elasticsearch-fail-query string
+    	Elasticsearch fail query
+  -elasticsearch-password string
+    	Elasticsearch password
+  -elasticsearch-retrieve-index string
+    	Elasticsearch retrieve index
+  -elasticsearch-retrieve-query string
+    	Elasticsearch retrieve query
+  -elasticsearch-tls-skip-verify
+    	Elasticsearch TLS skip verify
+  -elasticsearch-username string
+    	Elasticsearch username
   -gcp-bq-clear-query string
     	GCP BQ clear query
   -gcp-bq-fail-query string
@@ -351,6 +376,18 @@ Usage: procx [options] [process]
 - `PROCX_CENTAURI_KEY`
 - `PROCX_CENTAURI_KEY_BASE64`
 - `PROCX_CENTAURI_PEER_URL`
+- `PROCX_ELASTICSEARCH_ADDRESS`
+- `PROCX_ELASTICSEARCH_USERNAME`
+- `PROCX_ELASTICSEARCH_PASSWORD`
+- `PROCX_ELASTICSEARCH_TLS_SKIP_VERIFY`
+- `PROCX_ELASTICSEARCH_RETRIEVE_QUERY`
+- `PROCX_ELASTICSEARCH_RETRIEVE_INDEX`
+- `PROCX_ELASTICSEARCH_CLEAR_QUERY`
+- `PROCX_ELASTICSEARCH_CLEAR_INDEX`
+- `PROCX_ELASTICSEARCH_CLEAR_OP`
+- `PROCX_ELASTICSEARCH_FAIL_QUERY`
+- `PROCX_ELASTICSEARCH_FAIL_INDEX`
+- `PROCX_ELASTICSEARCH_FAIL_OP`
 - `PROCX_GCP_PROJECT_ID`
 - `PROCX_GCP_BQ_CLEAR_QUERY`
 - `PROCX_GCP_BQ_FAIL_QUERY`
@@ -524,6 +561,26 @@ procx \
     -driver centauri \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
+
+### Elasticsearch
+
+The Elasticsearch driver will retrieve the next message from the specified index, and pass it to the process. Upon successful completion of the process, it will execute the specified query to either update, move, or delete the document from the index.
+
+```bash
+procx \
+    -elasticsearch-address https://localhost:9200 \
+    -elasticsearch-username elastic \
+    -elasticsearch-password elastic \
+    -elasticsearch-tls-skip-verify \
+    -elasticsearch-retrieve-query '{"status": "pending"}' \
+    -elasticsearch-retrieve-index my-index \
+    -elasticsearch-clear-op merge-put \
+    -elasticsearch-clear-index my-index \
+    -elasticsearch-clear-query '{"status": "completed"}' \
+    -elasticsearch-fail-op move \
+    -elasticsearch-fail-index my-index-failed \
+    -driver elasticsearch \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
 
 ### GCP BQ
 

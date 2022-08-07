@@ -7,6 +7,7 @@ require (
 	cloud.google.com/go/pubsub v1.24.0
 	cloud.google.com/go/storage v1.22.1
 	github.com/aws/aws-sdk-go v1.44.61
+	github.com/elastic/go-elasticsearch/v8 v8.3.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gocql/gocql v1.2.0
@@ -26,6 +27,7 @@ require (
 	cloud.google.com/go/compute v1.7.0 // indirect
 	cloud.google.com/go/iam v0.3.0 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
+	github.com/elastic/elastic-transport-go/v8 v8.0.0-20211216131617-bbee439d559c // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
