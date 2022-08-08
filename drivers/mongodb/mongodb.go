@@ -3,15 +3,17 @@ package mongodb
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/robertlestak/procx/pkg/flags"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -32,6 +34,12 @@ type Mongo struct {
 	ClearQuery    *string
 	FailQuery     *string
 	Key           *string
+	// TLS
+	EnableTLS   *bool
+	TLSInsecure *bool
+	TLSCert     *string
+	TLSKey      *string
+	TLSCA       *string
 }
 
 func (d *Mongo) LoadEnv(prefix string) error {
@@ -75,6 +83,26 @@ func (d *Mongo) LoadEnv(prefix string) error {
 		c := os.Getenv(prefix + "MONGO_COLLECTION")
 		d.Collection = strings.TrimSpace(c)
 	}
+	if os.Getenv(prefix+"MONGO_ENABLE_TLS") != "" {
+		v := os.Getenv(prefix+"MONGO_ENABLE_TLS") == "true"
+		d.EnableTLS = &v
+	}
+	if os.Getenv(prefix+"MONGO_TLS_INSECURE") != "" {
+		v := os.Getenv(prefix+"MONGO_TLS_INSECURE") == "true"
+		d.TLSInsecure = &v
+	}
+	if os.Getenv(prefix+"MONGO_TLS_CERT_FILE") != "" {
+		v := os.Getenv(prefix + "MONGO_TLS_CERT_FILE")
+		d.TLSCert = &v
+	}
+	if os.Getenv(prefix+"MONGO_TLS_KEY_FILE") != "" {
+		v := os.Getenv(prefix + "MONGO_TLS_KEY_FILE")
+		d.TLSKey = &v
+	}
+	if os.Getenv(prefix+"MONGO_TLS_CA_FILE") != "" {
+		v := os.Getenv(prefix + "MONGO_TLS_CA_FILE")
+		d.TLSCA = &v
+	}
 	return nil
 }
 
@@ -97,6 +125,11 @@ func (d *Mongo) LoadFlags() error {
 	d.RetrieveQuery = flags.MongoRetrieveQuery
 	d.ClearQuery = flags.MongoClearQuery
 	d.FailQuery = flags.MongoFailQuery
+	d.EnableTLS = flags.MongoEnableTLS
+	d.TLSInsecure = flags.MongoTLSInsecure
+	d.TLSCert = flags.MongoCertFile
+	d.TLSKey = flags.MongoKeyFile
+	d.TLSCA = flags.MongoCAFile
 	return nil
 }
 
@@ -109,7 +142,33 @@ func (d *Mongo) Init() error {
 	var err error
 	uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s", d.User, d.Password, d.Host, d.Port, d.DB)
 	l.Debug("uri: ", uri)
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	opts := options.Client().ApplyURI(uri)
+	if d.EnableTLS != nil && *d.EnableTLS {
+		l.Debug("TLS enabled")
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: *d.TLSInsecure,
+		}
+		if *d.TLSCert != "" && *d.TLSKey != "" {
+			l.Debug("TLS cert and key provided")
+			cert, err := tls.LoadX509KeyPair(*d.TLSCert, *d.TLSKey)
+			if err != nil {
+				return err
+			}
+			tlsConfig.Certificates = []tls.Certificate{cert}
+		}
+		if *d.TLSCA != "" {
+			l.Debug("TLS CA provided")
+			caCert, err := ioutil.ReadFile(*d.TLSCA)
+			if err != nil {
+				return err
+			}
+			caCertPool := x509.NewCertPool()
+			caCertPool.AppendCertsFromPEM(caCert)
+			tlsConfig.RootCAs = caCertPool
+		}
+		opts.SetTLSConfig(tlsConfig)
+	}
+	client, err := mongo.Connect(context.TODO(), opts)
 	if err != nil {
 		l.Error(err)
 		return err

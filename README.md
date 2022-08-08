@@ -277,6 +277,8 @@ Usage: procx [options] [process]
     	MongoDB collection
   -mongo-database string
     	MongoDB database
+  -mongo-enable-tls
+    	Enable TLS
   -mongo-fail-query string
     	MongoDB fail query
   -mongo-host string
@@ -287,6 +289,14 @@ Usage: procx [options] [process]
     	MongoDB port (default "27017")
   -mongo-retrieve-query string
     	MongoDB retrieve query
+  -mongo-tls-ca-file string
+    	Mongo TLS CA file
+  -mongo-tls-cert-file string
+    	Mongo TLS cert file
+  -mongo-tls-insecure
+    	Enable TLS insecure
+  -mongo-tls-key-file string
+    	Mongo TLS key file
   -mongo-user string
     	MongoDB user
   -mysql-clear-params string
@@ -538,6 +548,11 @@ Usage: procx [options] [process]
 - `PROCX_MONGO_PORT`
 - `PROCX_MONGO_RETRIEVE_QUERY`
 - `PROCX_MONGO_USER`
+- `PROCX_MONGO_ENABLE_TLS`
+- `PROCX_MONGO_TLS_CA_FILE`
+- `PROCX_MONGO_TLS_CERT_FILE`
+- `PROCX_MONGO_TLS_KEY_FILE`
+- `PROCX_MONGO_TLS_INSECURE`
 - `PROCX_MYSQL_CLEAR_PARAMS`
 - `PROCX_MYSQL_CLEAR_QUERY`
 - `PROCX_MYSQL_DATABASE`
