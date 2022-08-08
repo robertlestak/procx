@@ -12,6 +12,7 @@ import (
 	"github.com/robertlestak/procx/drivers/local"
 	"github.com/robertlestak/procx/drivers/mongodb"
 	"github.com/robertlestak/procx/drivers/mysql"
+	"github.com/robertlestak/procx/drivers/nats"
 	"github.com/robertlestak/procx/drivers/nfs"
 	"github.com/robertlestak/procx/drivers/postgres"
 	"github.com/robertlestak/procx/drivers/rabbitmq"
@@ -35,6 +36,7 @@ var (
 	DriverPostgres          DriverName = "postgres"
 	DriverMongoDB           DriverName = "mongodb"
 	DriverMySQL             DriverName = "mysql"
+	DriverNats              DriverName = "nats"
 	DriverNFS               DriverName = "nfs"
 	DriverRabbit            DriverName = "rabbitmq"
 	DriverRedisSubscription DriverName = "redis-pubsub"
@@ -70,6 +72,8 @@ func GetDriver(name DriverName) Driver {
 		return &mongodb.Mongo{}
 	case DriverMySQL:
 		return &mysql.Mysql{}
+	case DriverNats:
+		return &nats.Nats{}
 	case DriverNFS:
 		return &nfs.NFS{}
 	case DriverPostgres:

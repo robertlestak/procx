@@ -4,7 +4,7 @@ import "flag"
 
 var (
 	FlagSet         = flag.NewFlagSet("procx", flag.ContinueOnError)
-	Driver          = FlagSet.String("driver", "", "driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)")
+	Driver          = FlagSet.String("driver", "", "driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, nats, nfs, postgres, rabbitmq, redis-list, redis-pubsub)")
 	HostEnv         = FlagSet.Bool("hostenv", false, "use host environment")
 	PassWorkAsArg   = FlagSet.Bool("pass-work-as-arg", false, "pass work as an argument")
 	PassWorkAsStdin = FlagSet.Bool("pass-work-as-stdin", false, "pass work as stdin")

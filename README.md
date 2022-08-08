@@ -31,6 +31,7 @@ Currently, the following drivers are supported:
 - [PostgreSQL](#postgresql) (`postgres`)
 - [MongoDB](#mongodb) (`mongodb`)
 - [MySQL](#mysql) (`mysql`)
+- [NATS](#nats) (`nats`)
 - [NFS](#nfs) (`nfs`)
 - [RabbitMQ](#rabbitmq) (`rabbitmq`)
 - [Redis List](#redis-list) (`redis-list`)
@@ -155,7 +156,7 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, postgres, rabbitmq, redis-list, redis-pubsub)
+    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, nats, nfs, postgres, rabbitmq, redis-list, redis-pubsub)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -294,6 +295,36 @@ Usage: procx [options] [process]
     	MySQL retrieve query
   -mysql-user string
     	MySQL user
+  -nats-clear-response string
+    	Nats clear response
+  -nats-creds-file string
+    	Nats creds file
+  -nats-enable-tls
+    	Nats enable TLS
+  -nats-fail-response string
+    	Nats fail response
+  -nats-jwt-file string
+    	Nats JWT file
+  -nats-nkey-file string
+    	Nats NKey file
+  -nats-password string
+    	Nats password
+  -nats-subject string
+    	Nats subject
+  -nats-tls-ca-file string
+    	Nats TLS CA file
+  -nats-tls-cert-file string
+    	Nats TLS cert file
+  -nats-tls-insecure
+    	Nats TLS insecure
+  -nats-tls-key-file string
+    	Nats TLS key file
+  -nats-token string
+    	Nats token
+  -nats-url string
+    	Nats URL
+  -nats-username string
+    	Nats username
   -nfs-clear-folder string
     	NFS clear folder, if clear op is mv
   -nfs-clear-key string
@@ -479,6 +510,20 @@ Usage: procx [options] [process]
 - `PROCX_MYSQL_RETRIEVE_PARAMS`
 - `PROCX_MYSQL_RETRIEVE_QUERY`
 - `PROCX_MYSQL_USER`
+- `PROCX_NATS_URL`
+- `PROCX_NATS_SUBJECT`
+- `PROCX_NATS_CREDS_FILE`
+- `PROCX_NATS_JWT_FILE`
+- `PROCX_NATS_TLS_CA_FILE`
+- `PROCX_NATS_TLS_CERT_FILE`
+- `PROCX_NATS_TLS_KEY_FILE`
+- `PROCX_NATS_ENABLE_TLS`
+- `PROCX_NATS_TLS_INSECURE`
+- `PROCX_NATS_NKEY_FILE`
+- `PROCX_NATS_USERNAME`
+- `PROCX_NATS_PASSWORD`
+- `PROCX_NATS_CLEAR_RESPONSE`
+- `PROCX_NATS_FAIL_RESPONSE`
 - `PROCX_NFS_FAIL_OP`
 - `PROCX_NFS_FOLDER`
 - `PROCX_NFS_HOST`
@@ -744,6 +789,26 @@ procx \
     -mysql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = ? and id = ?" \
     -mysql-fail-params "myqueue,{{key}}" \
     -driver mysql \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### NATS
+
+The NATS driver will retrieve the next message from the specified subject, and pass it to the process. If the received message type is a request, the message will be replied to with the result of the process (`0` or `1` for success or failure, respectively). You can optionally provide a `-nats-clear-response` and `-nats-fail-response` flag to send a custom response on completion.
+
+```bash
+procx \
+    -nats-subject my-subject \
+    -nats-url localhost:4222 \
+    -nats-username my-user \
+    -nats-password my-password \
+    -nats-clear-response "OK" \
+    -nats-fail-response "FAIL" \
+    -nats-enable-tls \
+    -nats-tls-ca-file /path/to/ca.pem \
+    -nats-tls-cert-file /path/to/cert.pem \
+    -nats-tls-key-file /path/to/key.pem \
+    -driver nats \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 

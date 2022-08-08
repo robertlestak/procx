@@ -13,6 +13,7 @@ require (
 	github.com/gocql/gocql v1.2.0
 	github.com/google/uuid v1.3.0
 	github.com/lib/pq v1.10.6
+	github.com/nats-io/nats.go v1.16.0
 	github.com/rabbitmq/amqp091-go v1.4.0
 	github.com/robertlestak/centauri v0.0.2
 	github.com/segmentio/kafka-go v0.4.33
@@ -51,6 +52,9 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/miekg/dns v1.1.26 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
+	github.com/nats-io/nats-server/v2 v2.8.4 // indirect
+	github.com/nats-io/nkeys v0.3.0 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.20.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
