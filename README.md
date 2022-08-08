@@ -1,18 +1,35 @@
-# procx - simple job queue worker
+# procx - cloud agnostic process execution
 
-procx is a small process manager that can wrap around any existing application / script / process, and integrate with a job queue system to enable autoscaling job executions with no native code integration.
+procx is a small process manager that can wrap around any existing application / process, and integrate with a job queue or data persistence layer to enable autoscaling job executions with no native code integration.
 
-procx is a single compiled binary that can be packaged in your existing job code container. procx is configured with environment variables or command line flags, and is started with the path to the process to execute.
+procx is a single compiled binary that can be packaged in your existing job code container, configured with environment variables or command line flags, and started as an entrypoint for any application.
 
-procx will retrieve the next job from the queue, and pass it to the process. Upon success (exit code 0), procx will mark the job as complete. Upon failure (exit code != 0), procx will mark the job as failed to be requeued.
+The application will receive the work data agnostic to the data provider, with no need to integrate with the various upstream data sources. Data sources can be changed by simply changing procx's start up variables, and the application remains exactly the same.
+
+Build once, run anywhere.
+
+## Execution
+
+procx is started with the path to the process to manage, and either environment variables or a set of command line flags.
+
+```bash
+# cli args
+procx -driver redis ... /path/to/process
+# or, env vars
+export PROCX_DRIVER=redis
+...
+procx /path/to/process
+```
+
+procx will retrieve the next job from the queue and pass it to the process. Upon success (exit code 0), procx will mark the job as complete. Upon failure (exit code != 0), procx will mark the job as failed to be requeued.
 
 By default, the subprocess spawned by procx will not have access to the host environment variables. This can be changed by setting the `-hostenv` flag.
 
 By default, procx will connect to the data source, consume a single message, and then exit when the spawned process exits. If the `-daemon` flag is set, procx will connect to the data source and consume messages until the process is killed, or until a job fails.
 
-## Payload
+### Payload
 
-By default, procx will export the payload as an environment variable `PROCX_PAYLOAD`. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments, and if the `-payload-file` flag is set, the payload will be written to the specified file path. procx will clean up the file at the end of the job, unless you pass `-keep-payload-file`. Finally, if `-pass-work-as-stdin` is set, the job payload will be piped to stdin of the process.
+By default, procx will export the payload as an environment variable `PROCX_PAYLOAD`. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments, and if `-pass-work-as-stdin` is set, the job payload will be piped to stdin of the process. If the `-payload-file` flag is set, the payload will be written to the specified file path. procx will clean up the file at the end of the job, unless you pass `-keep-payload-file`. Finally, 
 
 ## Drivers
 
