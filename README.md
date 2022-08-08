@@ -324,37 +324,37 @@ Usage: procx [options] [process]
   -mysql-user string
     	MySQL user
   -nats-clear-response string
-    	Nats clear response
+    	NATS clear response
   -nats-creds-file string
-    	Nats creds file
+    	NATS creds file
   -nats-enable-tls
-    	Nats enable TLS
+    	NATS enable TLS
   -nats-fail-response string
-    	Nats fail response
+    	NATS fail response
   -nats-jwt-file string
-    	Nats JWT file
+    	NATS JWT file
   -nats-nkey-file string
-    	Nats NKey file
+    	NATS NKey file
   -nats-password string
-    	Nats password
+    	NATS password
   -nats-queue-group string
-    	Nats queue group
+    	NATS queue group
   -nats-subject string
-    	Nats subject
+    	NATS subject
   -nats-tls-ca-file string
-    	Nats TLS CA file
+    	NATS TLS CA file
   -nats-tls-cert-file string
-    	Nats TLS cert file
+    	NATS TLS cert file
   -nats-tls-insecure
-    	Nats TLS insecure
+    	NATS TLS insecure
   -nats-tls-key-file string
-    	Nats TLS key file
+    	NATS TLS key file
   -nats-token string
-    	Nats token
+    	NATS token
   -nats-url string
-    	Nats URL
+    	NATS URL
   -nats-username string
-    	Nats username
+    	NATS username
   -nfs-clear-folder string
     	NFS clear folder, if clear op is mv
   -nfs-clear-key string
