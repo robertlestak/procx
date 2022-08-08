@@ -39,8 +39,9 @@ var (
 	DriverNats              DriverName = "nats"
 	DriverNFS               DriverName = "nfs"
 	DriverRabbit            DriverName = "rabbitmq"
-	DriverRedisSubscription DriverName = "redis-pubsub"
 	DriverRedisList         DriverName = "redis-list"
+	DriverRedisSubscription DriverName = "redis-pubsub"
+	DriverRedisStream       DriverName = "redis-stream"
 	DriverLocal             DriverName = "local"
 	ErrDriverNotFound                  = errors.New("driver not found")
 )
@@ -80,10 +81,12 @@ func GetDriver(name DriverName) Driver {
 		return &postgres.Postgres{}
 	case DriverRabbit:
 		return &rabbitmq.RabbitMQ{}
-	case DriverRedisSubscription:
-		return &redis.RedisPubSub{}
 	case DriverRedisList:
 		return &redis.RedisList{}
+	case DriverRedisSubscription:
+		return &redis.RedisPubSub{}
+	case DriverRedisStream:
+		return &redis.RedisStream{}
 	case DriverLocal:
 		return &local.Local{}
 	}

@@ -18,6 +18,12 @@ type RedisPubSub struct {
 	Port     string
 	Password string
 	Key      string
+	// TLS
+	EnableTLS   *bool
+	TLSInsecure *bool
+	TLSCert     *string
+	TLSKey      *string
+	TLSCA       *string
 }
 
 func (d *RedisPubSub) LoadEnv(prefix string) error {
@@ -38,6 +44,26 @@ func (d *RedisPubSub) LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"REDIS_KEY") != "" {
 		d.Key = os.Getenv(prefix + "REDIS_KEY")
 	}
+	if os.Getenv(prefix+"REDIS_ENABLE_TLS") != "" {
+		v := os.Getenv(prefix+"REDIS_ENABLE_TLS") == "true"
+		d.EnableTLS = &v
+	}
+	if os.Getenv(prefix+"REDIS_TLS_INSECURE") != "" {
+		v := os.Getenv(prefix+"REDIS_TLS_INSECURE") == "true"
+		d.TLSInsecure = &v
+	}
+	if os.Getenv(prefix+"REDIS_TLS_CERT_FILE") != "" {
+		v := os.Getenv(prefix + "REDIS_TLS_CERT_FILE")
+		d.TLSCert = &v
+	}
+	if os.Getenv(prefix+"REDIS_TLS_KEY_FILE") != "" {
+		v := os.Getenv(prefix + "REDIS_TLS_KEY_FILE")
+		d.TLSKey = &v
+	}
+	if os.Getenv(prefix+"REDIS_TLS_CA_FILE") != "" {
+		v := os.Getenv(prefix + "REDIS_TLS_CA_FILE")
+		d.TLSCA = &v
+	}
 	return nil
 }
 
@@ -51,6 +77,11 @@ func (d *RedisPubSub) LoadFlags() error {
 	d.Port = *flags.RedisPort
 	d.Password = *flags.RedisPassword
 	d.Key = *flags.RedisKey
+	d.EnableTLS = flags.RedisEnableTLS
+	d.TLSInsecure = flags.RedisTLSSkipVerify
+	d.TLSCert = flags.RedisCertFile
+	d.TLSKey = flags.RedisKeyFile
+	d.TLSCA = flags.RedisCAFile
 	return nil
 }
 
@@ -59,14 +90,17 @@ func (d *RedisPubSub) Init() error {
 		"pkg": "redis",
 		"fn":  "Init",
 	})
-	l.Debug("Initializing redis pub/sub driver")
-	d.Client = redis.NewClient(&redis.Options{
+	cfg := &redis.Options{
 		Addr:        fmt.Sprintf("%s:%s", d.Host, d.Port),
-		Password:    d.Password, // no password set
-		DB:          0,          // use default DB
+		Password:    d.Password,
+		DB:          0,
 		DialTimeout: 30 * time.Second,
 		ReadTimeout: 30 * time.Second,
-	})
+	}
+	if d.EnableTLS != nil && *d.EnableTLS {
+		cfg.TLSConfig = tlsConfig(*d.TLSInsecure, *d.TLSCert, *d.TLSKey, *d.TLSCA)
+	}
+	d.Client = redis.NewClient(cfg)
 	cmd := d.Client.Ping()
 	if cmd.Err() != nil {
 		l.Error("Failed to connect to redis")

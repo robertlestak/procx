@@ -36,6 +36,7 @@ Currently, the following drivers are supported:
 - [RabbitMQ](#rabbitmq) (`rabbitmq`)
 - [Redis List](#redis-list) (`redis-list`)
 - [Redis Pub/Sub](#redis-pubsub) (`redis-pubsub`)
+- [Redis Stream](#redis-stream) (`redis-stream`)
 - [Local](#local) (`local`)
 
 Plans to add more drivers in the future, and PRs are welcome.
@@ -156,7 +157,7 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, nats, nfs, postgres, rabbitmq, redis-list, redis-pubsub)
+    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, nats, nfs, postgres, rabbitmq, redis-list, redis-pubsub, redis-stream)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -393,6 +394,8 @@ Usage: procx [options] [process]
     	RabbitMQ queue
   -rabbitmq-url string
     	RabbitMQ URL
+  -redis-enable-tls
+    	Enable TLS
   -redis-host string
     	Redis host
   -redis-key string
@@ -401,6 +404,24 @@ Usage: procx [options] [process]
     	Redis password
   -redis-port string
     	Redis port (default "6379")
+  -redis-steam-consumer-name string
+    	Redis consumer name. Default is a random UUID
+  -redis-stream-clear-op string
+    	Redis clear operation. Valid values are 'ack' and 'del'.
+  -redis-stream-consumer-group string
+    	Redis consumer group
+  -redis-stream-fail-op string
+    	Redis fail operation. Valid values are 'ack' and 'del'.
+  -redis-stream-value-keys string
+    	Redis stream value keys to select. Comma separated, default all.
+  -redis-tls-ca-file string
+    	Redis TLS CA file
+  -redis-tls-cert-file string
+    	Redis TLS cert file
+  -redis-tls-key-file string
+    	Redis TLS key file
+  -redis-tls-skip-verify
+    	Redis TLS skip verify
 ```
 
 ### Environment Variables
@@ -565,6 +586,16 @@ Usage: procx [options] [process]
 - `PROCX_REDIS_PORT`
 - `PROCX_REDIS_PASSWORD`
 - `PROCX_REDIS_KEY`
+- `PROCX_REDIS_ENABLE_TLS`
+- `PROCX_REDIS_TLS_CA_FILE`
+- `PROCX_REDIS_TLS_CERT_FILE`
+- `PROCX_REDIS_TLS_KEY_FILE`
+- `PROCX_REDIS_TLS_INSECURE`
+- `PROCX_REDIS_STREAM_CLEAR_OP`
+- `PROCX_REDIS_STREAM_FAIL_OP`
+- `PROCX_REDIS_STREAM_VALUE_KEYS`
+- `PROCX_REDIS_STREAM_CONSUMER_GROUP`
+- `PROCX_REDIS_STREAM_CONSUMER_NAME`
 - `PROCX_DAEMON`
 
 ## Driver Examples
@@ -894,6 +925,23 @@ procx \
     -redis-port 6379 \
     -redis-key my-subscription \
     -driver redis-pubsub \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### Redis Stream
+
+The Redis Stream driver will connect to the specified Redis server and retrieve the next message from the specified stream. The message contents will be returned as a JSON object. You can optionally select a subset of keys with the `-redis-stream-value-keys` flag, providing a comma-separated list of keys to include in the payload. By default, the newest message will be read from the stream. You can control worker namespacing with the `-redis-stream-consumer-group` flag. You can either `ack` or `del` the message with the `-redis-stream-clear-op` and `-redis-stream-fail-op` flags.
+
+```bash
+procx \
+    -redis-host localhost \
+    -redis-port 6379 \
+    -redis-key my-stream \
+    -redis-stream-consumer-group my-group \
+    -redis-stream-value-keys "key1,key2" \
+    -redis-stream-clear-op del \
+    -redis-stream-fail-op ack \
+    -driver redis-stream \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
