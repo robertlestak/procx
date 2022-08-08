@@ -18,6 +18,7 @@ type Nats struct {
 	Client        *nats.Conn
 	URL           string
 	Subject       *string
+	QueueGroup    *string
 	CredsFile     *string
 	JWTFile       *string
 	NKeyFile      *string
@@ -99,6 +100,10 @@ func (d *Nats) LoadEnv(prefix string) error {
 		v := os.Getenv(prefix + "NATS_FAIL_RESPONSE")
 		d.FailResponse = &v
 	}
+	if os.Getenv(prefix+"NATS_QUEUE_GROUP") != "" {
+		v := os.Getenv(prefix + "NATS_QUEUE_GROUP")
+		d.QueueGroup = &v
+	}
 	return nil
 }
 
@@ -115,6 +120,7 @@ func (d *Nats) LoadFlags() error {
 	d.NKeyFile = flags.NatsNKeyFile
 	d.Username = flags.NatsUsername
 	d.Password = flags.NatsPassword
+	d.QueueGroup = flags.NatsQueueGroup
 	d.Token = flags.NatsToken
 	d.EnableTLS = flags.NatsEnableTLS
 	d.TLSInsecure = flags.NatsTLSInsecure
@@ -229,7 +235,14 @@ func (d *Nats) GetWork() (io.Reader, error) {
 	})
 	l.Debug("Getting work from nats")
 	ch := make(chan *nats.Msg, 64)
-	sub, err := d.Client.ChanSubscribe(*d.Subject, ch)
+	var sub *nats.Subscription
+	var err error
+	if d.QueueGroup != nil && *d.QueueGroup != "" {
+		l.Debug("Enabling queue group")
+		sub, err = d.Client.ChanQueueSubscribe(*d.Subject, *d.QueueGroup, ch)
+	} else {
+		sub, err = d.Client.ChanSubscribe(*d.Subject, ch)
+	}
 	if err != nil {
 		l.Errorf("%+v", err)
 		return nil, err

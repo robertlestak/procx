@@ -9,6 +9,7 @@ var (
 	NatsUsername      = FlagSet.String("nats-username", "", "Nats username")
 	NatsPassword      = FlagSet.String("nats-password", "", "Nats password")
 	NatsToken         = FlagSet.String("nats-token", "", "Nats token")
+	NatsQueueGroup    = FlagSet.String("nats-queue-group", "", "Nats queue group")
 	NatsEnableTLS     = FlagSet.Bool("nats-enable-tls", false, "Nats enable TLS")
 	NatsTLSInsecure   = FlagSet.Bool("nats-tls-insecure", false, "Nats TLS insecure")
 	NatsTLSCAFile     = FlagSet.String("nats-tls-ca-file", "", "Nats TLS CA file")

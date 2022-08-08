@@ -309,6 +309,8 @@ Usage: procx [options] [process]
     	Nats NKey file
   -nats-password string
     	Nats password
+  -nats-queue-group string
+    	Nats queue group
   -nats-subject string
     	Nats subject
   -nats-tls-ca-file string
@@ -511,6 +513,7 @@ Usage: procx [options] [process]
 - `PROCX_MYSQL_RETRIEVE_QUERY`
 - `PROCX_MYSQL_USER`
 - `PROCX_NATS_URL`
+- `PROCX_NATS_QUEUE_GROUP`
 - `PROCX_NATS_SUBJECT`
 - `PROCX_NATS_CREDS_FILE`
 - `PROCX_NATS_JWT_FILE`
@@ -794,7 +797,7 @@ procx \
 
 ### NATS
 
-The NATS driver will retrieve the next message from the specified subject, and pass it to the process. If the received message type is a request, the message will be replied to with the result of the process (`0` or `1` for success or failure, respectively). You can optionally provide a `-nats-clear-response` and `-nats-fail-response` flag to send a custom response on completion.
+The NATS driver will retrieve the next message from the specified subject, and pass it to the process. If the received message type is a request, the message will be replied to with the result of the process (`0` or `1` for success or failure, respectively). You can optionally provide a `-nats-clear-response` and `-nats-fail-response` flag to send a custom response on completion. You can optionally provide `-nats-queue-group` to namespace the queue group worker subscriptions.
 
 ```bash
 procx \
@@ -804,6 +807,7 @@ procx \
     -nats-password my-password \
     -nats-clear-response "OK" \
     -nats-fail-response "FAIL" \
+    -nats-queue-group my-group \
     -nats-enable-tls \
     -nats-tls-ca-file /path/to/ca.pem \
     -nats-tls-cert-file /path/to/cert.pem \
