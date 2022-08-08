@@ -14,7 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Nats struct {
+type NATS struct {
 	Client        *nats.Conn
 	URL           string
 	Subject       *string
@@ -35,7 +35,7 @@ type Nats struct {
 	Key           *string
 }
 
-func (d *Nats) LoadEnv(prefix string) error {
+func (d *NATS) LoadEnv(prefix string) error {
 	l := log.WithFields(log.Fields{
 		"pkg": "nats",
 		"fn":  "LoadEnv",
@@ -107,33 +107,33 @@ func (d *Nats) LoadEnv(prefix string) error {
 	return nil
 }
 
-func (d *Nats) LoadFlags() error {
+func (d *NATS) LoadFlags() error {
 	l := log.WithFields(log.Fields{
 		"pkg": "nats",
 		"fn":  "LoadFlags",
 	})
 	l.Debug("Loading flags")
-	d.URL = *flags.NatsURL
-	d.Subject = flags.NatsSubject
-	d.CredsFile = flags.NatsCredsFile
-	d.JWTFile = flags.NatsJWTFile
-	d.NKeyFile = flags.NatsNKeyFile
-	d.Username = flags.NatsUsername
-	d.Password = flags.NatsPassword
-	d.QueueGroup = flags.NatsQueueGroup
-	d.Token = flags.NatsToken
-	d.EnableTLS = flags.NatsEnableTLS
-	d.TLSInsecure = flags.NatsTLSInsecure
-	d.TLSCA = flags.NatsTLSCAFile
-	d.TLSCert = flags.NatsTLSCertFile
-	d.TLSKey = flags.NatsTLSKeyFile
-	d.ClearResponse = flags.NatsClearResponse
-	d.FailResponse = flags.NatsFailResponse
+	d.URL = *flags.NATSURL
+	d.Subject = flags.NATSSubject
+	d.CredsFile = flags.NATSCredsFile
+	d.JWTFile = flags.NATSJWTFile
+	d.NKeyFile = flags.NATSNKeyFile
+	d.Username = flags.NATSUsername
+	d.Password = flags.NATSPassword
+	d.QueueGroup = flags.NATSQueueGroup
+	d.Token = flags.NATSToken
+	d.EnableTLS = flags.NATSEnableTLS
+	d.TLSInsecure = flags.NATSTLSInsecure
+	d.TLSCA = flags.NATSTLSCAFile
+	d.TLSCert = flags.NATSTLSCertFile
+	d.TLSKey = flags.NATSTLSKeyFile
+	d.ClearResponse = flags.NATSClearResponse
+	d.FailResponse = flags.NATSFailResponse
 	l.Debug("Loaded flags")
 	return nil
 }
 
-func (d *Nats) tlsConfig() (*tls.Config, error) {
+func (d *NATS) tlsConfig() (*tls.Config, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "nats",
 		"fn":  "tlsConfig",
@@ -171,7 +171,7 @@ func (d *Nats) tlsConfig() (*tls.Config, error) {
 	return tc, nil
 }
 
-func (d *Nats) authOpts() []nats.Option {
+func (d *NATS) authOpts() []nats.Option {
 	l := log.WithFields(log.Fields{
 		"pkg": "nats",
 		"fn":  "authOpts",
@@ -198,7 +198,7 @@ func (d *Nats) authOpts() []nats.Option {
 	return opts
 }
 
-func (d *Nats) Init() error {
+func (d *NATS) Init() error {
 	l := log.WithFields(log.Fields{
 		"pkg": "nats",
 		"fn":  "Init",
@@ -228,7 +228,7 @@ func (d *Nats) Init() error {
 	return nil
 }
 
-func (d *Nats) GetWork() (io.Reader, error) {
+func (d *NATS) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "nats",
 		"fn":  "GetWork",
@@ -261,7 +261,7 @@ func (d *Nats) GetWork() (io.Reader, error) {
 	return bytes.NewReader(msg.Data), nil
 }
 
-func (d *Nats) ClearWork() error {
+func (d *NATS) ClearWork() error {
 	l := log.WithFields(log.Fields{
 		"pkg": "nats",
 		"fn":  "ClearWork",
@@ -284,7 +284,7 @@ func (d *Nats) ClearWork() error {
 	return nil
 }
 
-func (d *Nats) HandleFailure() error {
+func (d *NATS) HandleFailure() error {
 	l := log.WithFields(log.Fields{
 		"pkg": "nats",
 		"fn":  "HandleFailure",
@@ -307,7 +307,7 @@ func (d *Nats) HandleFailure() error {
 	return nil
 }
 
-func (d *Nats) Cleanup() error {
+func (d *NATS) Cleanup() error {
 	l := log.WithFields(log.Fields{
 		"pkg": "nats",
 		"fn":  "Cleanup",

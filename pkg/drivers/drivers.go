@@ -74,7 +74,7 @@ func GetDriver(name DriverName) Driver {
 	case DriverMySQL:
 		return &mysql.Mysql{}
 	case DriverNats:
-		return &nats.Nats{}
+		return &nats.NATS{}
 	case DriverNFS:
 		return &nfs.NFS{}
 	case DriverPostgres:
