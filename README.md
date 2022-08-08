@@ -29,7 +29,7 @@ By default, procx will connect to the data source, consume a single message, and
 
 ### Payload
 
-By default, procx will export the payload as an environment variable `PROCX_PAYLOAD`. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments, and if `-pass-work-as-stdin` is set, the job payload will be piped to stdin of the process. If the `-payload-file` flag is set, the payload will be written to the specified file path. procx will clean up the file at the end of the job, unless you pass `-keep-payload-file`. Finally, 
+By default, procx will export the payload as an environment variable `PROCX_PAYLOAD`. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments, and if `-pass-work-as-stdin` is set, the job payload will be piped to stdin of the process. Finally, if the `-payload-file` flag is set, the payload will be written to the specified file path. procx will clean up the file at the end of the job, unless you pass `-keep-payload-file`.
 
 ## Drivers
 
