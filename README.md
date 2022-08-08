@@ -778,7 +778,7 @@ procx \
     -kafka-tls-cert-file /path/to/cert.pem \
     -kafka-tls-key-file /path/to/key.pem \
     -kafka-enable-sasl \
-    -kafka-sasl-mechanism plain \
+    -kafka-sasl-type plain \
     -kafka-sasl-username my-username \
     -kafka-sasl-password my-password \
     -driver kafka \
