@@ -50,6 +50,7 @@ Currently, the following drivers are supported:
 - [MySQL](#mysql) (`mysql`)
 - [NATS](#nats) (`nats`)
 - [NFS](#nfs) (`nfs`)
+- [NSQ](#nsq) (`nsq`)
 - [RabbitMQ](#rabbitmq) (`rabbitmq`)
 - [Redis List](#redis-list) (`redis-list`)
 - [Redis Pub/Sub](#redis-pubsub) (`redis-pubsub`)
@@ -174,7 +175,7 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, nats, nfs, postgres, rabbitmq, redis-list, redis-pubsub, redis-stream)
+    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, nats, nfs, nsq, postgres, rabbitmq, redis-list, redis-pubsub, redis-stream)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -385,6 +386,24 @@ Usage: procx [options] [process]
     	NFS mount path
   -nfs-target string
     	NFS target
+  -nsq-channel string
+    	NSQ channel
+  -nsq-enable-tls
+    	Enable TLS
+  -nsq-nsqd-address string
+    	NSQ nsqd address
+  -nsq-nsqlookupd-address string
+    	NSQ nsqlookupd address
+  -nsq-tls-ca-file string
+    	NSQ TLS CA file
+  -nsq-tls-cert-file string
+    	NSQ TLS cert file
+  -nsq-tls-key-file string
+    	NSQ TLS key file
+  -nsq-tls-skip-verify
+    	NSQ TLS skip verify
+  -nsq-topic string
+    	NSQ topic
   -pass-work-as-arg
     	pass work as an argument
   -pass-work-as-stdin
@@ -596,6 +615,15 @@ Usage: procx [options] [process]
 - `PROCX_NFS_FAIL_KEY`
 - `PROCX_NFS_CLEAR_KEY_TEMPLATE`
 - `PROCX_NFS_FAIL_KEY_TEMPLATE`
+- `PROCX_NSQ_NSQLOOKUPD_ADDRESS`
+- `PROCX_NSQ_NSQD_ADDRESS`
+- `PROCX_NSQ_CHANNEL`
+- `PROCX_NSQ_ENABLE_TLS`
+- `PROCX_NSQ_TOPIC`
+- `PROCX_NSQ_TLS_CA_FILE`
+- `PROCX_NSQ_TLS_CERT_FILE`
+- `PROCX_NSQ_TLS_KEY_FILE`
+- `PROCX_NSQ_TLS_INSECURE`
 - `PROCX_PASS_WORK_AS_ARG`
 - `PROCX_PASS_WORK_AS_STDIN`
 - `PROCX_PAYLOAD_FILE`
@@ -897,6 +925,19 @@ procx \
     -nfs-fail-folder failed \
     -nfs-fail-key-template "failed_{{key}}" \
     -driver nfs \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### NSQ
+
+The NSQ driver will connect to the specified `nsqlookupd` or `nsqd` endpoint, retrieve the next message from the specified topic, and pass it to the process.
+
+```bash
+procx \
+    -nsq-nsqlookupd-address localhost:4161 \
+    -nsq-topic my-topic \
+    -nsq-channel my-channel \
+    -driver nsq \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
