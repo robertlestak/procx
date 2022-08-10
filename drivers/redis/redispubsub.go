@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/robertlestak/procx/pkg/flags"
+	"github.com/robertlestak/procx/pkg/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -98,7 +99,12 @@ func (d *RedisPubSub) Init() error {
 		ReadTimeout: 30 * time.Second,
 	}
 	if d.EnableTLS != nil && *d.EnableTLS {
-		cfg.TLSConfig = tlsConfig(*d.TLSInsecure, *d.TLSCert, *d.TLSKey, *d.TLSCA)
+		tc, err := utils.TlsConfig(d.EnableTLS, d.TLSInsecure, d.TLSCA, d.TLSCert, d.TLSKey)
+		if err != nil {
+			l.WithError(err).Error("Failed to create TLS config")
+			return err
+		}
+		cfg.TLSConfig = tc
 	}
 	d.Client = redis.NewClient(cfg)
 	cmd := d.Client.Ping()

@@ -3,15 +3,13 @@ package kafka
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/robertlestak/procx/pkg/flags"
+	"github.com/robertlestak/procx/pkg/utils"
 	kafka "github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
 	"github.com/segmentio/kafka-go/sasl/plain"
@@ -129,30 +127,6 @@ func (d *Kafka) LoadFlags() error {
 	return nil
 }
 
-func (d *Kafka) tlsConfig() (*tls.Config, error) {
-	tc := &tls.Config{}
-	if d.TLSInsecure != nil && *d.TLSInsecure {
-		tc.InsecureSkipVerify = true
-	}
-	if d.TLSCert != nil && *d.TLSCert != "" && d.TLSKey != nil && *d.TLSKey != "" {
-		cert, err := tls.LoadX509KeyPair(*d.TLSCert, *d.TLSKey)
-		if err != nil {
-			return nil, err
-		}
-		tc.Certificates = []tls.Certificate{cert}
-	}
-	if d.TLSCA != nil && *d.TLSCA != "" {
-		ca, err := ioutil.ReadFile(*d.TLSCA)
-		if err != nil {
-			return nil, err
-		}
-		caPool := x509.NewCertPool()
-		caPool.AppendCertsFromPEM(ca)
-		tc.RootCAs = caPool
-	}
-	return tc, nil
-}
-
 func (d *Kafka) saslConfig() (sasl.Mechanism, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "kafka",
@@ -203,7 +177,7 @@ func (d *Kafka) Init() error {
 		DualStack: true,
 	}
 	if d.EnableTLS != nil && *d.EnableTLS {
-		tc, err := d.tlsConfig()
+		tc, err := utils.TlsConfig(d.EnableTLS, d.TLSInsecure, d.TLSCA, d.TLSCert, d.TLSKey)
 		if err != nil {
 			return err
 		}

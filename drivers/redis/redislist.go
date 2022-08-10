@@ -1,17 +1,15 @@
 package redis
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/robertlestak/procx/pkg/flags"
+	"github.com/robertlestak/procx/pkg/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -88,41 +86,6 @@ func (d *RedisList) LoadFlags() error {
 	return nil
 }
 
-func tlsConfig(insecure bool, certFile string, keyFile string, caFile string) *tls.Config {
-	l := log.WithFields(log.Fields{
-		"pkg": "redis",
-		"fn":  "tlsConfig",
-	})
-	l.Debug("Configuring TLS")
-	cfg := &tls.Config{}
-	if insecure {
-		l.Debug("TLS is insecure")
-		cfg.InsecureSkipVerify = insecure
-	}
-	if certFile != "" {
-		l.Debug("Loading TLS certificate")
-		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-		if err != nil {
-			l.WithError(err).Error("Failed to load TLS certificate")
-			return nil
-		}
-		cfg.Certificates = []tls.Certificate{cert}
-	}
-	if caFile != "" {
-		l.Debug("Loading TLS CA")
-		caCert, err := ioutil.ReadFile(caFile)
-		if err != nil {
-			l.WithError(err).Error("Failed to load TLS CA")
-			return nil
-		}
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
-		cfg.RootCAs = caCertPool
-	}
-	l.Debug("TLS configured")
-	return cfg
-}
-
 func (d *RedisList) Init() error {
 	l := log.WithFields(log.Fields{
 		"pkg": "redis",
@@ -137,7 +100,12 @@ func (d *RedisList) Init() error {
 		ReadTimeout: 30 * time.Second,
 	}
 	if d.EnableTLS != nil && *d.EnableTLS {
-		cfg.TLSConfig = tlsConfig(*d.TLSInsecure, *d.TLSCert, *d.TLSKey, *d.TLSCA)
+		tc, err := utils.TlsConfig(d.EnableTLS, d.TLSInsecure, d.TLSCA, d.TLSCert, d.TLSKey)
+		if err != nil {
+			l.WithError(err).Error("Failed to create TLS config")
+			return err
+		}
+		cfg.TLSConfig = tc
 	}
 	d.Client = redis.NewClient(cfg)
 	cmd := d.Client.Ping()

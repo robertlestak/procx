@@ -3,18 +3,16 @@ package mongodb
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/robertlestak/procx/pkg/flags"
+	"github.com/robertlestak/procx/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -145,28 +143,11 @@ func (d *Mongo) Init() error {
 	opts := options.Client().ApplyURI(uri)
 	if d.EnableTLS != nil && *d.EnableTLS {
 		l.Debug("TLS enabled")
-		tlsConfig := &tls.Config{
-			InsecureSkipVerify: *d.TLSInsecure,
+		tc, err := utils.TlsConfig(d.EnableTLS, d.TLSInsecure, d.TLSCA, d.TLSCert, d.TLSKey)
+		if err != nil {
+			return err
 		}
-		if *d.TLSCert != "" && *d.TLSKey != "" {
-			l.Debug("TLS cert and key provided")
-			cert, err := tls.LoadX509KeyPair(*d.TLSCert, *d.TLSKey)
-			if err != nil {
-				return err
-			}
-			tlsConfig.Certificates = []tls.Certificate{cert}
-		}
-		if *d.TLSCA != "" {
-			l.Debug("TLS CA provided")
-			caCert, err := ioutil.ReadFile(*d.TLSCA)
-			if err != nil {
-				return err
-			}
-			caCertPool := x509.NewCertPool()
-			caCertPool.AppendCertsFromPEM(caCert)
-			tlsConfig.RootCAs = caCertPool
-		}
-		opts.SetTLSConfig(tlsConfig)
+		opts.SetTLSConfig(tc)
 	}
 	client, err := mongo.Connect(context.TODO(), opts)
 	if err != nil {

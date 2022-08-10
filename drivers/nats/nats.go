@@ -2,15 +2,13 @@ package nats
 
 import (
 	"bytes"
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"io"
-	"io/ioutil"
 	"os"
 
 	"github.com/nats-io/nats.go"
 	"github.com/robertlestak/procx/pkg/flags"
+	"github.com/robertlestak/procx/pkg/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -133,44 +131,6 @@ func (d *NATS) LoadFlags() error {
 	return nil
 }
 
-func (d *NATS) tlsConfig() (*tls.Config, error) {
-	l := log.WithFields(log.Fields{
-		"pkg": "nats",
-		"fn":  "tlsConfig",
-	})
-	l.Debug("Creating TLS config")
-	tc := &tls.Config{}
-	if d.EnableTLS != nil && *d.EnableTLS {
-		l.Debug("Enabling TLS")
-		if d.TLSInsecure != nil && *d.TLSInsecure {
-			l.Debug("Enabling TLS insecure")
-			tc.InsecureSkipVerify = true
-		}
-		if d.TLSCA != nil && *d.TLSCA != "" {
-			l.Debug("Enabling TLS CA")
-			caCert, err := ioutil.ReadFile(*d.TLSCA)
-			if err != nil {
-				l.Errorf("%+v", err)
-				return tc, err
-			}
-			caCertPool := x509.NewCertPool()
-			caCertPool.AppendCertsFromPEM(caCert)
-			tc.RootCAs = caCertPool
-		}
-		if d.TLSCert != nil && *d.TLSCert != "" {
-			l.Debug("Enabling TLS cert")
-			cert, err := tls.LoadX509KeyPair(*d.TLSCert, *d.TLSKey)
-			if err != nil {
-				l.Errorf("%+v", err)
-				return tc, err
-			}
-			tc.Certificates = []tls.Certificate{cert}
-		}
-	}
-	l.Debug("Created TLS config")
-	return tc, nil
-}
-
 func (d *NATS) authOpts() []nats.Option {
 	l := log.WithFields(log.Fields{
 		"pkg": "nats",
@@ -211,7 +171,7 @@ func (d *NATS) Init() error {
 	opts := []nats.Option{}
 	if d.EnableTLS != nil && *d.EnableTLS {
 		l.Debug("Enabling TLS")
-		tc, err := d.tlsConfig()
+		tc, err := utils.TlsConfig(d.EnableTLS, d.TLSInsecure, d.TLSCA, d.TLSCert, d.TLSKey)
 		if err != nil {
 			l.Errorf("%+v", err)
 			return err

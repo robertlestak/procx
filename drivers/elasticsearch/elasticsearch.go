@@ -3,8 +3,6 @@ package elasticsearch
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"io"
@@ -16,6 +14,7 @@ import (
 	elasticsearch8 "github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/robertlestak/procx/pkg/flags"
+	"github.com/robertlestak/procx/pkg/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -141,40 +140,13 @@ func (d *Elasticsearch) LoadFlags() error {
 	return nil
 }
 
-func (d *Elasticsearch) tlsConfig() (*tls.Config, error) {
-	tc := &tls.Config{}
-	if d.TLSInsecure != nil && *d.TLSInsecure {
-		tc.InsecureSkipVerify = true
-	}
-	if d.EnableTLS == nil || !*d.EnableTLS {
-		return tc, nil
-	}
-	if d.TLSCert != nil && *d.TLSCert != "" && d.Key != nil && *d.Key != "" {
-		cert, err := tls.LoadX509KeyPair(*d.TLSCert, *d.Key)
-		if err != nil {
-			return nil, err
-		}
-		tc.Certificates = []tls.Certificate{cert}
-	}
-	if d.TLSCA != nil && *d.TLSCA != "" {
-		ca, err := ioutil.ReadFile(*d.TLSCA)
-		if err != nil {
-			return nil, err
-		}
-		caPool := x509.NewCertPool()
-		caPool.AppendCertsFromPEM(ca)
-		tc.RootCAs = caPool
-	}
-	return tc, nil
-}
-
 func (d *Elasticsearch) Init() error {
 	l := log.WithFields(log.Fields{
 		"pkg": "elasticsearch",
 		"fn":  "Init",
 	})
 	l.Debug("Initializing elasticsearch driver")
-	tc, err := d.tlsConfig()
+	tc, err := utils.TlsConfig(d.EnableTLS, d.TLSInsecure, d.TLSCA, d.TLSCert, d.TLSKey)
 	if err != nil {
 		return err
 	}
