@@ -35,6 +35,7 @@ By default, procx will export the payload as an environment variable `PROCX_PAYL
 
 Currently, the following drivers are supported:
 
+- [ActiveMQ](#activemq) (`activemq`)
 - [AWS DynamoDB](#aws-dynamodb) (`aws-dynamo`)
 - [AWS S3](#aws-s3) (`aws-s3`)
 - [AWS SQS](#aws-sqs) (`aws-sqs`)
@@ -46,6 +47,7 @@ Currently, the following drivers are supported:
 - [GCP Pub/Sub](#gcp-pubsub) (`gcp-pubsub`)
 - [Kafka](#kafka) (`kafka`)
 - [PostgreSQL](#postgresql) (`postgres`)
+- [Pulsar](#pulsar) (`pulsar`)
 - [MongoDB](#mongodb) (`mongodb`)
 - [MySQL](#mysql) (`mysql`)
 - [NATS](#nats) (`nats`)
@@ -96,6 +98,22 @@ While building for a specific driver may seem contrary to the ethos of procx, th
 
 ```bash
 Usage: procx [options] [process]
+  -activemq-address string
+    	ActiveMQ STOMP address
+  -activemq-enable-tls
+    	Enable TLS
+  -activemq-name string
+    	ActiveMQ name
+  -activemq-tls-ca-file string
+    	TLS CA
+  -activemq-tls-cert-file string
+    	TLS cert
+  -activemq-tls-insecure
+    	Enable TLS insecure
+  -activemq-tls-key-file string
+    	TLS key
+  -activemq-type string
+    	ActiveMQ type. Valid values are: topic, queue
   -aws-dynamo-clear-query string
     	AWS DynamoDB clear query
   -aws-dynamo-data-path string
@@ -175,7 +193,7 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, nats, nfs, nsq, postgres, rabbitmq, redis-list, redis-pubsub, redis-stream)
+    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -436,6 +454,32 @@ Usage: procx [options] [process]
     	PostgreSQL SSL mode (default "disable")
   -psql-user string
     	PostgreSQL user
+  -pulsar-address string
+    	Pulsar address
+  -pulsar-auth-cert-file string
+    	Pulsar auth cert file
+  -pulsar-auth-key-file string
+    	Pulsar auth key file
+  -pulsar-auth-oauth-params string
+    	Pulsar auth oauth params
+  -pulsar-auth-token string
+    	Pulsar auth token
+  -pulsar-auth-token-file string
+    	Pulsar auth token file
+  -pulsar-subscription string
+    	Pulsar subscription name
+  -pulsar-tls-allow-insecure-connection
+    	Pulsar TLS allow insecure connection
+  -pulsar-tls-trust-certs-file string
+    	Pulsar TLS trust certs file path
+  -pulsar-tls-validate-hostname
+    	Pulsar TLS validate hostname
+  -pulsar-topic string
+    	Pulsar topic
+  -pulsar-topics string
+    	Pulsar topics, comma separated
+  -pulsar-topics-pattern string
+    	Pulsar topics pattern
   -rabbitmq-queue string
     	RabbitMQ queue
   -rabbitmq-url string
@@ -472,6 +516,14 @@ Usage: procx [options] [process]
 
 ### Environment Variables
 
+- `PROCX_ACTIVEMQ_ADDRESS`
+- `PROCX_ACTIVEMQ_ENABLE_TLS`
+- `PROCX_ACTIVEMQ_NAME`
+- `PROCX_ACTIVEMQ_TLS_CA_FILE`
+- `PROCX_ACTIVEMQ_TLS_CERT_FILE`
+- `PROCX_ACTIVEMQ_TLS_KEY_FILE`
+- `PROCX_ACTIVEMQ_TLS_INSECURE`
+- `PROCX_ACTIVEMQ_TYPE`
 - `PROCX_AWS_REGION`
 - `PROCX_AWS_ROLE_ARN`
 - `PROCX_AWS_DYNAMO_DATA_PATH`
@@ -640,6 +692,19 @@ Usage: procx [options] [process]
 - `PROCX_PSQL_RETRIEVE_QUERY`
 - `PROCX_PSQL_SSL_MODE`
 - `PROCX_PSQL_USER`
+- `PROCX_PULSAR_ADDRESS`
+- `PROCX_PULSAR_SUBSCRIPTION`
+- `PROCX_PULSAR_TOPIC`
+- `PROCX_PULSAR_TOPICS`
+- `PROCX_PULSAR_TOPICS_PATTERN`
+- `PROCX_PULSAR_TLS_ALLOW_INSECURE_CONNECTION`
+- `PROCX_PULSAR_TLS_TRUST_CERTS_FILE`
+- `PROCX_PULSAR_TLS_VALIDATE_HOSTNAME` 
+- `PROCX_PULSAR_AUTH_TOKEN`
+- `PROCX_PULSAR_AUTH_TOKEN_FILE`
+- `PROCX_PULSAR_AUTH_CERT_FILE`
+- `PROCX_PULSAR_AUTH_KEY_FILE`
+- `PROCX_PULSAR_AUTH_OAUTH_PARAMS`
 - `PROCX_RABBITMQ_URL`
 - `PROCX_RABBITMQ_QUEUE`
 - `PROCX_REDIS_HOST`
@@ -659,6 +724,23 @@ Usage: procx [options] [process]
 - `PROCX_DAEMON`
 
 ## Driver Examples
+
+### ActiveMQ
+
+The ActiveMQ driver will connect to the specified STOMP address and retrieve the next message from the specified queue or topic. If the message is successfully retrieved, the message will be deleted from the queue, otherwise it will be `nacked`. TLS is optional and shown below, if not used the flags are not required.
+
+```bash
+procx \
+    -driver activemq \
+    -activemq-address localhost:61613 \
+    -activemq-type queue \
+    -activemq-name my-queue \
+    -activemq-enable-tls \
+    -activemq-tls-ca-file /path/to/ca.pem \
+    -activemq-tls-cert-file /path/to/cert.pem \
+    -activemq-tls-key-file /path/to/key.pem \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
 
 ### AWS DynamoDB
 
@@ -960,6 +1042,21 @@ procx \
     -psql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = $1 and id = $2" \
     -psql-fail-params "myqueue,{{key}}" \
     -driver postgres \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### Pulsar
+
+The Pulsar driver will connect to the specified comma-separated Pulsar endpoint(s) and retrieve the next message from the specified topic, and pass it to the process. An `ack` will be sent on success, and a `nack` will be sent on failure. Clients can subscribe to either a specific topic, a set of topics (comma separated), or a regex pattern. Token and TLS auth methods are supported.
+
+```bash
+procx \
+    -pulsar-address localhost:6650,localhost:6651 \
+    -pulsar-topic my-topic \
+    -pulsar-subscription my-subscription \
+    -pulsar-auth-token-file /path/to/token.key \
+    -pulsar-tls-trust-certs-file /path/to/cert.pem \
+    -driver pulsar \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 

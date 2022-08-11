@@ -29,7 +29,7 @@ type NSQ struct {
 
 func (d *NSQ) LoadEnv(prefix string) error {
 	l := log.WithFields(log.Fields{
-		"pkg": "nats",
+		"pkg": "nsq",
 		"fn":  "LoadEnv",
 	})
 	l.Debug("Loading environment")
@@ -75,7 +75,7 @@ func (d *NSQ) LoadEnv(prefix string) error {
 
 func (d *NSQ) LoadFlags() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "nats",
+		"pkg": "nsq",
 		"fn":  "LoadFlags",
 	})
 	l.Debug("Loading flags")
@@ -94,10 +94,10 @@ func (d *NSQ) LoadFlags() error {
 
 func (d *NSQ) Init() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "nats",
+		"pkg": "nsq",
 		"fn":  "Init",
 	})
-	l.Debug("Initializing nats driver")
+	l.Debug("Initializing nsq driver")
 	cfg := nsq.NewConfig()
 	cfg.MaxInFlight = 1
 	if d.EnableTLS != nil && *d.EnableTLS {
@@ -139,10 +139,10 @@ func (d *NSQ) handleMessage(msg *nsq.Message) error {
 
 func (d *NSQ) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
-		"pkg": "nats",
+		"pkg": "nsq",
 		"fn":  "GetWork",
 	})
-	l.Debug("Getting work from nats")
+	l.Debug("Getting work from nsq")
 	d.data = make(chan []byte)
 	d.Client.AddHandler(nsq.HandlerFunc(d.handleMessage))
 	var err error
@@ -164,17 +164,17 @@ func (d *NSQ) GetWork() (io.Reader, error) {
 
 func (d *NSQ) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "nats",
+		"pkg": "nsq",
 		"fn":  "ClearWork",
 	})
-	l.Debug("Clearing work from nats")
+	l.Debug("Clearing work from nsq")
 	l.Debug("Cleared work")
 	return nil
 }
 
 func (d *NSQ) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "nats",
+		"pkg": "nsq",
 		"fn":  "HandleFailure",
 	})
 	l.Debug("Handling failure")
@@ -184,7 +184,7 @@ func (d *NSQ) HandleFailure() error {
 
 func (d *NSQ) Cleanup() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "nats",
+		"pkg": "nsq",
 		"fn":  "Cleanup",
 	})
 	l.Debug("Cleaning up")

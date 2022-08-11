@@ -3,6 +3,7 @@ package drivers
 import (
 	"errors"
 
+	"github.com/robertlestak/procx/drivers/activemq"
 	"github.com/robertlestak/procx/drivers/aws"
 	"github.com/robertlestak/procx/drivers/cassandra"
 	"github.com/robertlestak/procx/drivers/centauri"
@@ -16,82 +17,88 @@ import (
 	"github.com/robertlestak/procx/drivers/nfs"
 	"github.com/robertlestak/procx/drivers/nsq"
 	"github.com/robertlestak/procx/drivers/postgres"
+	"github.com/robertlestak/procx/drivers/pulsar"
 	"github.com/robertlestak/procx/drivers/rabbitmq"
 	"github.com/robertlestak/procx/drivers/redis"
 )
 
-// DriverName is the unique name of a driver.
 type DriverName string
 
 var (
-	DriverAWSS3             DriverName = "aws-s3"
-	DriverAWSSQS            DriverName = "aws-sqs"
-	DriverAWSDynamoDB       DriverName = "aws-dynamo"
-	DriverCassandraDB       DriverName = "cassandra"
-	DriverCentauriNet       DriverName = "centauri"
-	DriverElasticsearch     DriverName = "elasticsearch"
-	DriverKafka             DriverName = "kafka"
-	DriverGCPBQ             DriverName = "gcp-bq"
-	DriverGCPGCS            DriverName = "gcp-gcs"
-	DriverGCPPubSub         DriverName = "gcp-pubsub"
-	DriverPostgres          DriverName = "postgres"
-	DriverMongoDB           DriverName = "mongodb"
-	DriverMySQL             DriverName = "mysql"
-	DriverNats              DriverName = "nats"
-	DriverNSQ               DriverName = "nsq"
-	DriverNFS               DriverName = "nfs"
-	DriverRabbit            DriverName = "rabbitmq"
-	DriverRedisList         DriverName = "redis-list"
-	DriverRedisSubscription DriverName = "redis-pubsub"
-	DriverRedisStream       DriverName = "redis-stream"
-	DriverLocal             DriverName = "local"
-	ErrDriverNotFound                  = errors.New("driver not found")
+	ActiveMQ          DriverName = "activemq"
+	AWSS3             DriverName = "aws-s3"
+	AWSSQS            DriverName = "aws-sqs"
+	AWSDynamoDB       DriverName = "aws-dynamo"
+	CassandraDB       DriverName = "cassandra"
+	Centauri          DriverName = "centauri"
+	Elasticsearch     DriverName = "elasticsearch"
+	Kafka             DriverName = "kafka"
+	GCPBQ             DriverName = "gcp-bq"
+	GCPGCS            DriverName = "gcp-gcs"
+	GCPPubSub         DriverName = "gcp-pubsub"
+	MongoDB           DriverName = "mongodb"
+	MySQL             DriverName = "mysql"
+	Nats              DriverName = "nats"
+	NSQ               DriverName = "nsq"
+	NFS               DriverName = "nfs"
+	Postgres          DriverName = "postgres"
+	Pulsar            DriverName = "pulsar"
+	Rabbit            DriverName = "rabbitmq"
+	RedisList         DriverName = "redis-list"
+	RedisSubscription DriverName = "redis-pubsub"
+	RedisStream       DriverName = "redis-stream"
+	Local             DriverName = "local"
+	ErrDriverNotFound            = errors.New("driver not found")
 )
 
-// GetDriver returns the driver with the given name.
+// Get returns the driver with the given name.
 func GetDriver(name DriverName) Driver {
 	switch name {
-	case DriverAWSS3:
+	case ActiveMQ:
+		return &activemq.ActiveMQ{}
+	case AWSS3:
 		return &aws.S3{}
-	case DriverAWSSQS:
+	case AWSSQS:
 		return &aws.SQS{}
-	case DriverAWSDynamoDB:
+	case AWSDynamoDB:
 		return &aws.Dynamo{}
-	case DriverCassandraDB:
+	case CassandraDB:
 		return &cassandra.Cassandra{}
-	case DriverCentauriNet:
+	case Centauri:
 		return &centauri.Centauri{}
-	case DriverElasticsearch:
+	case Elasticsearch:
 		return &elasticsearch.Elasticsearch{}
-	case DriverGCPBQ:
+	case GCPBQ:
 		return &gcp.BQ{}
-	case DriverGCPGCS:
+	case GCPGCS:
 		return &gcp.GCS{}
-	case DriverGCPPubSub:
+	case GCPPubSub:
 		return &gcp.GCPPubSub{}
-	case DriverKafka:
+	case Kafka:
 		return &kafka.Kafka{}
-	case DriverMongoDB:
+	case MongoDB:
 		return &mongodb.Mongo{}
-	case DriverMySQL:
+	case MySQL:
 		return &mysql.Mysql{}
-	case DriverNats:
+	case Nats:
 		return &nats.NATS{}
-	case DriverNSQ:
+	case NSQ:
 		return &nsq.NSQ{}
-	case DriverNFS:
+	case NFS:
 		return &nfs.NFS{}
-	case DriverPostgres:
+	case Postgres:
 		return &postgres.Postgres{}
-	case DriverRabbit:
+	case Pulsar:
+		return &pulsar.Pulsar{}
+	case Rabbit:
 		return &rabbitmq.RabbitMQ{}
-	case DriverRedisList:
+	case RedisList:
 		return &redis.RedisList{}
-	case DriverRedisSubscription:
+	case RedisSubscription:
 		return &redis.RedisPubSub{}
-	case DriverRedisStream:
+	case RedisStream:
 		return &redis.RedisStream{}
-	case DriverLocal:
+	case Local:
 		return &local.Local{}
 	}
 	return nil
