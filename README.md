@@ -1054,8 +1054,9 @@ procx \
     -pulsar-address localhost:6650,localhost:6651 \
     -pulsar-topic my-topic \
     -pulsar-subscription my-subscription \
-    -pulsar-auth-token-file /path/to/token.key \
-    -pulsar-tls-trust-certs-file /path/to/cert.pem \
+    -pulsar-auth-cert-file /path/to/cert.pem \
+    -pulsar-auth-key-file /path/to/key.pem \
+    -pulsar-tls-trust-certs-file /path/to/trusted.pem \
     -driver pulsar \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
