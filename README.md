@@ -45,6 +45,7 @@ Currently, the following drivers are supported:
 - [GCP Big Query](#gcp-bq) (`gcp-bq`)
 - [GCP Cloud Storage](#gcp-gcs) (`gcp-gcs`)
 - [GCP Pub/Sub](#gcp-pubsub) (`gcp-pubsub`)
+- [HTTP](#http) (`http`)
 - [Kafka](#kafka) (`kafka`)
 - [PostgreSQL](#postgresql) (`postgres`)
 - [Pulsar](#pulsar) (`pulsar`)
@@ -193,7 +194,7 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, kafka, local, mongodb, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
+    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, http, kafka, local, mongodb, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -264,6 +265,62 @@ Usage: procx [options] [process]
     	GCP Pub/Sub subscription name
   -hostenv
     	use host environment
+  -http-clear-body string
+    	HTTP clear body
+  -http-clear-body-file string
+    	HTTP clear body file
+  -http-clear-content-type string
+    	HTTP clear content type
+  -http-clear-headers string
+    	HTTP clear headers
+  -http-clear-method string
+    	HTTP clear method (default "GET")
+  -http-clear-successful-status-codes string
+    	HTTP clear successful status codes
+  -http-clear-url string
+    	HTTP clear url
+  -http-enable-tls
+    	HTTP enable tls
+  -http-fail-body string
+    	HTTP fail body
+  -http-fail-body-file string
+    	HTTP fail body file
+  -http-fail-content-type string
+    	HTTP fail content type
+  -http-fail-headers string
+    	HTTP fail headers
+  -http-fail-method string
+    	HTTP fail method (default "GET")
+  -http-fail-successful-status-codes string
+    	HTTP fail successful status codes
+  -http-fail-url string
+    	HTTP fail url
+  -http-retrieve-body string
+    	HTTP retrieve body
+  -http-retrieve-body-file string
+    	HTTP retrieve body file
+  -http-retrieve-content-type string
+    	HTTP retrieve content type
+  -http-retrieve-headers string
+    	HTTP retrieve headers
+  -http-retrieve-key-json-selector string
+    	HTTP retrieve key json selector
+  -http-retrieve-method string
+    	HTTP retrieve method (default "GET")
+  -http-retrieve-successful-status-codes string
+    	HTTP retrieve successful status codes
+  -http-retrieve-url string
+    	HTTP retrieve url
+  -http-retrieve-work-json-selector string
+    	HTTP retrieve work json selector
+  -http-tls-ca-file string
+    	HTTP tls ca file
+  -http-tls-cert-file string
+    	HTTP tls cert file
+  -http-tls-insecure
+    	HTTP tls insecure
+  -http-tls-key-file string
+    	HTTP tls key file
   -kafka-brokers string
     	Kafka brokers, comma separated
   -kafka-enable-sasl
@@ -595,6 +652,33 @@ Usage: procx [options] [process]
 - `PROCX_GCP_GCS_FAIL_KEY_TEMPLATE`
 - `PROCX_GCP_GCS_FAIL_OP`
 - `PROCX_GCP_PUBSUB_SUBSCRIPTION`
+- `PROCX_HTTP_CLEAR_BODY`
+- `PROCX_HTTP_CLEAR_BODY_FILE`
+- `PROCX_HTTP_CLEAR_CONTENT_TYPE`
+- `PROCX_HTTP_CLEAR_HEADERS`
+- `PROCX_HTTP_CLEAR_METHOD`
+- `PROCX_HTTP_CLEAR_SUCCESSFUL_STATUS_CODES`
+- `PROCX_HTTP_CLEAR_URL`
+- `PROCX_HTTP_FAIL_BODY`
+- `PROCX_HTTP_FAIL_BODY_FILE`
+- `PROCX_HTTP_FAIL_CONTENT_TYPE`
+- `PROCX_HTTP_FAIL_HEADERS`
+- `PROCX_HTTP_FAIL_METHOD`
+- `PROCX_HTTP_FAIL_SUCCESSFUL_STATUS_CODES`
+- `PROCX_HTTP_FAIL_URL`
+- `PROCX_HTTP_RETRIEVE_BODY`
+- `PROCX_HTTP_RETRIEVE_BODY_FILE`
+- `PROCX_HTTP_RETRIEVE_CONTENT_TYPE`
+- `PROCX_HTTP_RETRIEVE_HEADERS`
+- `PROCX_HTTP_RETRIEVE_METHOD`
+- `PROCX_HTTP_RETRIEVE_SUCCESSFUL_STATUS_CODES`
+- `PROCX_HTTP_RETRIEVE_URL`
+- `PROCX_HTTP_RETRIEVE_KEY_JSON_SELECTOR`
+- `PROCX_HTTP_RETRIEVE_WORK_JSON_SELECTOR`
+- `PROCX_HTTP_ENABLE_TLS`
+- `PROCX_HTTP_TLS_CERT_FILE`
+- `PROCX_HTTP_TLS_KEY_FILE`
+- `PROCX_HTTP_TLS_CA_FILE`
 - `PROCX_KAFKA_BROKERS`
 - `PROCX_KAFKA_GROUP`
 - `PROCX_KAFKA_TOPIC`
@@ -903,6 +987,27 @@ procx \
     -gcp-project-id my-project \
     -gcp-pubsub-subscription my-subscription \
     -driver gcp-pubsub \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### HTTP
+
+The HTTP driver will connect to any HTTP(s) endpoint, retrieve the content from the endpoint, and return it to the process. If the upstream returns a JSON payload, the `-http-retrieve-work-json-selector` flag can be used to select a specific value from the JSON response, and similarly the `-http-retrieve-key-json-selector` flag can be used to select a value from the JSON response which can then be used to replace any instances of `{{key}}` in either the clear or failure URL or payload. If using internal PKI, mTLS, or disabling TLS validation, pass the `-http-enable-tls` flag and the corresponding TLS flags.
+
+```bash
+procx \
+    -http-retrieve-url https://example.com/jobs \
+    -http-retrieve-work-json-selector '0.work' \
+    -http-retrieve-key-json-selector '0.id' \
+    -http-retrieve-headers 'ExampleToken:foobar,ExampleHeader:barfoo' \
+    -http-clear-url 'https://example.com/jobs/{{key}}' \
+    -http-clear-method DELETE \
+    -http-clear-headers 'ExampleToken:foobar,ExampleHeader:barfoo' \
+    -http-fail-url 'https://example.com/jobs/{{key}}' \
+    -http-fail-method POST \
+    -http-fail-headers 'ExampleToken:foobar,ExampleHeader:barfoo' \
+    -http-fail-body '{"id": "{{key}}", "status": "failed"}' \
+    -driver http \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 

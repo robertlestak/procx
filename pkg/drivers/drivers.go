@@ -9,6 +9,7 @@ import (
 	"github.com/robertlestak/procx/drivers/centauri"
 	"github.com/robertlestak/procx/drivers/elasticsearch"
 	"github.com/robertlestak/procx/drivers/gcp"
+	"github.com/robertlestak/procx/drivers/http"
 	"github.com/robertlestak/procx/drivers/kafka"
 	"github.com/robertlestak/procx/drivers/local"
 	"github.com/robertlestak/procx/drivers/mongodb"
@@ -32,6 +33,7 @@ var (
 	CassandraDB       DriverName = "cassandra"
 	Centauri          DriverName = "centauri"
 	Elasticsearch     DriverName = "elasticsearch"
+	HTTP              DriverName = "http"
 	Kafka             DriverName = "kafka"
 	GCPBQ             DriverName = "gcp-bq"
 	GCPGCS            DriverName = "gcp-gcs"
@@ -74,6 +76,8 @@ func GetDriver(name DriverName) Driver {
 		return &gcp.GCS{}
 	case GCPPubSub:
 		return &gcp.GCPPubSub{}
+	case HTTP:
+		return &http.HTTP{}
 	case Kafka:
 		return &kafka.Kafka{}
 	case MongoDB:
