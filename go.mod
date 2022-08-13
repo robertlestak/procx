@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	cloud.google.com/go/bigquery v1.8.0
+	cloud.google.com/go/firestore v1.1.0
 	cloud.google.com/go/pubsub v1.24.0
 	cloud.google.com/go/storage v1.22.1
 	github.com/apache/pulsar-client-go v0.8.1
@@ -66,13 +67,11 @@ require (
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/hashicorp/memberlist v0.3.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/keybase/go-keychain v0.0.0-20220610143837-c2ce06069005 // indirect
 	github.com/klauspost/compress v1.15.8 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/linkedin/goavro/v2 v2.9.8 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/miekg/dns v1.1.26 // indirect
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/nats-io/nats-server/v2 v2.8.4 // indirect

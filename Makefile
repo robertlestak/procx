@@ -1,4 +1,4 @@
-VERSION=v0.0.43
+VERSION=v0.0.44
 
 .PHONY: procx
 procx: clean bin/procx_darwin bin/procx_windows bin/procx_linux
@@ -23,13 +23,31 @@ bin/procx_windows:
 	GOOS=windows GOARCH=amd64 go build -ldflags="-X 'main.Version=$(VERSION)'" -o bin/procx_windows cmd/procx/*.go
 	openssl sha512 bin/procx_windows > bin/procx_windows.sha512
 
+.PHONY: envvars
+envvars:
+	egrep -oh --exclude Makefile \
+		--exclude-dir bin \
+		--exclude-dir scripts \
+		-R 'os.Getenv\(.*?\)' . | \
+		tr -d ' ' | \
+		sort | \
+		uniq | \
+		sed -e 's,os.Getenv(,,g' -e 's,),,g' \
+		-e 's,",,g' \
+		-e 's,prefix+,PROCX_,g'
+
+.PHONY: envvarsyaml
+envvarsyaml:
+	bash scripts/envvarsyaml.sh
+
+.PHONY: clean
 clean:
 	rm -rf bin
 
-.PHONY=slim
+.PHONY: slim
 slim:
 	bash scripts/build_drivers.sh build $(drivers)
 
-.PHONY=listdrivers
+.PHONY: listdrivers
 listdrivers:
 	bash scripts/build_drivers.sh list

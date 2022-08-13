@@ -44,6 +44,7 @@ Currently, the following drivers are supported:
 - [Elasticsearch](#elasticsearch) (`elasticsearch`)
 - [GCP Big Query](#gcp-bq) (`gcp-bq`)
 - [GCP Cloud Storage](#gcp-gcs) (`gcp-gcs`)
+- [GCP Firestore](#gcp-firestore) (`gcp-firestore`)
 - [GCP Pub/Sub](#gcp-pubsub) (`gcp-pubsub`)
 - [HTTP](#http) (`http`)
 - [Kafka](#kafka) (`kafka`)
@@ -194,7 +195,7 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-gcs, gcp-pubsub, http, kafka, local, mongodb, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
+    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, http, kafka, local, mongodb, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -235,6 +236,34 @@ Usage: procx [options] [process]
     	GCP BQ query returns key as first column and value as second column
   -gcp-bq-retrieve-query string
     	GCP BQ retrieve query
+  -gcp-firestore-clear-collection string
+    	GCP Firestore clear collection
+  -gcp-firestore-clear-op string
+    	GCP Firestore clear op. Possible values: 'mv', 'rm', 'update'
+  -gcp-firestore-clear-update string
+    	GCP Firestore clear update object. Will be merged with document before update or move.
+  -gcp-firestore-fail-collection string
+    	GCP Firestore fail collection
+  -gcp-firestore-fail-op string
+    	GCP Firestore fail op. Possible values: 'mv', 'rm', 'update'
+  -gcp-firestore-fail-update string
+    	GCP Firestore fail update object. Will be merged with document before update or move.
+  -gcp-firestore-retrieve-collection string
+    	GCP Firestore retrieve collection
+  -gcp-firestore-retrieve-document string
+    	GCP Firestore retrieve document
+  -gcp-firestore-retrieve-document-json-key string
+    	GCP Firestore retrieve document JSON key
+  -gcp-firestore-retrieve-query-op string
+    	GCP Firestore retrieve query op
+  -gcp-firestore-retrieve-query-order string
+    	GCP Firestore retrieve query order. Valid values: asc, desc
+  -gcp-firestore-retrieve-query-order-by string
+    	GCP Firestore retrieve query order by key
+  -gcp-firestore-retrieve-query-path string
+    	GCP Firestore retrieve query path
+  -gcp-firestore-retrieve-query-value string
+    	GCP Firestore retrieve query value
   -gcp-gcs-bucket string
     	GCP GCS bucket
   -gcp-gcs-clear-bucket string
@@ -573,26 +602,29 @@ Usage: procx [options] [process]
 
 ### Environment Variables
 
+- `AWS_REGION`
+- `AWS_SDK_LOAD_CONFIG`
+- `LOG_LEVEL`
+- `NSQ_LOG_LEVEL`
+- `PROCX_PAYLOAD`
 - `PROCX_ACTIVEMQ_ADDRESS`
 - `PROCX_ACTIVEMQ_ENABLE_TLS`
 - `PROCX_ACTIVEMQ_NAME`
 - `PROCX_ACTIVEMQ_TLS_CA_FILE`
 - `PROCX_ACTIVEMQ_TLS_CERT_FILE`
-- `PROCX_ACTIVEMQ_TLS_KEY_FILE`
 - `PROCX_ACTIVEMQ_TLS_INSECURE`
+- `PROCX_ACTIVEMQ_TLS_KEY_FILE`
 - `PROCX_ACTIVEMQ_TYPE`
-- `PROCX_AWS_REGION`
-- `PROCX_AWS_ROLE_ARN`
+- `PROCX_AWS_DYNAMO_CLEAR_QUERY`
 - `PROCX_AWS_DYNAMO_DATA_PATH`
-- `PROCX_AWS_DYNAMO_TABLE`
+- `PROCX_AWS_DYNAMO_FAIL_QUERY`
 - `PROCX_AWS_DYNAMO_KEY_PATH`
 - `PROCX_AWS_DYNAMO_RETRIEVE_QUERY`
-- `PROCX_AWS_DYNAMO_CLEAR_QUERY`
-- `PROCX_AWS_DYNAMO_FAIL_QUERY`
+- `PROCX_AWS_DYNAMO_TABLE`
+- `PROCX_AWS_LOAD_CONFIG`
+- `PROCX_AWS_REGION`
+- `PROCX_AWS_ROLE_ARN`
 - `PROCX_AWS_S3_BUCKET`
-- `PROCX_AWS_S3_KEY`
-- `PROCX_AWS_S3_KEY_PREFIX`
-- `PROCX_AWS_S3_KEY_REGEX`
 - `PROCX_AWS_S3_CLEAR_BUCKET`
 - `PROCX_AWS_S3_CLEAR_KEY`
 - `PROCX_AWS_S3_CLEAR_KEY_TEMPLATE`
@@ -601,7 +633,11 @@ Usage: procx [options] [process]
 - `PROCX_AWS_S3_FAIL_KEY`
 - `PROCX_AWS_S3_FAIL_KEY_TEMPLATE`
 - `PROCX_AWS_S3_FAIL_OP`
+- `PROCX_AWS_S3_KEY`
+- `PROCX_AWS_S3_KEY_PREFIX`
+- `PROCX_AWS_S3_KEY_REGEX`
 - `PROCX_AWS_SQS_QUEUE_URL`
+- `PROCX_AWS_SQS_ROLE_ARN`
 - `PROCX_CASSANDRA_CLEAR_PARAMS`
 - `PROCX_CASSANDRA_CLEAR_QUERY`
 - `PROCX_CASSANDRA_CONSISTENCY`
@@ -618,31 +654,43 @@ Usage: procx [options] [process]
 - `PROCX_CENTAURI_KEY`
 - `PROCX_CENTAURI_KEY_BASE64`
 - `PROCX_CENTAURI_PEER_URL`
+- `PROCX_DAEMON`
+- `PROCX_DRIVER`
 - `PROCX_ELASTICSEARCH_ADDRESS`
-- `PROCX_ELASTICSEARCH_USERNAME`
-- `PROCX_ELASTICSEARCH_PASSWORD`
-- `PROCX_ELASTICSEARCH_TLS_SKIP_VERIFY`
-- `PROCX_ELASTICSEARCH_RETRIEVE_QUERY`
-- `PROCX_ELASTICSEARCH_RETRIEVE_INDEX`
-- `PROCX_ELASTICSEARCH_CLEAR_QUERY`
 - `PROCX_ELASTICSEARCH_CLEAR_INDEX`
 - `PROCX_ELASTICSEARCH_CLEAR_OP`
-- `PROCX_ELASTICSEARCH_FAIL_QUERY`
+- `PROCX_ELASTICSEARCH_CLEAR_QUERY`
+- `PROCX_ELASTICSEARCH_ENABLE_TLS`
 - `PROCX_ELASTICSEARCH_FAIL_INDEX`
 - `PROCX_ELASTICSEARCH_FAIL_OP`
-- `PROCX_ELASTICSEARCH_ENABLE_TLS`
+- `PROCX_ELASTICSEARCH_FAIL_QUERY`
+- `PROCX_ELASTICSEARCH_PASSWORD`
+- `PROCX_ELASTICSEARCH_RETRIEVE_INDEX`
+- `PROCX_ELASTICSEARCH_RETRIEVE_QUERY`
 - `PROCX_ELASTICSEARCH_TLS_CA_FILE`
 - `PROCX_ELASTICSEARCH_TLS_CERT_FILE`
 - `PROCX_ELASTICSEARCH_TLS_KEY_FILE`
-- `PROCX_GCP_PROJECT_ID`
+- `PROCX_ELASTICSEARCH_TLS_SKIP_VERIFY`
+- `PROCX_ELASTICSEARCH_USERNAME`
 - `PROCX_GCP_BQ_CLEAR_QUERY`
 - `PROCX_GCP_BQ_FAIL_QUERY`
 - `PROCX_GCP_BQ_QUERY_KEY`
 - `PROCX_GCP_BQ_RETRIEVE_QUERY`
+- `PROCX_GCP_FIRESTORE_CLEAR_COLLECTION`
+- `PROCX_GCP_FIRESTORE_CLEAR_OP`
+- `PROCX_GCP_FIRESTORE_CLEAR_UPDATE`
+- `PROCX_GCP_FIRESTORE_FAIL_COLLECTION`
+- `PROCX_GCP_FIRESTORE_FAIL_OP`
+- `PROCX_GCP_FIRESTORE_FAIL_UPDATE`
+- `PROCX_GCP_FIRESTORE_RETRIEVE_COLLECTION`
+- `PROCX_GCP_FIRESTORE_RETRIEVE_DOCUMENT`
+- `PROCX_GCP_FIRESTORE_RETRIEVE_DOCUMENT_JSON_KEY`
+- `PROCX_GCP_FIRESTORE_RETRIEVE_QUERY_OP`
+- `PROCX_GCP_FIRESTORE_RETRIEVE_QUERY_ORDER`
+- `PROCX_GCP_FIRESTORE_RETRIEVE_QUERY_ORDER_BY`
+- `PROCX_GCP_FIRESTORE_RETRIEVE_QUERY_PATH`
+- `PROCX_GCP_FIRESTORE_RETRIEVE_QUERY_VALUE`
 - `PROCX_GCP_GCS_BUCKET`
-- `PROCX_GCP_GCS_KEY`
-- `PROCX_GCP_GCS_KEY_PREFIX`
-- `PROCX_GCP_GCS_KEY_REGEX`
 - `PROCX_GCP_GCS_CLEAR_BUCKET`
 - `PROCX_GCP_GCS_CLEAR_KEY`
 - `PROCX_GCP_GCS_CLEAR_KEY_TEMPLATE`
@@ -651,7 +699,12 @@ Usage: procx [options] [process]
 - `PROCX_GCP_GCS_FAIL_KEY`
 - `PROCX_GCP_GCS_FAIL_KEY_TEMPLATE`
 - `PROCX_GCP_GCS_FAIL_OP`
-- `PROCX_GCP_PUBSUB_SUBSCRIPTION`
+- `PROCX_GCP_GCS_KEY`
+- `PROCX_GCP_GCS_KEY_PREFIX`
+- `PROCX_GCP_GCS_KEY_REGEX`
+- `PROCX_GCP_PROJECT_ID`
+- `PROCX_GCP_SUBSCRIPTION`
+- `PROCX_HOSTENV`
 - `PROCX_HTTP_CLEAR_BODY`
 - `PROCX_HTTP_CLEAR_BODY_FILE`
 - `PROCX_HTTP_CLEAR_CONTENT_TYPE`
@@ -659,6 +712,7 @@ Usage: procx [options] [process]
 - `PROCX_HTTP_CLEAR_METHOD`
 - `PROCX_HTTP_CLEAR_SUCCESSFUL_STATUS_CODES`
 - `PROCX_HTTP_CLEAR_URL`
+- `PROCX_HTTP_ENABLE_TLS`
 - `PROCX_HTTP_FAIL_BODY`
 - `PROCX_HTTP_FAIL_BODY_FILE`
 - `PROCX_HTTP_FAIL_CONTENT_TYPE`
@@ -670,44 +724,41 @@ Usage: procx [options] [process]
 - `PROCX_HTTP_RETRIEVE_BODY_FILE`
 - `PROCX_HTTP_RETRIEVE_CONTENT_TYPE`
 - `PROCX_HTTP_RETRIEVE_HEADERS`
+- `PROCX_HTTP_RETRIEVE_KEY_JSON_SELECTOR`
 - `PROCX_HTTP_RETRIEVE_METHOD`
 - `PROCX_HTTP_RETRIEVE_SUCCESSFUL_STATUS_CODES`
 - `PROCX_HTTP_RETRIEVE_URL`
-- `PROCX_HTTP_RETRIEVE_KEY_JSON_SELECTOR`
 - `PROCX_HTTP_RETRIEVE_WORK_JSON_SELECTOR`
-- `PROCX_HTTP_ENABLE_TLS`
+- `PROCX_HTTP_TLS_CA_FILE`
 - `PROCX_HTTP_TLS_CERT_FILE`
 - `PROCX_HTTP_TLS_KEY_FILE`
-- `PROCX_HTTP_TLS_CA_FILE`
 - `PROCX_KAFKA_BROKERS`
-- `PROCX_KAFKA_GROUP`
-- `PROCX_KAFKA_TOPIC`
-- `PROCX_KAFKA_TLS_CA_FILE`
-- `PROCX_KAFKA_TLS_CERT_FILE`
-- `PROCX_KAFKA_TLS_KEY_FILE`
-- `PROCX_KAFKA_ENABLE_TLS`
 - `PROCX_KAFKA_ENABLE_SASL`
-- `PROCX_KAFKA_SASL_USERNAME`
+- `PROCX_KAFKA_ENABLE_TLS`
+- `PROCX_KAFKA_GROUP`
 - `PROCX_KAFKA_SASL_PASSWORD`
 - `PROCX_KAFKA_SASL_TYPE`
+- `PROCX_KAFKA_SASL_USERNAME`
+- `PROCX_KAFKA_TLS_CA_FILE`
+- `PROCX_KAFKA_TLS_CERT_FILE`
 - `PROCX_KAFKA_TLS_INSECURE`
-- `PROCX_DRIVER`
-- `PROCX_HOSTENV`
+- `PROCX_KAFKA_TLS_KEY_FILE`
+- `PROCX_KAFKA_TOPIC`
 - `PROCX_KEEP_PAYLOAD_FILE`
 - `PROCX_MONGO_CLEAR_QUERY`
 - `PROCX_MONGO_COLLECTION`
 - `PROCX_MONGO_DATABASE`
+- `PROCX_MONGO_ENABLE_TLS`
 - `PROCX_MONGO_FAIL_QUERY`
 - `PROCX_MONGO_HOST`
 - `PROCX_MONGO_PASSWORD`
 - `PROCX_MONGO_PORT`
 - `PROCX_MONGO_RETRIEVE_QUERY`
-- `PROCX_MONGO_USER`
-- `PROCX_MONGO_ENABLE_TLS`
 - `PROCX_MONGO_TLS_CA_FILE`
 - `PROCX_MONGO_TLS_CERT_FILE`
-- `PROCX_MONGO_TLS_KEY_FILE`
 - `PROCX_MONGO_TLS_INSECURE`
+- `PROCX_MONGO_TLS_KEY_FILE`
+- `PROCX_MONGO_USER`
 - `PROCX_MYSQL_CLEAR_PARAMS`
 - `PROCX_MYSQL_CLEAR_QUERY`
 - `PROCX_MYSQL_DATABASE`
@@ -720,21 +771,29 @@ Usage: procx [options] [process]
 - `PROCX_MYSQL_RETRIEVE_PARAMS`
 - `PROCX_MYSQL_RETRIEVE_QUERY`
 - `PROCX_MYSQL_USER`
-- `PROCX_NATS_URL`
+- `PROCX_NATS_CLEAR_RESPONSE`
+- `PROCX_NATS_CREDS_FILE`
+- `PROCX_NATS_ENABLE_TLS`
+- `PROCX_NATS_FAIL_RESPONSE`
+- `PROCX_NATS_JWT_FILE`
+- `PROCX_NATS_NKEY_FILE`
+- `PROCX_NATS_PASSWORD`
 - `PROCX_NATS_QUEUE_GROUP`
 - `PROCX_NATS_SUBJECT`
-- `PROCX_NATS_CREDS_FILE`
-- `PROCX_NATS_JWT_FILE`
 - `PROCX_NATS_TLS_CA_FILE`
 - `PROCX_NATS_TLS_CERT_FILE`
-- `PROCX_NATS_TLS_KEY_FILE`
-- `PROCX_NATS_ENABLE_TLS`
 - `PROCX_NATS_TLS_INSECURE`
-- `PROCX_NATS_NKEY_FILE`
+- `PROCX_NATS_TLS_KEY_FILE`
+- `PROCX_NATS_TOKEN`
+- `PROCX_NATS_URL`
 - `PROCX_NATS_USERNAME`
-- `PROCX_NATS_PASSWORD`
-- `PROCX_NATS_CLEAR_RESPONSE`
-- `PROCX_NATS_FAIL_RESPONSE`
+- `PROCX_NFS_CLEAR_FOLDER`
+- `PROCX_NFS_CLEAR_KEY`
+- `PROCX_NFS_CLEAR_KEY_TEMPLATE`
+- `PROCX_NFS_CLEAR_OP`
+- `PROCX_NFS_FAIL_FOLDER`
+- `PROCX_NFS_FAIL_KEY`
+- `PROCX_NFS_FAIL_KEY_TEMPLATE`
 - `PROCX_NFS_FAIL_OP`
 - `PROCX_NFS_FOLDER`
 - `PROCX_NFS_HOST`
@@ -743,23 +802,15 @@ Usage: procx [options] [process]
 - `PROCX_NFS_KEY_REGEX`
 - `PROCX_NFS_MOUNT_PATH`
 - `PROCX_NFS_TARGET`
-- `PROCX_NFS_CLEAR_OP`
-- `PROCX_NFS_FAIL_OP`
-- `PROCX_NFS_CLEAR_FOLDER`
-- `PROCX_NFS_FAIL_FOLDER`
-- `PROCX_NFS_CLEAR_KEY`
-- `PROCX_NFS_FAIL_KEY`
-- `PROCX_NFS_CLEAR_KEY_TEMPLATE`
-- `PROCX_NFS_FAIL_KEY_TEMPLATE`
-- `PROCX_NSQ_NSQLOOKUPD_ADDRESS`
-- `PROCX_NSQ_NSQD_ADDRESS`
 - `PROCX_NSQ_CHANNEL`
 - `PROCX_NSQ_ENABLE_TLS`
-- `PROCX_NSQ_TOPIC`
+- `PROCX_NSQ_NSQD_ADDRESS`
+- `PROCX_NSQ_NSQLOOKUPD_ADDRESS`
 - `PROCX_NSQ_TLS_CA_FILE`
 - `PROCX_NSQ_TLS_CERT_FILE`
-- `PROCX_NSQ_TLS_KEY_FILE`
 - `PROCX_NSQ_TLS_INSECURE`
+- `PROCX_NSQ_TLS_KEY_FILE`
+- `PROCX_NSQ_TOPIC`
 - `PROCX_PASS_WORK_AS_ARG`
 - `PROCX_PASS_WORK_AS_STDIN`
 - `PROCX_PAYLOAD_FILE`
@@ -777,35 +828,34 @@ Usage: procx [options] [process]
 - `PROCX_PSQL_SSL_MODE`
 - `PROCX_PSQL_USER`
 - `PROCX_PULSAR_ADDRESS`
-- `PROCX_PULSAR_SUBSCRIPTION`
-- `PROCX_PULSAR_TOPIC`
-- `PROCX_PULSAR_TOPICS`
-- `PROCX_PULSAR_TOPICS_PATTERN`
-- `PROCX_PULSAR_TLS_ALLOW_INSECURE_CONNECTION`
-- `PROCX_PULSAR_TLS_TRUST_CERTS_FILE`
-- `PROCX_PULSAR_TLS_VALIDATE_HOSTNAME` 
-- `PROCX_PULSAR_AUTH_TOKEN`
-- `PROCX_PULSAR_AUTH_TOKEN_FILE`
 - `PROCX_PULSAR_AUTH_CERT_FILE`
 - `PROCX_PULSAR_AUTH_KEY_FILE`
 - `PROCX_PULSAR_AUTH_OAUTH_PARAMS`
-- `PROCX_RABBITMQ_URL`
+- `PROCX_PULSAR_AUTH_TOKEN`
+- `PROCX_PULSAR_AUTH_TOKEN_FILE`
+- `PROCX_PULSAR_SUBSCRIPTION`
+- `PROCX_PULSAR_TLS_ALLOW_INSECURE_CONNECTION`
+- `PROCX_PULSAR_TLS_TRUST_CERTS_FILE`
+- `PROCX_PULSAR_TLS_VALIDATE_HOSTNAME`
+- `PROCX_PULSAR_TOPIC`
+- `PROCX_PULSAR_TOPICS`
+- `PROCX_PULSAR_TOPICS_PATTERN`
 - `PROCX_RABBITMQ_QUEUE`
-- `PROCX_REDIS_HOST`
-- `PROCX_REDIS_PORT`
-- `PROCX_REDIS_PASSWORD`
-- `PROCX_REDIS_KEY`
+- `PROCX_RABBITMQ_URL`
 - `PROCX_REDIS_ENABLE_TLS`
-- `PROCX_REDIS_TLS_CA_FILE`
-- `PROCX_REDIS_TLS_CERT_FILE`
-- `PROCX_REDIS_TLS_KEY_FILE`
-- `PROCX_REDIS_TLS_INSECURE`
+- `PROCX_REDIS_HOST`
+- `PROCX_REDIS_KEY`
+- `PROCX_REDIS_PASSWORD`
+- `PROCX_REDIS_PORT`
 - `PROCX_REDIS_STREAM_CLEAR_OP`
-- `PROCX_REDIS_STREAM_FAIL_OP`
-- `PROCX_REDIS_STREAM_VALUE_KEYS`
 - `PROCX_REDIS_STREAM_CONSUMER_GROUP`
 - `PROCX_REDIS_STREAM_CONSUMER_NAME`
-- `PROCX_DAEMON`
+- `PROCX_REDIS_STREAM_FAIL_OP`
+- `PROCX_REDIS_STREAM_VALUE_KEYS`
+- `PROCX_REDIS_TLS_CA_FILE`
+- `PROCX_REDIS_TLS_CERT_FILE`
+- `PROCX_REDIS_TLS_INSECURE`
+- `PROCX_REDIS_TLS_KEY_FILE`
 
 ## Driver Examples
 
@@ -944,7 +994,7 @@ The `gcp-bq` driver will retrieve the next message from the specified BigQuery t
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/credentials.json"
 procx \
-    -gcp-bq-project my-project \
+    -gcp-project-id my-project \
     -gcp-bq-dataset my-dataset \
     -gcp-bq-table my-table \
     -gcp-bq-retrieve-query "SELECT id, work FROM mydatatest.mytable LIMIT 1" \
@@ -967,6 +1017,7 @@ By default, if the object is moved the key will be the same as the source key, t
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
 procx \
     -driver gcp-gcs \
+    -gcp-project-id my-project \
     -payload-file my-payload.json \
     -gcp-gcs-bucket my-bucket \
     -gcp-gcs-key-regex 'jobs-.*?[a-z]' \
@@ -976,6 +1027,30 @@ procx \
     -gcp-gcs-fail-key-template 'fail/{{key}}' \
     bash -c 'echo the payload is: $(cat my-payload.json)'
 ```
+
+### GCP Firestore
+
+The GCP Firestore driver will retrieve the first document in the collection `-gcp-firestore-retrieve-collection` which matches the specified input query. If `-gcp-firestore-retrieve-document` is specified, this exact document ID will be retrieved. If `-gcp-firestore-retrieve-query-path` is specified, it will be used with `-gcp-firestore-retrieve-query-op` and `-gcp-firestore-retrieve-query-value` to construct a select query. To order the documents before selecting the first response, `-gcp-firestore-retrieve-query-order-by` and `-gcp-firestore-retrieve-query-order` can be used. The document will be returned to the process as a `map[string]interface{}` JSON object. If neither document nor query is specified, the first document in the collection will be retrieved. If `-gcp-firestore-retrieve-document-json-key` is provided, it will be used to select a single field in the JSON repsonse to pass to the process. Upon completion, the document can either be moved to a new collection, updated, or deleted. If updating, the new fields can be provided as a JSON string which will be merged with the object.
+
+```bash
+procx \
+    -driver gcp-firestore \
+    -gcp-project-id my-project \
+    -gcp-firestore-retrieve-collection my-collection \
+    -gcp-firestore-retrieve-query-path 'status' \
+    -gcp-firestore-retrieve-query-op '==' \
+    -gcp-firestore-retrieve-query-value 'pending' \
+    -gcp-firestore-retrieve-query-order-by 'created_at' \
+    -gcp-firestore-retrieve-query-order 'desc' \
+    -gcp-firestore-retrieve-document-json-key 'work' \
+    -gcp-firestore-clear-op=mv \
+    -gcp-firestore-clear-update '{"status": "completed"}' \
+    -gcp-firestore-clear-collection my-collection-completed \
+    -gcp-firestore-fail-op=mv \
+    -gcp-firestore-fail-update '{"status": "failed"}' \
+    -gcp-firestore-fail-collection my-collection-failed \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```    
 
 ### GCP Pub/Sub
 

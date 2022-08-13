@@ -36,6 +36,7 @@ var (
 	HTTP              DriverName = "http"
 	Kafka             DriverName = "kafka"
 	GCPBQ             DriverName = "gcp-bq"
+	GCPFirestore      DriverName = "gcp-firestore"
 	GCPGCS            DriverName = "gcp-gcs"
 	GCPPubSub         DriverName = "gcp-pubsub"
 	MongoDB           DriverName = "mongodb"
@@ -72,6 +73,8 @@ func GetDriver(name DriverName) Driver {
 		return &elasticsearch.Elasticsearch{}
 	case GCPBQ:
 		return &gcp.BQ{}
+	case GCPFirestore:
+		return &gcp.GCPFirestore{}
 	case GCPGCS:
 		return &gcp.GCS{}
 	case GCPPubSub:
