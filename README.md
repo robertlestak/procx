@@ -42,6 +42,7 @@ Currently, the following drivers are supported:
 - [Cassandra](#cassandra) (`cassandra`)
 - [Centauri](#centauri) (`centauri`)
 - [Elasticsearch](#elasticsearch) (`elasticsearch`)
+- [FS](#fs) (`fs`)
 - [GCP Big Query](#gcp-bq) (`gcp-bq`)
 - [GCP Cloud Storage](#gcp-gcs) (`gcp-gcs`)
 - [GCP Firestore](#gcp-firestore) (`gcp-firestore`)
@@ -195,7 +196,7 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, http, kafka, local, mongodb, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
+    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, http, kafka, local, mongodb, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -228,6 +229,30 @@ Usage: procx [options] [process]
     	Elasticsearch TLS skip verify
   -elasticsearch-username string
     	Elasticsearch username
+  -fs-clear-folder string
+    	FS clear folder, if clear op is mv
+  -fs-clear-key string
+    	FS clear key, if clear op is mv. default is origional key name.
+  -fs-clear-key-template string
+    	FS clear key template, if clear op is mv.
+  -fs-clear-op string
+    	FS clear operation. Valid values: mv, rm
+  -fs-fail-folder string
+    	FS fail folder, if fail op is mv
+  -fs-fail-key string
+    	FS fail key, if fail op is mv. default is original key name.
+  -fs-fail-key-template string
+    	FS fail key template, if fail op is mv.
+  -fs-fail-op string
+    	FS fail operation. Valid values: mv, rm
+  -fs-folder string
+    	FS folder
+  -fs-key string
+    	FS key
+  -fs-key-prefix string
+    	FS key prefix
+  -fs-key-regex string
+    	FS key regex
   -gcp-bq-clear-query string
     	GCP BQ clear query
   -gcp-bq-fail-query string
@@ -672,6 +697,18 @@ Usage: procx [options] [process]
 - `PROCX_ELASTICSEARCH_TLS_KEY_FILE`
 - `PROCX_ELASTICSEARCH_TLS_SKIP_VERIFY`
 - `PROCX_ELASTICSEARCH_USERNAME`
+- `PROCX_FS_CLEAR_FOLDER`
+- `PROCX_FS_CLEAR_KEY`
+- `PROCX_FS_CLEAR_KEY_TEMPLATE`
+- `PROCX_FS_CLEAR_OP`
+- `PROCX_FS_FAIL_FOLDER`
+- `PROCX_FS_FAIL_KEY`
+- `PROCX_FS_FAIL_KEY_TEMPLATE`
+- `PROCX_FS_FAIL_OP`
+- `PROCX_FS_FOLDER`
+- `PROCX_FS_KEY`
+- `PROCX_FS_KEY_PREFIX`
+- `PROCX_FS_KEY_REGEX`
 - `PROCX_GCP_BQ_CLEAR_QUERY`
 - `PROCX_GCP_BQ_FAIL_QUERY`
 - `PROCX_GCP_BQ_QUERY_KEY`
@@ -984,6 +1021,26 @@ procx \
     -elasticsearch-fail-op move \
     -elasticsearch-fail-index my-index-failed \
     -driver elasticsearch \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### FS
+
+The FS driver will traverse the specified locally mounted directory, and retrieve the first file which matches the specified key. Similar to the AWS S3 and NFS drivers, the FS driver supports `-fs-key`, `-fs-key-prefix`, and `-fs-key-regex` selection flags. 
+
+Upon completion, the file can either be moved to a different folder, or it can be deleted, with the `-fs-clear-op` and `-fs-fail-op` flags (`mv` or `rm`). You can specify the target folder with the `-fs-clear-folder` and `-fs-fail-folder` flags, and the `-fs-clear-key` and `-fs-fail-key` flags let you rename the file on move. You can also use the `-fs-clear-key-template` and `-fs-fail-key-template` flags to specify a template for the key, which will be replaced with the key.
+
+```bash
+procx \
+    -fs-folder /path/to/folder \
+    -fs-key-prefix "my-prefix" \
+    -fs-clear-op mv \
+    -fs-clear-folder /path/to/cleared \
+    -fs-clear-key-template "cleared_{{key}}" \
+    -fs-fail-op mv \
+    -fs-fail-folder /path/to/failed \
+    -fs-fail-key-template "failed_{{key}}" \
+    -driver fs \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 

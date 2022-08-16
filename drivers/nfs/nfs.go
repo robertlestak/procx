@@ -57,7 +57,7 @@ func (o *S3Op) GetKey() string {
 
 func (d *NFS) LoadEnv(prefix string) error {
 	l := log.WithFields(log.Fields{
-		"pkg": "aws",
+		"pkg": "nfs",
 		"fn":  "LoadEnv",
 	})
 	l.Debug("LoadEnv")
@@ -113,7 +113,7 @@ func (d *NFS) LoadEnv(prefix string) error {
 
 func (d *NFS) LoadFlags() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "aws",
+		"pkg": "nfs",
 		"fn":  "LoadFlags",
 	})
 	l.Debug("LoadFlags")
@@ -149,7 +149,7 @@ func hostname() string {
 	hostname, err := os.Hostname()
 	if err != nil {
 		log.WithFields(log.Fields{
-			"pkg": "aws",
+			"pkg": "nfs",
 			"fn":  "hostname",
 		}).Error("Failed to get hostname")
 		return uuid.New().String()
@@ -160,7 +160,7 @@ func hostname() string {
 func (d *NFS) Init() error {
 	l := log.WithFields(
 		log.Fields{
-			"pkg": "aws",
+			"pkg": "nfs",
 			"fn":  "CreateNFSSession",
 		},
 	)
@@ -183,7 +183,7 @@ func (d *NFS) Init() error {
 
 func (d *NFS) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
-		"pkg": "aws",
+		"pkg": "nfs",
 		"fn":  "GetWork",
 	})
 	l.Debug("GetWork")
@@ -204,7 +204,7 @@ func (d *NFS) GetWork() (io.Reader, error) {
 
 func (d *NFS) getObject() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
-		"pkg":    "aws",
+		"pkg":    "nfs",
 		"fn":     "getObject",
 		"folder": d.Folder,
 		"key":    d.Key,
@@ -218,7 +218,7 @@ func (d *NFS) getObject() (io.Reader, error) {
 
 func (t *NFSMount) FindPrefixRecursive(folder, prefix string) *string {
 	l := log.WithFields(log.Fields{
-		"pkg": "aws",
+		"pkg": "nfs",
 		"fn":  "FindPrefixRecursive",
 	})
 	l.Debugf("FindPrefixRecursive folder=%s prefix=%s", folder, prefix)
@@ -248,7 +248,7 @@ func (t *NFSMount) FindPrefixRecursive(folder, prefix string) *string {
 
 func (d *NFS) findObjectByPrefix() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
-		"pkg": "aws",
+		"pkg": "nfs",
 		"fn":  "findObjectByPrefix",
 	})
 	l.Debug("findObjectByPrefix")
@@ -266,7 +266,7 @@ func (d *NFS) findObjectByPrefix() (io.Reader, error) {
 
 func (t *NFSMount) FindRegexRecursive(folder, prefix string) *string {
 	l := log.WithFields(log.Fields{
-		"pkg": "aws",
+		"pkg": "nfs",
 		"fn":  "FindRegexRecursive",
 	})
 	l.Debugf("FindPrefixRecursive folder=%s prefix=%s", folder, prefix)
@@ -280,7 +280,7 @@ func (t *NFSMount) FindRegexRecursive(folder, prefix string) *string {
 			if entry.Name() == "." || entry.Name() == ".." {
 				continue
 			}
-			if t.FindPrefixRecursive(path.Join(folder, entry.Name()), prefix) != nil {
+			if t.FindRegexRecursive(path.Join(folder, entry.Name()), prefix) != nil {
 				n := entry.Name()
 				return &n
 			}
@@ -301,7 +301,7 @@ func (t *NFSMount) FindRegexRecursive(folder, prefix string) *string {
 
 func (d *NFS) findObjectByRegex() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
-		"pkg": "aws",
+		"pkg": "nfs",
 		"fn":  "findObjectByRegex",
 	})
 	l.Debug("findObjectByRegex")
@@ -319,7 +319,7 @@ func (d *NFS) findObjectByRegex() (io.Reader, error) {
 
 func (d *NFS) deleteObject() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "aws",
+		"pkg": "nfs",
 		"fn":  "deleteObject",
 	})
 	l.Debug("deleteObject")
@@ -331,7 +331,7 @@ func (d *NFS) deleteObject() error {
 
 func (d *NFS) mvObject(destBucket string, destKey string) error {
 	l := log.WithFields(log.Fields{
-		"pkg":        "aws",
+		"pkg":        "nfs",
 		"fn":         "mvObject",
 		"destBucket": destBucket,
 		"destKey":    destKey,
@@ -373,7 +373,7 @@ func (d *NFS) mvObject(destBucket string, destKey string) error {
 
 func (d *NFS) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "aws",
+		"pkg": "nfs",
 		"fn":  "ClearWork",
 	})
 	l.Debug("ClearWork")
@@ -399,7 +399,7 @@ func (d *NFS) ClearWork() error {
 
 func (d *NFS) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "aws",
+		"pkg": "nfs",
 		"fn":  "HandleFailure",
 	})
 	l.Debug("HandleFailure")
@@ -425,7 +425,7 @@ func (d *NFS) HandleFailure() error {
 
 func (d *NFS) Cleanup() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "aws",
+		"pkg": "nfs",
 		"fn":  "Cleanup",
 	})
 	l.Debug("Cleanup")
