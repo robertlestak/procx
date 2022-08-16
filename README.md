@@ -1026,7 +1026,7 @@ procx \
 
 ### FS
 
-The FS driver will traverse the specified locally mounted directory, and retrieve the first file which matches the specified key. Similar to the AWS S3 and NFS drivers, the FS driver supports `-fs-key`, `-fs-key-prefix`, and `-fs-key-regex` selection flags. 
+The `fs` driver will traverse the specified locally mounted directory, and retrieve the first file which matches the specified key. Similar to the AWS S3 and NFS drivers, the FS driver supports `-fs-key`, `-fs-key-prefix`, and `-fs-key-regex` selection flags. 
 
 Upon completion, the file can either be moved to a different folder, or it can be deleted, with the `-fs-clear-op` and `-fs-fail-op` flags (`mv` or `rm`). You can specify the target folder with the `-fs-clear-folder` and `-fs-fail-folder` flags, and the `-fs-clear-key` and `-fs-fail-key` flags let you rename the file on move. You can also use the `-fs-clear-key-template` and `-fs-fail-key-template` flags to specify a template for the key, which will be replaced with the key.
 
@@ -1228,7 +1228,7 @@ procx \
 
 ### NFS
 
-The NFS driver will mount the specified NFS directory, and retrieve the first file which matches the specified key. Similar to the AWS S3 driver, the NFS driver supports `-nfs-key`, `-nfs-key-prefix`, and `-nfs-key-regex` selection flags. 
+The `nfs` driver will mount the specified NFS directory, and retrieve the first file which matches the specified key. Similar to the AWS S3 driver, the NFS driver supports `-nfs-key`, `-nfs-key-prefix`, and `-nfs-key-regex` selection flags. 
 
 Upon completion, the file can either be moved to a different folder in the NFS, or it can be deleted, with the `-nfs-clear-op` and `-nfs-fail-op` flags (`mv` or `rm`). You can specify the target folder with the `-nfs-clear-folder` and `-nfs-fail-folder` flags, and the `-nfs-clear-key` and `-nfs-fail-key` flags let you rename the file on move. You can also use the `-nfs-clear-key-template` and `-nfs-fail-key-template` flags to specify a template for the key, which will be replaced with the key.
 
