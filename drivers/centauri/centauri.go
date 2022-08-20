@@ -57,14 +57,14 @@ func (d *Centauri) LoadFlags() error {
 	l.Debug("Loading flags")
 	d.URL = *flags.CentauriPeerURL
 	d.Channel = flags.CentauriChannel
-	if flags.CentauriKeyBase64 != nil {
+	if flags.CentauriKeyBase64 != nil && *flags.CentauriKeyBase64 != "" {
 		kd, err := base64.StdEncoding.DecodeString(*flags.CentauriKeyBase64)
 		if err != nil {
 			l.Errorf("error decoding base64: %v", err)
 			return err
 		}
 		d.PrivateKey = kd
-	} else if flags.CentauriKey != nil {
+	} else if flags.CentauriKey != nil && *flags.CentauriKey != "" {
 		if flags.CentauriKey == nil || (flags.CentauriKey != nil && *flags.CentauriKey == "") {
 			return errors.New("key required")
 		}
