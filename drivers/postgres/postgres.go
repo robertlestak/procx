@@ -24,11 +24,11 @@ type Postgres struct {
 	Pass          string
 	Db            string
 	SslMode       string
-	Key           *string
-	QueryKey      *bool
+	RetrieveField *string
 	RetrieveQuery *schema.SqlQuery
 	ClearQuery    *schema.SqlQuery
 	FailQuery     *schema.SqlQuery
+	data          map[string]any
 }
 
 func (d *Postgres) LoadEnv(prefix string) error {
@@ -92,9 +92,9 @@ func (d *Postgres) LoadEnv(prefix string) error {
 			d.FailQuery.Params = append(d.FailQuery.Params, v)
 		}
 	}
-	if os.Getenv(prefix+"PSQL_QUERY_KEY") != "" {
-		tval := os.Getenv(prefix+"PSQL_QUERY_KEY") == "true"
-		d.QueryKey = &tval
+	if os.Getenv(prefix+"PSQL_RETRIEVE_FIELD") != "" {
+		v := os.Getenv(prefix + "PSQL_RETRIEVE_FIELD")
+		d.RetrieveField = &v
 	}
 	return nil
 }
@@ -136,9 +136,7 @@ func (d *Postgres) LoadFlags() error {
 	d.Pass = *flags.PsqlPassword
 	d.Db = *flags.PsqlDatabase
 	d.SslMode = *flags.PsqlSSLMode
-	if *flags.PsqlQueryKey {
-		d.QueryKey = flags.PsqlQueryKey
-	}
+	d.RetrieveField = flags.PsqlRetrieveField
 	if *flags.PsqlRetrieveQuery != "" {
 		rq := &schema.SqlQuery{
 			Query:  *flags.PsqlRetrieveQuery,
@@ -192,29 +190,46 @@ func (d *Postgres) GetWork() (io.Reader, error) {
 		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from psql")
-	var err error
 	var result string
-	var key string
 	if d.RetrieveQuery == nil || d.RetrieveQuery.Query == "" {
 		l.Error("RetrieveQuery is nil or empty")
 		return nil, errors.New("RetrieveQuery is nil or empty")
 	}
-	if d.QueryKey != nil && *d.QueryKey {
-		err = d.Client.QueryRow(d.RetrieveQuery.Query, d.RetrieveQuery.Params...).Scan(&key, &result)
-	} else {
-		err = d.Client.QueryRow(d.RetrieveQuery.Query, d.RetrieveQuery.Params...).Scan(&result)
-	}
+	r, err := d.Client.Query(d.RetrieveQuery.Query, d.RetrieveQuery.Params...)
 	if err != nil {
-		// if the queue is empty, return nil
-		if err == sql.ErrNoRows {
-			l.Debug("Queue is empty")
-			return nil, nil
-		}
 		l.Error(err)
 		return nil, err
 	}
-	d.Key = &key
+	if r.Err() != nil {
+		l.Error(r.Err())
+		return nil, r.Err()
+	}
+	m, err := schema.RowsToMap(r)
+	if err != nil {
+		l.Error(err)
+		return nil, err
+	}
+	if len(m) == 0 {
+		l.Debug("No work found")
+		return nil, nil
+	}
+	d.data = m
+	if d.RetrieveField != nil && *d.RetrieveField != "" {
+		result = fmt.Sprintf("%s", schema.HandleField(m[*d.RetrieveField]))
+	} else {
+		jd, err := schema.MapStringAnyToJSON(m)
+		if err != nil {
+			l.Error(err)
+			return nil, err
+		}
+		result = string(jd)
+	}
 	l.Debug("Got work")
+	// if result is empty, return nil
+	if result == "" {
+		l.Debug("result is empty")
+		return nil, nil
+	}
 	return strings.NewReader(result), nil
 }
 
@@ -228,14 +243,7 @@ func (d *Postgres) ClearWork() error {
 	if d.ClearQuery == nil || d.ClearQuery.Query == "" {
 		return nil
 	}
-	if d.Key != nil && *d.Key != "" {
-		// loop through params and if we find {{key}}, replace it with the key
-		for i, v := range d.ClearQuery.Params {
-			if v == "{{key}}" {
-				d.ClearQuery.Params[i] = *d.Key
-			}
-		}
-	}
+	d.ClearQuery.Params = schema.ReplaceParamsMap(d.data, d.ClearQuery.Params)
 	_, err = d.Client.Exec(d.ClearQuery.Query, d.ClearQuery.Params...)
 	if err != nil {
 		l.Error(err)
@@ -255,14 +263,7 @@ func (d *Postgres) HandleFailure() error {
 	if d.FailQuery == nil || d.FailQuery.Query == "" {
 		return nil
 	}
-	if d.Key != nil && *d.Key != "" {
-		// loop through params and if we find {{key}}, replace it with the key
-		for i, v := range d.FailQuery.Params {
-			if v == "{{key}}" {
-				d.FailQuery.Params[i] = *d.Key
-			}
-		}
-	}
+	d.FailQuery.Params = schema.ReplaceParamsMap(d.data, d.FailQuery.Params)
 	_, err = d.Client.Exec(d.FailQuery.Query, d.FailQuery.Params...)
 	if err != nil {
 		l.Error(err)

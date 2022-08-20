@@ -8,6 +8,7 @@ var (
 	PsqlDatabase       = FlagSet.String("psql-database", "", "PostgreSQL database")
 	PsqlSSLMode        = FlagSet.String("psql-ssl-mode", "disable", "PostgreSQL SSL mode")
 	PsqlQueryKey       = FlagSet.Bool("psql-query-key", false, "PostgreSQL query returns key as first column and value as second column")
+	PsqlRetrieveField  = FlagSet.String("psql-retrieve-field", "", "PostgreSQL retrieve field. If not set, all fields will be returned as a JSON object")
 	PsqlRetrieveQuery  = FlagSet.String("psql-retrieve-query", "", "PostgreSQL retrieve query")
 	PsqlRetrieveParams = FlagSet.String("psql-retrieve-params", "", "PostgreSQL retrieve params")
 	PsqlClearQuery     = FlagSet.String("psql-clear-query", "", "PostgreSQL clear query")

@@ -31,6 +31,24 @@ By default, procx will connect to the data source, consume a single message, and
 
 By default, procx will export the payload as an environment variable `PROCX_PAYLOAD`. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments, and if `-pass-work-as-stdin` is set, the job payload will be piped to stdin of the process. Finally, if the `-payload-file` flag is set, the payload will be written to the specified file path. procx will clean up the file at the end of the job, unless you pass `-keep-payload-file`.
 
+### Relational Driver JSON Parsing
+
+For drivers which are non-structured (ex. `fs`, `aws-s3`, `redis-list`, etc.), procx will pass the payload data as-is to the driver. However for drivers which enforce some relational schema such as SQL-based drivers, you will need to provide a query which will be run to retrieve the data, and optionally queries to run if the work completes successfully or fails. procx will parse the query output into a JSON object and pass it to the process. You can select a specific column field by passing the driver's respective `-{driver}-retrieve-field` flag. You can then use `{{mustache}}` syntax to extract specific fields from the returned data and use them in your subsequent clear and fail queries. For example:
+
+```bash
+procx -driver postgres \
+    ... \
+    -psql-retrieve-query "SELECT id,name,work FROM jobs WHERE status=$1" \
+    -psql-retrieve-params "pending" \
+    -psql-clear-query "UPDATE jobs SET status=$1 WHERE id=$2" \
+    -psql-clear-params "complete,{{id}}" \
+    -pass-work-as-stdin \
+    cat
+# the above will print
+# {"id":1,"name":"John Doe","work":"This is my work"}
+# however if we use the -psql-retrieve-field flag, we can extract the work field, to just print: "This is my work"
+```
+
 ## Drivers
 
 Currently, the following drivers are supported:
@@ -177,8 +195,8 @@ Usage: procx [options] [process]
     	Cassandra keyspace
   -cassandra-password string
     	Cassandra password
-  -cassandra-query-key
-    	Cassandra query returns key as first column and value as second column
+  -cassandra-retrieve-field string
+    	Cassandra retrieve field. If not set, all fields will be returned as a JSON object
   -cassandra-retrieve-params string
     	Cassandra retrieve params
   -cassandra-retrieve-query string
@@ -257,8 +275,8 @@ Usage: procx [options] [process]
     	GCP BQ clear query
   -gcp-bq-fail-query string
     	GCP BQ fail query
-  -gcp-bq-query-key
-    	GCP BQ query returns key as first column and value as second column
+  -gcp-bq-retrieve-field string
+    	GCP BigQuery retrieve field
   -gcp-bq-retrieve-query string
     	GCP BQ retrieve query
   -gcp-firestore-clear-collection string
@@ -401,6 +419,8 @@ Usage: procx [options] [process]
     	Kafka topic
   -keep-payload-file
     	keep payload file after processing
+  -mongo-auth-source string
+    	MongoDB auth source
   -mongo-clear-query string
     	MongoDB clear query
   -mongo-collection string
@@ -445,8 +465,8 @@ Usage: procx [options] [process]
     	MySQL password
   -mysql-port string
     	MySQL port (default "3306")
-  -mysql-query-key
-    	MySQL query returns key as first column and value as second column
+  -mysql-retrieve-field string
+    	MySQL retrieve field. If not set, all fields will be returned as a JSON object
   -mysql-retrieve-params string
     	MySQL retrieve params
   -mysql-retrieve-query string
@@ -511,8 +531,6 @@ Usage: procx [options] [process]
     	NFS key prefix
   -nfs-key-regex string
     	NFS key regex
-  -nfs-mount-path string
-    	NFS mount path
   -nfs-target string
     	NFS target
   -nsq-channel string
@@ -557,6 +575,8 @@ Usage: procx [options] [process]
     	PostgreSQL port (default "5432")
   -psql-query-key
     	PostgreSQL query returns key as first column and value as second column
+  -psql-retrieve-field string
+    	PostgreSQL retrieve field. If not set, all fields will be returned as a JSON object
   -psql-retrieve-params string
     	PostgreSQL retrieve params
   -psql-retrieve-query string
@@ -671,7 +691,7 @@ Usage: procx [options] [process]
 - `PROCX_CASSANDRA_HOSTS`
 - `PROCX_CASSANDRA_KEYSPACE`
 - `PROCX_CASSANDRA_PASSWORD`
-- `PROCX_CASSANDRA_QUERY_KEY`
+- `PROCX_CASSANDRA_RETRIEVE_FIELD`
 - `PROCX_CASSANDRA_RETRIEVE_PARAMS`
 - `PROCX_CASSANDRA_RETRIEVE_QUERY`
 - `PROCX_CASSANDRA_USER`
@@ -711,7 +731,7 @@ Usage: procx [options] [process]
 - `PROCX_FS_KEY_REGEX`
 - `PROCX_GCP_BQ_CLEAR_QUERY`
 - `PROCX_GCP_BQ_FAIL_QUERY`
-- `PROCX_GCP_BQ_QUERY_KEY`
+- `PROCX_GCP_BQ_RETRIEVE_FIELD`
 - `PROCX_GCP_BQ_RETRIEVE_QUERY`
 - `PROCX_GCP_FIRESTORE_CLEAR_COLLECTION`
 - `PROCX_GCP_FIRESTORE_CLEAR_OP`
@@ -782,6 +802,7 @@ Usage: procx [options] [process]
 - `PROCX_KAFKA_TLS_KEY_FILE`
 - `PROCX_KAFKA_TOPIC`
 - `PROCX_KEEP_PAYLOAD_FILE`
+- `PROCX_MONGO_AUTH_SOURCE`
 - `PROCX_MONGO_CLEAR_QUERY`
 - `PROCX_MONGO_COLLECTION`
 - `PROCX_MONGO_DATABASE`
@@ -804,7 +825,7 @@ Usage: procx [options] [process]
 - `PROCX_MYSQL_HOST`
 - `PROCX_MYSQL_PASSWORD`
 - `PROCX_MYSQL_PORT`
-- `PROCX_MYSQL_QUERY_KEY`
+- `PROCX_MYSQL_RETRIEVE_FIELD`
 - `PROCX_MYSQL_RETRIEVE_PARAMS`
 - `PROCX_MYSQL_RETRIEVE_QUERY`
 - `PROCX_MYSQL_USER`
@@ -837,7 +858,6 @@ Usage: procx [options] [process]
 - `PROCX_NFS_KEY`
 - `PROCX_NFS_KEY_PREFIX`
 - `PROCX_NFS_KEY_REGEX`
-- `PROCX_NFS_MOUNT_PATH`
 - `PROCX_NFS_TARGET`
 - `PROCX_NSQ_CHANNEL`
 - `PROCX_NSQ_ENABLE_TLS`
@@ -859,7 +879,7 @@ Usage: procx [options] [process]
 - `PROCX_PSQL_HOST`
 - `PROCX_PSQL_PASSWORD`
 - `PROCX_PSQL_PORT`
-- `PROCX_PSQL_QUERY_KEY`
+- `PROCX_PSQL_RETRIEVE_FIELD`
 - `PROCX_PSQL_RETRIEVE_PARAMS`
 - `PROCX_PSQL_RETRIEVE_QUERY`
 - `PROCX_PSQL_SSL_MODE`
@@ -980,11 +1000,11 @@ procx \
     -cassandra-keyspace mykeyspace \
     -cassandra-consistency QUORUM \
     -cassandra-clear-query "DELETE FROM mykeyspace.mytable WHERE id = ?" \
-    -cassandra-clear-params "{{key}}" \
+    -cassandra-clear-params "{{id}}" \
     -cassandra-hosts "localhost:9042,another:9042" \
     -cassandra-fail-query "UPDATE mykeyspace.mytable SET status = 'failed' WHERE id = ?" \
-    -cassandra-fail-params "{{key}}" \
-    -cassandra-query-key \
+    -cassandra-fail-params "{{id}}" \
+    -cassandra-retrieve-field work \
     -cassandra-retrieve-query "SELECT id, work FROM mykeyspace.mytable LIMIT 1" \
     -driver cassandra \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
@@ -1046,7 +1066,7 @@ procx \
 
 ### GCP BQ
 
-The `gcp-bq` driver will retrieve the next message from the specified BigQuery table, and pass it to the process. Upon successful completion of the process, it will execute the specified query to update / remove the work from the table. By default, it is assumed that a single value (single column and row) is returned by `-gcp-bq-retrieve-query`. You can optionally set `-gcp-bq-query-key` and return a unique key column and work value as the second column. This then enables you to template your `-gcp-bq-clear-query` and `-gcp-bq-fail-query` queries with the `{{key}}` placeholder.
+The `gcp-bq` driver will retrieve the next message from the specified BigQuery table, and pass it to the process. Upon successful completion of the process, it will execute the specified query to update / remove the work from the table. By default, the row data will be returned as a JSON object, unless `-gcp-bq-retrieve-field` is specified, in which case only the specifed field will be returned.
 
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/credentials.json"
@@ -1055,9 +1075,8 @@ procx \
     -gcp-bq-dataset my-dataset \
     -gcp-bq-table my-table \
     -gcp-bq-retrieve-query "SELECT id, work FROM mydatatest.mytable LIMIT 1" \
-    -gcp-bq-query-key \
-    -gcp-bq-clear-query "DELETE FROM my-table WHERE id = '{{key}}'" \
-    -gcp-bq-fail-query "UPDATE my-table SET status = 'failed' WHERE id = '{{key}}'" \
+    -gcp-bq-clear-query "DELETE FROM my-table WHERE id = '{{id}}'" \
+    -gcp-bq-fail-query "UPDATE my-table SET status = 'failed' WHERE id = '{{id}}'" \
     -driver gcp-bq \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
@@ -1185,7 +1204,7 @@ procx \
 
 ### MySQL
 
-The MySQL driver will retrieve the next message from the specified queue, and pass it to the process. By default, the query used to retrieve the message (`-mysql-retrieve-query`) will assume to return a single column, however if you pass `-mysql-query-key` it will assume to return a two-column result, with the first column being the key and the second column being the value. This then allows you to provide a placeholder `{{key}}` param for clearing / failure queries, and this will be replaced with the respective key.
+The MySQL driver will retrieve the next message from the specified queue, and pass it to the process.
 
 ```bash
 procx \
@@ -1195,12 +1214,11 @@ procx \
     -mysql-user myuser \
     -mysql-password mypassword \
     -mysql-retrieve-query "SELECT id, work from mytable where queue = ? and status = ?" \
-    -mysql-query-key \
     -mysql-retrieve-params "myqueue,pending" \
     -mysql-clear-query "UPDATE mytable SET status = ? where queue = ? and id = ?" \
-    -mysql-clear-params "cleared,myqueue,{{key}}" \
+    -mysql-clear-params "cleared,myqueue,{{id}}" \
     -mysql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = ? and id = ?" \
-    -mysql-fail-params "myqueue,{{key}}" \
+    -mysql-fail-params "myqueue,{{id}}" \
     -driver mysql \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
@@ -1262,7 +1280,7 @@ procx \
 
 ### PostgreSQL
 
-The PostgreSQL driver will retrieve the next message from the specified queue, and pass it to the process. By default, the query used to retrieve the message (`-psql-retrieve-query`) will assume to return a single column, however if you pass `-psql-query-key` it will assume to return a two-column result, with the first column being the key and the second column being the value. This then allows you to provide a placeholder `{{key}}` param for clearing / failure queries, and this will be replaced with the respective key.
+The PostgreSQL driver will retrieve the next message from the specified queue, and pass it to the process.
 
 ```bash
 procx \
@@ -1272,12 +1290,11 @@ procx \
     -psql-user myuser \
     -psql-password mypassword \
     -psql-retrieve-query "SELECT id, work from mytable where queue = $1 and status = $2" \
-    -psql-query-key \
     -psql-retrieve-params "myqueue,pending" \
     -psql-clear-query "UPDATE mytable SET status = $1 where queue = $2 and id = $3" \
-    -psql-clear-params "cleared,myqueue,{{key}}" \
+    -psql-clear-params "cleared,myqueue,{{id}}" \
     -psql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = $1 and id = $2" \
-    -psql-fail-params "myqueue,{{key}}" \
+    -psql-fail-params "myqueue,{{id}}" \
     -driver postgres \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```

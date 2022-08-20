@@ -22,11 +22,11 @@ type Mysql struct {
 	User          string
 	Pass          string
 	Db            string
-	Key           *string
-	QueryKey      *bool
+	RetrieveField *string
 	RetrieveQuery *schema.SqlQuery
 	ClearQuery    *schema.SqlQuery
 	FailQuery     *schema.SqlQuery
+	data          map[string]any
 }
 
 func (d *Mysql) LoadEnv(prefix string) error {
@@ -87,9 +87,9 @@ func (d *Mysql) LoadEnv(prefix string) error {
 			d.FailQuery.Params = append(d.FailQuery.Params, v)
 		}
 	}
-	if os.Getenv(prefix+"MYSQL_QUERY_KEY") != "" {
-		v := os.Getenv(prefix+"MYSQL_QUERY_KEY") == "true"
-		d.QueryKey = &v
+	if os.Getenv(prefix+"MYSQL_RETRIEVE_FIELD") != "" {
+		v := os.Getenv(prefix + "MYSQL_RETRIEVE_FIELD")
+		d.RetrieveField = &v
 	}
 	return nil
 }
@@ -130,9 +130,7 @@ func (d *Mysql) LoadFlags() error {
 	d.User = *flags.MysqlUser
 	d.Pass = *flags.MysqlPassword
 	d.Db = *flags.MysqlDatabase
-	if *flags.MysqlQueryKey {
-		d.QueryKey = flags.MysqlQueryKey
-	}
+	d.RetrieveField = flags.MysqlRetrieveField
 	if *flags.MysqlRetrieveQuery != "" {
 		rq := &schema.SqlQuery{
 			Query:  *flags.MysqlRetrieveQuery,
@@ -188,28 +186,45 @@ func (d *Mysql) GetWork() (io.Reader, error) {
 		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from mysql")
-	var err error
 	var result string
-	var key string
 	if d.RetrieveQuery == nil || d.RetrieveQuery.Query == "" {
 		l.Error("query is empty")
 		return nil, errors.New("query is empty")
 	}
-	if d.QueryKey != nil && *d.QueryKey {
-		err = d.Client.QueryRow(d.RetrieveQuery.Query, d.RetrieveQuery.Params...).Scan(&key, &result)
-	} else {
-		err = d.Client.QueryRow(d.RetrieveQuery.Query, d.RetrieveQuery.Params...).Scan(&result)
-	}
+	r, err := d.Client.Query(d.RetrieveQuery.Query, d.RetrieveQuery.Params...)
 	if err != nil {
-		// if the queue is empty, return nil
-		if err == sql.ErrNoRows {
-			l.Debug("Queue is empty")
-			return nil, nil
-		}
 		l.Error(err)
 		return nil, err
 	}
-	d.Key = &key
+	if r.Err() != nil {
+		l.Error(r.Err())
+		return nil, r.Err()
+	}
+	m, err := schema.RowsToMap(r)
+	if err != nil {
+		l.Error(err)
+		return nil, err
+	}
+	if len(m) == 0 {
+		l.Debug("No work found")
+		return nil, nil
+	}
+	d.data = m
+	if d.RetrieveField != nil && *d.RetrieveField != "" {
+		result = fmt.Sprintf("%s", schema.HandleField(m[*d.RetrieveField]))
+	} else {
+		jd, err := schema.MapStringAnyToJSON(m)
+		if err != nil {
+			l.Error(err)
+			return nil, err
+		}
+		result = string(jd)
+	}
+	// if result is empty, return nil
+	if result == "" {
+		l.Debug("result is empty")
+		return nil, nil
+	}
 	l.Debug("Got work")
 	return strings.NewReader(result), nil
 }
@@ -224,14 +239,7 @@ func (d *Mysql) ClearWork() error {
 	if d.ClearQuery == nil || d.ClearQuery.Query == "" {
 		return nil
 	}
-	if d.Key != nil && *d.Key != "" {
-		// loop through params and if we find {{key}}, replace it with the key
-		for i, v := range d.ClearQuery.Params {
-			if v == "{{key}}" {
-				d.ClearQuery.Params[i] = *d.Key
-			}
-		}
-	}
+	d.ClearQuery.Params = schema.ReplaceParamsMap(d.data, d.ClearQuery.Params)
 	_, err = d.Client.Exec(d.ClearQuery.Query, d.ClearQuery.Params...)
 	if err != nil {
 		l.Error(err)
@@ -251,14 +259,7 @@ func (d *Mysql) HandleFailure() error {
 	if d.FailQuery == nil || d.FailQuery.Query == "" {
 		return nil
 	}
-	if d.Key != nil && *d.Key != "" {
-		// loop through params and if we find {{key}}, replace it with the key
-		for i, v := range d.FailQuery.Params {
-			if v == "{{key}}" {
-				d.FailQuery.Params[i] = *d.Key
-			}
-		}
-	}
+	d.FailQuery.Params = schema.ReplaceParamsMap(d.data, d.FailQuery.Params)
 	_, err = d.Client.Exec(d.FailQuery.Query, d.FailQuery.Params...)
 	if err != nil {
 		l.Error(err)

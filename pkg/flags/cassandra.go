@@ -12,5 +12,5 @@ var (
 	CassandraClearParams    = FlagSet.String("cassandra-clear-params", "", "Cassandra clear params")
 	CassandraFailQuery      = FlagSet.String("cassandra-fail-query", "", "Cassandra fail query")
 	CassandraFailParams     = FlagSet.String("cassandra-fail-params", "", "Cassandra fail params")
-	CassandraQueryKey       = FlagSet.Bool("cassandra-query-key", false, "Cassandra query returns key as first column and value as second column")
+	CassandraRetrieveField  = FlagSet.String("cassandra-retrieve-field", "", "Cassandra retrieve field. If not set, all fields will be returned as a JSON object")
 )

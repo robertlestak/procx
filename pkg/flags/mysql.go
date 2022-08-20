@@ -6,7 +6,7 @@ var (
 	MysqlUser           = FlagSet.String("mysql-user", "", "MySQL user")
 	MysqlPassword       = FlagSet.String("mysql-password", "", "MySQL password")
 	MysqlDatabase       = FlagSet.String("mysql-database", "", "MySQL database")
-	MysqlQueryKey       = FlagSet.Bool("mysql-query-key", false, "MySQL query returns key as first column and value as second column")
+	MysqlRetrieveField  = FlagSet.String("mysql-retrieve-field", "", "MySQL retrieve field. If not set, all fields will be returned as a JSON object")
 	MysqlRetrieveQuery  = FlagSet.String("mysql-retrieve-query", "", "MySQL retrieve query")
 	MysqlRetrieveParams = FlagSet.String("mysql-retrieve-params", "", "MySQL retrieve params")
 	MysqlClearQuery     = FlagSet.String("mysql-clear-query", "", "MySQL clear query")

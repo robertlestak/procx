@@ -1,6 +1,7 @@
 package cassandra
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -19,11 +20,11 @@ type Cassandra struct {
 	Password      string
 	Consistency   string
 	Keyspace      string
-	QueryKey      *bool
-	Key           *string
+	RetrieveField *string
 	RetrieveQuery *schema.SqlQuery
 	ClearQuery    *schema.SqlQuery
 	FailQuery     *schema.SqlQuery
+	data          map[string]any
 }
 
 func (d *Cassandra) LoadEnv(prefix string) error {
@@ -71,9 +72,9 @@ func (d *Cassandra) LoadEnv(prefix string) error {
 			d.FailQuery.Params = append(d.FailQuery.Params, s)
 		}
 	}
-	if os.Getenv(prefix+"CASSANDRA_QUERY_KEY") != "" {
-		tval := os.Getenv(prefix+"CASSANDRA_QUERY_KEY") == "true"
-		d.QueryKey = &tval
+	if os.Getenv(prefix+"CASSANDRA_RETRIEVE_FIELD") != "" {
+		v := os.Getenv(prefix + "CASSANDRA_RETRIEVE_FIELD")
+		d.RetrieveField = &v
 	}
 	return nil
 }
@@ -120,9 +121,7 @@ func (d *Cassandra) LoadFlags() error {
 	d.Password = *flags.CassandraPassword
 	d.Keyspace = *flags.CassandraKeyspace
 	d.Consistency = *flags.CassandraConsistency
-	if *flags.CassandraQueryKey {
-		d.QueryKey = flags.CassandraQueryKey
-	}
+	d.RetrieveField = flags.CassandraRetrieveField
 	if *flags.CassandraRetrieveQuery != "" {
 		rq := &schema.SqlQuery{
 			Query:  *flags.CassandraRetrieveQuery,
@@ -180,14 +179,9 @@ func (d *Cassandra) GetWork() (io.Reader, error) {
 		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from cassandra")
-	var err error
 	var result string
-	var key string
-	if d.QueryKey != nil && *d.QueryKey {
-		err = d.Client.Query(d.RetrieveQuery.Query).Scan(&key, &result)
-	} else {
-		err = d.Client.Query(d.RetrieveQuery.Query).Scan(&result)
-	}
+	qry := d.Client.Query(d.RetrieveQuery.Query, d.RetrieveQuery.Params...)
+	m, err := schema.CqlRowsToMap(qry)
 	if err != nil {
 		// if the queue is empty, return nil
 		if err == gocql.ErrNotFound {
@@ -195,8 +189,28 @@ func (d *Cassandra) GetWork() (io.Reader, error) {
 		}
 		return nil, err
 	}
+	d.data = m
+	if len(m) == 0 {
+		l.Debug("No work found")
+		return nil, nil
+	}
+	d.data = m
+	if d.RetrieveField != nil && *d.RetrieveField != "" {
+		result = fmt.Sprintf("%s", schema.HandleField(m[*d.RetrieveField]))
+	} else {
+		jd, err := schema.MapStringAnyToJSON(m)
+		if err != nil {
+			l.Error(err)
+			return nil, err
+		}
+		result = string(jd)
+	}
 	l.Debug("Got work")
-	d.Key = &key
+	// if result is empty, return nil
+	if result == "" {
+		l.Debug("result is empty")
+		return nil, nil
+	}
 	return strings.NewReader(result), nil
 }
 
@@ -213,14 +227,7 @@ func (d *Cassandra) ClearWork() error {
 	if d.ClearQuery.Query == "" {
 		return nil
 	}
-	if d.Key != nil && *d.Key != "" {
-		// loop through params and if we find {{key}}, replace it with the key
-		for i, v := range d.ClearQuery.Params {
-			if v == "{{key}}" {
-				d.ClearQuery.Params[i] = *d.Key
-			}
-		}
-	}
+	d.ClearQuery.Params = schema.ReplaceParamsMap(d.data, d.ClearQuery.Params)
 	err = d.Client.Query(d.ClearQuery.Query, d.ClearQuery.Params...).Exec()
 	if err != nil {
 		l.Error(err)
@@ -243,14 +250,7 @@ func (d *Cassandra) HandleFailure() error {
 	if d.FailQuery.Query == "" {
 		return nil
 	}
-	if d.Key != nil && *d.Key != "" {
-		// loop through params and if we find {{key}}, replace it with the key
-		for i, v := range d.FailQuery.Params {
-			if v == "{{key}}" {
-				d.FailQuery.Params[i] = *d.Key
-			}
-		}
-	}
+	d.FailQuery.Params = schema.ReplaceParamsMap(d.data, d.FailQuery.Params)
 	err = d.Client.Query(d.FailQuery.Query, d.FailQuery.Params...).Exec()
 	if err != nil {
 		l.Error(err)

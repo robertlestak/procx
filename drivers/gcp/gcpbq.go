@@ -10,7 +10,7 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/robertlestak/procx/pkg/flags"
-	"google.golang.org/api/iterator"
+	"github.com/robertlestak/procx/pkg/schema"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -19,10 +19,11 @@ type BQ struct {
 	Client        *bigquery.Client
 	ProjectID     string
 	Key           *string
-	QueryKey      *bool
+	RetrieveField *string
 	RetrieveQuery *string
 	ClearQuery    *string
 	FailQuery     *string
+	data          map[string]bigquery.Value
 }
 
 func (d *BQ) LoadEnv(prefix string) error {
@@ -43,9 +44,9 @@ func (d *BQ) LoadEnv(prefix string) error {
 		q := os.Getenv(prefix + "GCP_BQ_FAIL_QUERY")
 		d.FailQuery = &q
 	}
-	if os.Getenv(prefix+"GCP_BQ_QUERY_KEY") != "" {
-		tval := os.Getenv(prefix+"GCP_BQ_QUERY_KEY") == "true"
-		d.QueryKey = &tval
+	if os.Getenv(prefix+"GCP_BQ_RETRIEVE_FIELD") != "" {
+		f := os.Getenv(prefix + "GCP_BQ_RETRIEVE_FIELD")
+		d.RetrieveField = &f
 	}
 	if os.Getenv(prefix+"GCP_PROJECT_ID") != "" {
 		d.ProjectID = os.Getenv(prefix + "GCP_PROJECT_ID")
@@ -60,9 +61,7 @@ func (d *BQ) LoadFlags() error {
 	})
 	l.Debug("Loading flags")
 	d.ProjectID = *flags.GCPProjectID
-	if *flags.GCPBQQueryKey {
-		d.QueryKey = flags.GCPBQQueryKey
-	}
+	d.RetrieveField = flags.GCPBQRetrieveField
 	if *flags.GCPBQRetrieveQuery != "" {
 		d.RetrieveQuery = flags.GCPBQRetrieveQuery
 	}
@@ -99,9 +98,7 @@ func (d *BQ) GetWork() (io.Reader, error) {
 		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from GCP_BQ")
-	var err error
 	var result string
-	var key string
 	if d.RetrieveQuery == nil || *d.RetrieveQuery == "" {
 		l.Error("RetrieveQuery is nil or empty")
 		return nil, errors.New("RetrieveQuery is nil or empty")
@@ -112,69 +109,35 @@ func (d *BQ) GetWork() (io.Reader, error) {
 		l.Error(err)
 		return nil, err
 	}
-	if d.QueryKey != nil && *d.QueryKey {
-		for {
-			var values []bigquery.Value
-			err := it.Next(&values)
-			if err == iterator.Done {
-				break
-			}
-			if err != nil {
-				l.Error(err)
-				return nil, err
-			}
-			if values == nil {
-				return nil, nil
-			}
-			if len(values) < 2 {
-				return nil, errors.New("invalid query result")
-			}
-			if values[0] == nil || values[1] == nil {
-				return nil, errors.New("invalid query result")
-			}
-			key = fmt.Sprintf("%v", values[0])
-			result = fmt.Sprintf("%v", values[1])
-			l.WithFields(log.Fields{
-				"key":  key,
-				"data": result,
-			}).Debug("Got work")
-			if key != "" && result != "" {
-				break
-			}
-		}
-	} else {
-		for {
-			var values []bigquery.Value
-			err := it.Next(&values)
-			if err == iterator.Done {
-				break
-			}
-			if err != nil {
-				l.Error(err)
-				return nil, err
-			}
-			if values == nil {
-				l.Debug("values is nil")
-				return nil, nil
-			}
-			v := values[0]
-			if v == nil {
-				l.Debug("value is nil")
-				return nil, errors.New("invalid query result")
-			}
-			// parse result as string
-			result = fmt.Sprintf("%v", v)
-			l.Debugf("result: %v", result)
-			if result != "" {
-				break
-			}
-		}
+	m, err := schema.BqRowToMap(it)
+	if err != nil {
+		l.Error(err)
+		return nil, err
 	}
-	if result == "" {
+	if len(m) == 0 {
 		l.Debug("No work found")
 		return nil, nil
 	}
-	d.Key = &key
+	d.data = m
+	if d.RetrieveField != nil && *d.RetrieveField != "" {
+		result = fmt.Sprintf("%s", schema.HandleField(m[*d.RetrieveField]))
+	} else {
+		td := make(map[string]any)
+		for k, v := range d.data {
+			td[k] = v
+		}
+		jd, err := schema.MapStringAnyToJSON(td)
+		if err != nil {
+			l.Error(err)
+			return nil, err
+		}
+		result = string(jd)
+	}
+	// if result is empty, return nil
+	if result == "" {
+		l.Debug("result is empty")
+		return nil, nil
+	}
 	l.Debug("Got work")
 	return strings.NewReader(result), nil
 }
@@ -183,14 +146,22 @@ func (d *BQ) clearQuery() string {
 	if d.ClearQuery == nil {
 		return ""
 	}
-	return strings.ReplaceAll(*d.ClearQuery, "{{key}}", *d.Key)
+	td := make(map[string]any)
+	for k, v := range d.data {
+		td[k] = v
+	}
+	return schema.ReplaceParamsMapString(td, *d.ClearQuery)
 }
 
 func (d *BQ) failQuery() string {
 	if d.FailQuery == nil {
 		return ""
 	}
-	return strings.ReplaceAll(*d.FailQuery, "{{key}}", *d.Key)
+	td := make(map[string]any)
+	for k, v := range d.data {
+		td[k] = v
+	}
+	return schema.ReplaceParamsMapString(td, *d.FailQuery)
 }
 
 func (d *BQ) ClearWork() error {
