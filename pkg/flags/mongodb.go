@@ -15,4 +15,5 @@ var (
 	MongoCAFile        = FlagSet.String("mongo-tls-ca-file", "", "Mongo TLS CA file")
 	MongoCertFile      = FlagSet.String("mongo-tls-cert-file", "", "Mongo TLS cert file")
 	MongoKeyFile       = FlagSet.String("mongo-tls-key-file", "", "Mongo TLS key file")
+	MongoAuthSource    = FlagSet.String("mongo-auth-source", "", "MongoDB auth source")
 )

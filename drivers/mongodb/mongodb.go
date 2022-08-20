@@ -32,6 +32,7 @@ type Mongo struct {
 	ClearQuery    *string
 	FailQuery     *string
 	Key           *string
+	AuthSource    *string
 	// TLS
 	EnableTLS   *bool
 	TLSInsecure *bool
@@ -101,6 +102,10 @@ func (d *Mongo) LoadEnv(prefix string) error {
 		v := os.Getenv(prefix + "MONGO_TLS_CA_FILE")
 		d.TLSCA = &v
 	}
+	if os.Getenv(prefix+"MONGO_AUTH_SOURCE") != "" {
+		v := os.Getenv(prefix + "MONGO_AUTH_SOURCE")
+		d.AuthSource = &v
+	}
 	return nil
 }
 
@@ -128,6 +133,7 @@ func (d *Mongo) LoadFlags() error {
 	d.TLSCert = flags.MongoCertFile
 	d.TLSKey = flags.MongoKeyFile
 	d.TLSCA = flags.MongoCAFile
+	d.AuthSource = flags.MongoAuthSource
 	return nil
 }
 
@@ -138,7 +144,12 @@ func (d *Mongo) Init() error {
 	})
 	l.Debug("Initializing mongo client")
 	var err error
-	uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s", d.User, d.Password, d.Host, d.Port, d.DB)
+	var uri string
+	if d.AuthSource != nil && *d.AuthSource != "" {
+		uri = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=%s", d.User, d.Password, d.Host, d.Port, d.DB, *d.AuthSource)
+	} else {
+		uri = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s", d.User, d.Password, d.Host, d.Port, d.DB)
+	}
 	l.Debug("uri: ", uri)
 	opts := options.Client().ApplyURI(uri)
 	if d.EnableTLS != nil && *d.EnableTLS {
