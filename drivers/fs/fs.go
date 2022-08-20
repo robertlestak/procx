@@ -178,7 +178,8 @@ func (t *FS) FindPrefixRecursive(folder, prefix string) *string {
 	var found *string
 	err := filepath.WalkDir(folder,
 		func(path string, d fs.DirEntry, err error) error {
-			fn := strings.Replace(path, folder+"/", "", 1)
+			fn := strings.Replace(path, folder, "", 1)
+			fn = strings.Replace(fn, folder+"/", "", 1)
 			if err != nil {
 				return err
 			}
@@ -227,7 +228,8 @@ func (t *FS) FindRegexRecursive(folder, prefix string) *string {
 	var found *string
 	err := filepath.WalkDir(folder,
 		func(path string, d fs.DirEntry, err error) error {
-			fn := strings.Replace(path, folder+"/", "", 1)
+			fn := strings.Replace(path, folder, "", 1)
+			fn = strings.Replace(fn, folder+"/", "", 1)
 			if err != nil {
 				return err
 			}
