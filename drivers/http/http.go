@@ -323,7 +323,7 @@ func (d *HTTP) GetWork() (io.Reader, error) {
 	if len(d.RetrieveRequest.SuccessfulStatusCodes) > 0 {
 		if !contains(d.RetrieveRequest.SuccessfulStatusCodes, resp.StatusCode) {
 			l.Errorf("Status code %d not in successful status codes", resp.StatusCode)
-			return nil, err
+			return nil, errors.New("status code not in successful status codes")
 		}
 	}
 	if d.RetrieveRequest.KeyJSONSelector != "" || d.RetrieveRequest.WorkJSONSelector != "" {
