@@ -42,7 +42,6 @@ type NFS struct {
 	Key       string
 	KeyPrefix string
 	KeyRegex  string
-	MountPath string
 	ClearOp   *S3Op
 	FailOp    *S3Op
 	Client    *NFSMount
@@ -78,9 +77,6 @@ func (d *NFS) LoadEnv(prefix string) error {
 	}
 	if os.Getenv(prefix+"NFS_TARGET") != "" {
 		d.Target = os.Getenv(prefix + "NFS_TARGET")
-	}
-	if os.Getenv(prefix+"NFS_MOUNT_PATH") != "" {
-		d.MountPath = os.Getenv(prefix + "NFS_MOUNT_PATH")
 	}
 	if os.Getenv(prefix+"NFS_CLEAR_OP") != "" {
 		d.ClearOp = &S3Op{}
@@ -121,7 +117,6 @@ func (d *NFS) LoadFlags() error {
 	d.Target = *flags.NFSTarget
 	d.Folder = *flags.NFSFolder
 	d.Key = *flags.NFSKey
-	d.MountPath = *flags.NFSMountPath
 	if flags.NFSKeyRegex != nil {
 		d.KeyRegex = *flags.NFSKeyRegex
 	}

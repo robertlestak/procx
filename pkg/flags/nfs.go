@@ -5,7 +5,6 @@ var (
 	NFSKey              = FlagSet.String("nfs-key", "", "NFS key")
 	NFSFolder           = FlagSet.String("nfs-folder", "", "NFS folder")
 	NFSTarget           = FlagSet.String("nfs-target", "", "NFS target")
-	NFSMountPath        = FlagSet.String("nfs-mount-path", "", "NFS mount path")
 	NFSKeyRegex         = FlagSet.String("nfs-key-regex", "", "NFS key regex")
 	NFSKeyPrefix        = FlagSet.String("nfs-key-prefix", "", "NFS key prefix")
 	NFSClearOp          = FlagSet.String("nfs-clear-op", "", "NFS clear operation. Valid values: mv, rm")
