@@ -14,9 +14,9 @@ procx is started with the path to the process to manage, and either environment 
 
 ```bash
 # cli args
-procx -driver redis ... /path/to/process
+procx -driver redis-list ... /path/to/process
 # or, env vars
-export PROCX_DRIVER=redis
+export PROCX_DRIVER=redis-list
 ...
 procx /path/to/process
 ```
