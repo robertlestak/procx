@@ -31,6 +31,8 @@ By default, procx will connect to the data source, consume a single message, and
 
 By default, procx will export the payload as an environment variable `PROCX_PAYLOAD`. If `-pass-work-as-arg` is set, the job payload string will be appended to the process arguments, and if `-pass-work-as-stdin` is set, the job payload will be piped to stdin of the process. Finally, if the `-payload-file` flag is set, the payload will be written to the specified file path. procx will clean up the file at the end of the job, unless you pass `-keep-payload-file`.
 
+If no process is passed to `procx`, the payload will be printed to stdout.
+
 ### Relational Driver JSON Parsing
 
 For drivers which are non-structured (ex. `fs`, `aws-s3`, `redis-list`, etc.), procx will pass the payload data as-is to the driver. However for drivers which enforce some relational schema such as SQL-based drivers, you will need to provide a query which will be run to retrieve the data, and optionally queries to run if the work completes successfully or fails. procx will parse the query output into a JSON object and pass it to the process. You can select a specific column field by passing the driver's respective `-{driver}-retrieve-field` flag. You can then use `{{mustache}}` syntax to extract specific fields from the returned data and use them in your subsequent clear and fail queries. For example:

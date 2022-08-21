@@ -123,6 +123,10 @@ func main() {
 			printVersion()
 			os.Exit(0)
 		}
+		if os.Args[1] == "--help" || os.Args[1] == "-h" {
+			printUsage()
+			os.Exit(0)
+		}
 	}
 	flags.FlagSet.Parse(os.Args[1:])
 	if err := LoadEnv(EnvKeyPrefix); err != nil {
@@ -130,11 +134,6 @@ func main() {
 		os.Exit(1)
 	}
 	l.Debug("parsed flags")
-	args := flags.FlagSet.Args()
-	if len(args) == 0 {
-		printUsage()
-		os.Exit(1)
-	}
 	j := &procx.ProcX{
 		DriverName:      drivers.DriverName(*flags.Driver),
 		HostEnv:         *flags.HostEnv,

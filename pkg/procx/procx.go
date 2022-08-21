@@ -72,11 +72,6 @@ func (j *ProcX) DoWork() error {
 		"driver": j.DriverName,
 	})
 	l.Debug("DoWork")
-	// execute
-	if j.Bin == "" {
-		l.Error("no bin specified")
-		os.Exit(1)
-	}
 	work, err := j.Driver.GetWork()
 	if err != nil {
 		l.Error(err)
@@ -88,13 +83,22 @@ func (j *ProcX) DoWork() error {
 	}
 	j.work = work
 	l.Debug("work received")
-	err = j.Exec(os.Stdout, os.Stderr)
-	if err != nil {
-		l.Error(err)
-		if err := j.Driver.HandleFailure(); err != nil {
-			l.Error(err)
+	// execute
+	if j.Bin == "" {
+		// print work to stdout
+		if _, err := io.Copy(os.Stdout, work); err != nil {
+			l.WithError(err).Error("Copy")
+			return err
 		}
-		return err
+	} else {
+		err = j.Exec(os.Stdout, os.Stderr)
+		if err != nil {
+			l.Error(err)
+			if err := j.Driver.HandleFailure(); err != nil {
+				l.Error(err)
+			}
+			return err
+		}
 	}
 	l.Debug("work completed")
 	err = j.Driver.ClearWork()
