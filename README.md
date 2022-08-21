@@ -70,6 +70,7 @@ Currently, the following drivers are supported:
 - [PostgreSQL](#postgresql) (`postgres`)
 - [Pulsar](#pulsar) (`pulsar`)
 - [MongoDB](#mongodb) (`mongodb`)
+- [MSSQL](#mssql) (`mssql`)
 - [MySQL](#mysql) (`mysql`)
 - [NATS](#nats) (`nats`)
 - [NFS](#nfs) (`nfs`)
@@ -212,7 +213,7 @@ Usage: procx [options] [process]
   -daemon
     	run as daemon
   -driver string
-    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, http, kafka, local, mongodb, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
+    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -447,6 +448,30 @@ Usage: procx [options] [process]
     	Mongo TLS key file
   -mongo-user string
     	MongoDB user
+  -mssql-clear-params string
+    	MSSQL clear params
+  -mssql-clear-query string
+    	MSSQL clear query
+  -mssql-database string
+    	MSSQL database
+  -mssql-fail-params string
+    	MSSQL fail params
+  -mssql-fail-query string
+    	MSSQL fail query
+  -mssql-host string
+    	MSSQL host
+  -mssql-password string
+    	MSSQL password
+  -mssql-port string
+    	MSSQL port (default "1433")
+  -mssql-retrieve-field string
+    	MSSQL retrieve field. If not set, all fields will be returned as a JSON object
+  -mssql-retrieve-params string
+    	MSSQL retrieve params
+  -mssql-retrieve-query string
+    	MSSQL retrieve query
+  -mssql-user string
+    	MSSQL user
   -mysql-clear-params string
     	MySQL clear params
   -mysql-clear-query string
@@ -814,6 +839,18 @@ Usage: procx [options] [process]
 - `PROCX_MONGO_TLS_INSECURE`
 - `PROCX_MONGO_TLS_KEY_FILE`
 - `PROCX_MONGO_USER`
+- `PROCX_MSSQL_CLEAR_PARAMS`
+- `PROCX_MSSQL_CLEAR_QUERY`
+- `PROCX_MSSQL_DATABASE`
+- `PROCX_MSSQL_FAIL_PARAMS`
+- `PROCX_MSSQL_FAIL_QUERY`
+- `PROCX_MSSQL_HOST`
+- `PROCX_MSSQL_PASSWORD`
+- `PROCX_MSSQL_PORT`
+- `PROCX_MSSQL_RETRIEVE_FIELD`
+- `PROCX_MSSQL_RETRIEVE_PARAMS`
+- `PROCX_MSSQL_RETRIEVE_QUERY`
+- `PROCX_MSSQL_USER`
 - `PROCX_MYSQL_CLEAR_PARAMS`
 - `PROCX_MYSQL_CLEAR_QUERY`
 - `PROCX_MYSQL_DATABASE`
@@ -1197,9 +1234,30 @@ procx \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
+### MSSQL
+
+The MSSQL driver will retrieve the next message from the specified Microsoft SQL Server, and pass it to the process.
+
+```bash
+procx \
+    -mssql-host localhost \
+    -mssql-port 1433 \
+    -mssql-database mydb \
+    -mssql-user sa \
+    -mssql-password 'mypassword!' \
+    -mssql-retrieve-query "SET ROWCOUNT 1 SELECT id, work from mytable where queue = ? and status = ?" \
+    -mssql-retrieve-params "myqueue,pending" \
+    -mssql-clear-query "UPDATE mytable SET status = ? where queue = ? and id = ?" \
+    -mssql-clear-params "cleared,myqueue,{{id}}" \
+    -mssql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = ? and id = ?" \
+    -mssql-fail-params "myqueue,{{id}}" \
+    -driver mssql \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
 ### MySQL
 
-The MySQL driver will retrieve the next message from the specified queue, and pass it to the process.
+The MySQL driver will retrieve the next message from the specified database, and pass it to the process.
 
 ```bash
 procx \

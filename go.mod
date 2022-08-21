@@ -9,6 +9,7 @@ require (
 	cloud.google.com/go/storage v1.22.1
 	github.com/apache/pulsar-client-go v0.8.1
 	github.com/aws/aws-sdk-go v1.44.61
+	github.com/denisenkom/go-mssqldb v0.12.2
 	github.com/elastic/go-elasticsearch/v8 v8.3.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-sql-driver/mysql v1.6.0
@@ -48,6 +49,8 @@ require (
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
+	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
