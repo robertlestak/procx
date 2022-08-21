@@ -137,12 +137,10 @@ Usage: procx [options] [process]
     	ActiveMQ type. Valid values are: topic, queue
   -aws-dynamo-clear-query string
     	AWS DynamoDB clear query
-  -aws-dynamo-data-path string
-    	AWS DynamoDB data JSON path
   -aws-dynamo-fail-query string
     	AWS DynamoDB fail query
-  -aws-dynamo-key-path string
-    	AWS DynamoDB query key JSON path
+  -aws-dynamo-retrieve-field string
+    	AWS DynamoDB retrieve field
   -aws-dynamo-retrieve-query string
     	AWS DynamoDB retrieve query
   -aws-dynamo-table string
@@ -661,9 +659,8 @@ Usage: procx [options] [process]
 - `PROCX_ACTIVEMQ_TLS_KEY_FILE`
 - `PROCX_ACTIVEMQ_TYPE`
 - `PROCX_AWS_DYNAMO_CLEAR_QUERY`
-- `PROCX_AWS_DYNAMO_DATA_PATH`
 - `PROCX_AWS_DYNAMO_FAIL_QUERY`
-- `PROCX_AWS_DYNAMO_KEY_PATH`
+- `PROCX_AWS_DYNAMO_RETRIEVE_FIELD`
 - `PROCX_AWS_DYNAMO_RETRIEVE_QUERY`
 - `PROCX_AWS_DYNAMO_TABLE`
 - `PROCX_AWS_LOAD_CONFIG`
@@ -935,17 +932,15 @@ procx \
 
 ### AWS DynamoDB
 
-The AWS DynamoDB driver will execute the provided PartiQL query and return the first result. An optional JSON path can be passed in the `-aws-dynamo-key-path` flag, if this is provided it will be used to extract the value from the returned data, and this will replace `{{key}}` in subsequent clear and fail handling queries. Additionally, an optional `-aws-dynamo-data-path` flag can be passed in, if this is provided it will be used to extract the data from the returned JSON.
+The AWS DynamoDB driver will execute the provided PartiQL query and return the first result. An optional JSON path can be passed in the `-aws-dynamo-retrieve-field` flag, if this is provided it will be used to extract the value from the returned data before passing to the process, otherwise the full Dynamo JSON document is passed. Similar to other SQL-based drivers, you can use `gjson` syntax to extract values from the data which can be used in subsequent clear and fail handling queries.
 
 ```bash
 procx \
     -driver aws-dynamo \
     -aws-dynamo-table my-table \
-    -aws-dynamo-key-path 'id.S' \
     -aws-dynamo-retrieve-query "SELECT id,job,status FROM my-table WHERE status = 'pending'" \
-    -aws-dynamo-data-path 'job.S' \
-    -aws-dynamo-clear-query "UPDATE my-table SET status='complete' WHERE id = '{{key}}'" \
-    -aws-dynamo-fail-query "UPDATE my-table SET status='failed' WHERE id = '{{key}}'" \
+    -aws-dynamo-clear-query "UPDATE my-table SET status='complete' WHERE id = '{{id}}'" \
+    -aws-dynamo-fail-query "UPDATE my-table SET status='failed' WHERE id = '{{id}}'" \
     -aws-region us-east-1 \
     -aws-role-arn arn:aws:iam::123456789012:role/my-role \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'

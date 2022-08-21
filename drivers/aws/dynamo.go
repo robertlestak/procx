@@ -11,25 +11,26 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/google/uuid"
 	"github.com/robertlestak/procx/pkg/flags"
+	"github.com/robertlestak/procx/pkg/schema"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
 type Dynamo struct {
-	Client           *dynamodb.DynamoDB
-	sts              *STSSession
-	Table            string
-	Region           string
-	RoleARN          string
-	QueryKeyJSONPath *string
-	DataJSONPath     *string
-	RetrieveQuery    *string
-	ClearQuery       *string
-	FailQuery        *string
-	Key              *string
+	Client        *dynamodb.DynamoDB
+	sts           *STSSession
+	Table         string
+	Region        string
+	RetrieveField *string
+	RoleARN       string
+	RetrieveQuery *string
+	ClearQuery    *string
+	FailQuery     *string
+	data          map[string]any
 }
 
 func (d *Dynamo) LogIdentity() error {
@@ -81,13 +82,9 @@ func (d *Dynamo) LoadEnv(prefix string) error {
 		q := os.Getenv(prefix + "AWS_DYNAMO_FAIL_QUERY")
 		d.FailQuery = &q
 	}
-	if os.Getenv(prefix+"AWS_DYNAMO_KEY_PATH") != "" {
-		q := os.Getenv(prefix + "AWS_DYNAMO_KEY_PATH")
-		d.QueryKeyJSONPath = &q
-	}
-	if os.Getenv(prefix+"AWS_DYNAMO_DATA_PATH") != "" {
-		q := os.Getenv(prefix + "AWS_DYNAMO_DATA_PATH")
-		d.DataJSONPath = &q
+	if os.Getenv(prefix+"AWS_DYNAMO_RETRIEVE_FIELD") != "" {
+		f := os.Getenv(prefix + "AWS_DYNAMO_RETRIEVE_FIELD")
+		d.RetrieveField = &f
 	}
 	if os.Getenv(prefix+"AWS_LOAD_CONFIG") != "" || os.Getenv("AWS_SDK_LOAD_CONFIG") != "" {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
@@ -105,8 +102,7 @@ func (d *Dynamo) LoadFlags() error {
 	d.Region = *flags.AWSRegion
 	d.RoleARN = *flags.AWSRoleARN
 	d.RetrieveQuery = flags.AWSDynamoRetrieveQuery
-	d.QueryKeyJSONPath = flags.AWSDynamoQueryKeyPath
-	d.DataJSONPath = flags.AWSDynamoDataPath
+	d.RetrieveField = flags.AWSDynamoRetrieveField
 	d.ClearQuery = flags.AWSDynamoClearQuery
 	d.FailQuery = flags.AWSDynamoFailQuery
 	if flags.AWSLoadConfig != nil && *flags.AWSLoadConfig {
@@ -194,28 +190,81 @@ func (d *Dynamo) GetWork() (io.Reader, error) {
 		l.Debug("GetWork no items")
 		return nil, nil
 	}
-	jd, err := json.Marshal(item)
+	err = dynamodbattribute.UnmarshalMap(item, &d.data)
 	if err != nil {
 		l.Errorf("%+v", err)
+		if err := d.LogIdentity(); err != nil {
+			l.Errorf("%+v", err)
+		}
 		return nil, err
 	}
-	rd := aws.String(string(jd))
-	l.Debug("GetWork item=%s", rd)
-	if d.QueryKeyJSONPath != nil {
-		if err := d.extractKey(rd); err != nil {
+	var result string
+	if d.RetrieveField != nil && *d.RetrieveField != "" {
+		bd, err := json.Marshal(d.data)
+		if err != nil {
 			l.Errorf("%+v", err)
+			if err := d.LogIdentity(); err != nil {
+				l.Errorf("%+v", err)
+			}
 			return nil, err
 		}
-	}
-	if d.DataJSONPath != nil {
-		value := gjson.Get(*rd, *d.DataJSONPath)
-		if value.Exists() {
-			l.Debugf("extractKey value=%s", value.String())
-			k := value.String()
-			rd = &k
+		l.Debug("GetWork item=%s", string(bd))
+		result = gjson.GetBytes(bd, *d.RetrieveField).String()
+	} else {
+		td := make(map[string]any)
+		for k, v := range d.data {
+			td[k] = v
 		}
+		jd, err := schema.MapStringAnyToJSON(td)
+		if err != nil {
+			l.Error(err)
+			return nil, err
+		}
+		result = string(jd)
 	}
-	return strings.NewReader(*rd), nil
+	// if result is empty, return nil
+	if result == "" {
+		l.Debug("result is empty")
+		return nil, nil
+	}
+	l.Debug("Got work")
+	return strings.NewReader(result), nil
+}
+
+func (d *Dynamo) clearQuery() string {
+	l := log.WithFields(log.Fields{
+		"fn":  "clearQuery",
+		"pkg": "aws",
+	})
+	l.Debug("clearQuery")
+	if d.ClearQuery == nil {
+		return ""
+	}
+	td := make(map[string]any)
+	for k, v := range d.data {
+		td[k] = v
+	}
+	q := schema.ReplaceParamsMapString(td, *d.ClearQuery)
+	l.Debugf("clearQuery query=%s", q)
+	return q
+}
+
+func (d *Dynamo) failQuery() string {
+	l := log.WithFields(log.Fields{
+		"fn":  "failQuery",
+		"pkg": "aws",
+	})
+	l.Debug("failQuery")
+	if d.FailQuery == nil {
+		return ""
+	}
+	td := make(map[string]any)
+	for k, v := range d.data {
+		td[k] = v
+	}
+	q := schema.ReplaceParamsMapString(td, *d.FailQuery)
+	l.Debugf("failQuery query=%s", q)
+	return q
 }
 
 func (d *Dynamo) ClearWork() error {
@@ -228,10 +277,7 @@ func (d *Dynamo) ClearWork() error {
 		return nil
 	}
 	// replace {{key}} with key
-	q := *d.ClearQuery
-	if d.Key != nil {
-		q = strings.Replace(q, "{{key}}", *d.Key, -1)
-	}
+	q := d.clearQuery()
 	// execute statement
 	statement := dynamodb.ExecuteStatementInput{
 		Statement: &q,
@@ -257,10 +303,7 @@ func (d *Dynamo) HandleFailure() error {
 		return nil
 	}
 	// replace {{key}} with key
-	q := *d.FailQuery
-	if d.Key != nil {
-		q = strings.Replace(q, "{{key}}", *d.Key, -1)
-	}
+	q := d.failQuery()
 	// execute statement
 	statement := dynamodb.ExecuteStatementInput{
 		Statement: &q,
@@ -272,33 +315,6 @@ func (d *Dynamo) HandleFailure() error {
 			l.Errorf("%+v", err)
 		}
 		return err
-	}
-	return nil
-}
-
-func (d *Dynamo) extractKey(data *string) error {
-	l := log.WithFields(log.Fields{
-		"fn":  "extractKey",
-		"pkg": "aws",
-	})
-	l.Debug("extractKey")
-	if d.QueryKeyJSONPath == nil {
-		return nil
-	}
-	if *d.QueryKeyJSONPath == "" {
-		return nil
-	}
-	if data == nil {
-		return nil
-	}
-	if *data == "" {
-		return nil
-	}
-	value := gjson.Get(*data, *d.QueryKeyJSONPath)
-	if value.Exists() {
-		l.Debugf("extractKey value=%s", value.String())
-		k := value.String()
-		d.Key = &k
 	}
 	return nil
 }

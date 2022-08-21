@@ -99,6 +99,7 @@ func ExtractMustacheKeys(s string) []string {
 			keys = append(keys, strings.Split(k, "}}")[0])
 		}
 	}
+	l.Debug("Extracted mustache keys: ", keys)
 	return keys
 }
 
@@ -136,30 +137,47 @@ func ReplaceJSONKey(query string, k string, v any) string {
 	l := log.WithFields(log.Fields{
 		"pkg": "schema",
 		"fn":  "ReplaceJSONKey",
+		"k":   k,
+		"v":   v,
 	})
 	l.Debug("Replacing JSON key")
 	return strings.ReplaceAll(query, "{{"+k+"}}", fmt.Sprint(HandleField(v)))
 }
 
 func ReplaceParamsString(bd []byte, params string) string {
+	l := log.WithFields(log.Fields{
+		"pkg":    "schema",
+		"fn":     "ReplaceParamsString",
+		"params": params,
+	})
+	l.Debug("Replacing params")
 	s := strings.ReplaceAll(params, "{{procx_payload}}", string(bd))
 	keys := ExtractMustacheKeys(s)
 	for _, k := range keys {
 		jv := gjson.GetBytes(bd, k)
 		s = ReplaceJSONKey(s, k, jv.String())
 	}
+	l.Debug("Replaced params")
 	return s
 }
 
 func ReplaceParamsMapString(data map[string]any, params string) string {
+	l := log.WithFields(log.Fields{
+		"pkg":    "schema",
+		"fn":     "ReplaceParamsMapString",
+		"params": params,
+	})
+	l.Debug("Replacing params map string")
 	jd, err := MapStringAnyToJSON(data)
 	if err != nil {
-		log.Error(err)
+		l.Error(err)
 	}
 	s := strings.ReplaceAll(params, "{{procx_payload}}", string(jd))
 	keys := ExtractMustacheKeys(s)
 	for _, k := range keys {
-		s = ReplaceJSONKey(s, k, data[k])
+		jv := gjson.GetBytes(jd, k)
+		s = ReplaceJSONKey(s, k, jv.String())
 	}
+	l.Debug("Replaced params map string: ", s)
 	return s
 }

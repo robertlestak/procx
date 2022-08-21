@@ -7,8 +7,7 @@ var (
 	SQSQueueURL   = FlagSet.String("aws-sqs-queue-url", "", "AWS SQS queue URL")
 
 	AWSDynamoTable         = FlagSet.String("aws-dynamo-table", "", "AWS DynamoDB table name")
-	AWSDynamoQueryKeyPath  = FlagSet.String("aws-dynamo-key-path", "", "AWS DynamoDB query key JSON path")
-	AWSDynamoDataPath      = FlagSet.String("aws-dynamo-data-path", "", "AWS DynamoDB data JSON path")
+	AWSDynamoRetrieveField = FlagSet.String("aws-dynamo-retrieve-field", "", "AWS DynamoDB retrieve field")
 	AWSDynamoRetrieveQuery = FlagSet.String("aws-dynamo-retrieve-query", "", "AWS DynamoDB retrieve query")
 	AWSDynamoClearQuery    = FlagSet.String("aws-dynamo-clear-query", "", "AWS DynamoDB clear query")
 	AWSDynamoFailQuery     = FlagSet.String("aws-dynamo-fail-query", "", "AWS DynamoDB fail query")
