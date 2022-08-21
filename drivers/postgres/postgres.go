@@ -59,20 +59,23 @@ func (d *Postgres) LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"PSQL_SSL_MODE") != "" {
 		d.SslMode = os.Getenv(prefix + "PSQL_SSL_MODE")
 	}
+	if d.RetrieveQuery == nil {
+		d.RetrieveQuery = &schema.SqlQuery{}
+	}
 	if os.Getenv(prefix+"PSQL_RETRIEVE_QUERY") != "" {
-		d.RetrieveQuery = &schema.SqlQuery{
-			Query: os.Getenv(prefix + "PSQL_RETRIEVE_QUERY"),
-		}
+		d.RetrieveQuery.Query = os.Getenv(prefix + "PSQL_RETRIEVE_QUERY")
+	}
+	if d.ClearQuery == nil {
+		d.ClearQuery = &schema.SqlQuery{}
 	}
 	if os.Getenv(prefix+"PSQL_CLEAR_QUERY") != "" {
-		d.ClearQuery = &schema.SqlQuery{
-			Query: os.Getenv(prefix + "PSQL_CLEAR_QUERY"),
-		}
+		d.ClearQuery.Query = os.Getenv(prefix + "PSQL_CLEAR_QUERY")
+	}
+	if d.FailQuery == nil {
+		d.FailQuery = &schema.SqlQuery{}
 	}
 	if os.Getenv(prefix+"PSQL_FAIL_QUERY") != "" {
-		d.FailQuery = &schema.SqlQuery{
-			Query: os.Getenv(prefix + "PSQL_FAIL_QUERY"),
-		}
+		d.FailQuery.Query = os.Getenv(prefix + "PSQL_FAIL_QUERY")
 	}
 	if os.Getenv(prefix+"PSQL_RETRIEVE_PARAMS") != "" {
 		p := strings.Split(os.Getenv(prefix+"PSQL_RETRIEVE_PARAMS"), ",")
@@ -137,26 +140,32 @@ func (d *Postgres) LoadFlags() error {
 	d.Db = *flags.PsqlDatabase
 	d.SslMode = *flags.PsqlSSLMode
 	d.RetrieveField = flags.PsqlRetrieveField
+	if d.RetrieveQuery == nil {
+		d.RetrieveQuery = &schema.SqlQuery{}
+	}
 	if *flags.PsqlRetrieveQuery != "" {
-		rq := &schema.SqlQuery{
-			Query:  *flags.PsqlRetrieveQuery,
-			Params: rps,
-		}
-		d.RetrieveQuery = rq
+		d.RetrieveQuery.Query = *flags.PsqlRetrieveQuery
+	}
+	if len(rps) > 0 {
+		d.RetrieveQuery.Params = rps
+	}
+	if d.ClearQuery == nil {
+		d.ClearQuery = &schema.SqlQuery{}
 	}
 	if *flags.PsqlClearQuery != "" {
-		cq := &schema.SqlQuery{
-			Query:  *flags.PsqlClearQuery,
-			Params: cps,
-		}
-		d.ClearQuery = cq
+		d.ClearQuery.Query = *flags.PsqlClearQuery
+	}
+	if len(cps) > 0 {
+		d.ClearQuery.Params = cps
+	}
+	if d.FailQuery == nil {
+		d.FailQuery = &schema.SqlQuery{}
 	}
 	if *flags.PsqlFailQuery != "" {
-		fq := &schema.SqlQuery{
-			Query:  *flags.PsqlFailQuery,
-			Params: fps,
-		}
-		d.FailQuery = fq
+		d.FailQuery.Query = *flags.PsqlFailQuery
+	}
+	if len(fps) > 0 {
+		d.FailQuery.Params = fps
 	}
 	return nil
 }

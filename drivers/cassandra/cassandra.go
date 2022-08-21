@@ -48,24 +48,33 @@ func (d *Cassandra) LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"CASSANDRA_CONSISTENCY") != "" {
 		d.Consistency = os.Getenv(prefix + "CASSANDRA_CONSISTENCY")
 	}
+	if d.RetrieveQuery == nil {
+		d.RetrieveQuery = &schema.SqlQuery{}
+	}
 	if os.Getenv(prefix+"CASSANDRA_RETRIEVE_QUERY") != "" {
-		d.RetrieveQuery = &schema.SqlQuery{Query: os.Getenv(prefix + "CASSANDRA_RETRIEVE_QUERY")}
+		d.RetrieveQuery.Query = os.Getenv(prefix + "CASSANDRA_RETRIEVE_QUERY")
 	}
 	if os.Getenv(prefix+"CASSANDRA_RETRIEVE_PARAMS") != "" {
 		for _, s := range strings.Split(os.Getenv(prefix+"CASSANDRA_RETRIEVE_PARAMS"), ",") {
 			d.RetrieveQuery.Params = append(d.RetrieveQuery.Params, s)
 		}
 	}
+	if d.ClearQuery == nil {
+		d.ClearQuery = &schema.SqlQuery{}
+	}
 	if os.Getenv(prefix+"CASSANDRA_CLEAR_QUERY") != "" {
-		d.ClearQuery = &schema.SqlQuery{Query: os.Getenv(prefix + "CASSANDRA_CLEAR_QUERY")}
+		d.ClearQuery.Query = os.Getenv(prefix + "CASSANDRA_CLEAR_QUERY")
 	}
 	if os.Getenv(prefix+"CASSANDRA_CLEAR_PARAMS") != "" {
 		for _, s := range strings.Split(os.Getenv(prefix+"CASSANDRA_CLEAR_PARAMS"), ",") {
 			d.ClearQuery.Params = append(d.ClearQuery.Params, s)
 		}
 	}
+	if d.FailQuery == nil {
+		d.FailQuery = &schema.SqlQuery{}
+	}
 	if os.Getenv(prefix+"CASSANDRA_FAIL_QUERY") != "" {
-		d.FailQuery = &schema.SqlQuery{Query: os.Getenv(prefix + "CASSANDRA_FAIL_QUERY")}
+		d.FailQuery.Query = os.Getenv(prefix + "CASSANDRA_FAIL_QUERY")
 	}
 	if os.Getenv(prefix+"CASSANDRA_FAIL_PARAMS") != "" {
 		for _, s := range strings.Split(os.Getenv(prefix+"CASSANDRA_FAIL_PARAMS"), ",") {
@@ -122,26 +131,32 @@ func (d *Cassandra) LoadFlags() error {
 	d.Keyspace = *flags.CassandraKeyspace
 	d.Consistency = *flags.CassandraConsistency
 	d.RetrieveField = flags.CassandraRetrieveField
+	if d.RetrieveQuery == nil {
+		d.RetrieveQuery = &schema.SqlQuery{}
+	}
 	if *flags.CassandraRetrieveQuery != "" {
-		rq := &schema.SqlQuery{
-			Query:  *flags.CassandraRetrieveQuery,
-			Params: rps,
-		}
-		d.RetrieveQuery = rq
+		d.RetrieveQuery.Query = *flags.CassandraRetrieveQuery
+	}
+	if len(rps) > 0 {
+		d.RetrieveQuery.Params = rps
+	}
+	if d.ClearQuery == nil {
+		d.ClearQuery = &schema.SqlQuery{}
 	}
 	if *flags.CassandraClearQuery != "" {
-		cq := &schema.SqlQuery{
-			Query:  *flags.CassandraClearQuery,
-			Params: cps,
-		}
-		d.ClearQuery = cq
+		d.ClearQuery.Query = *flags.CassandraClearQuery
+	}
+	if len(cps) > 0 {
+		d.ClearQuery.Params = cps
+	}
+	if d.FailQuery == nil {
+		d.FailQuery = &schema.SqlQuery{}
 	}
 	if *flags.CassandraFailQuery != "" {
-		fq := &schema.SqlQuery{
-			Query:  *flags.CassandraFailQuery,
-			Params: fps,
-		}
-		d.FailQuery = fq
+		d.FailQuery.Query = *flags.CassandraFailQuery
+	}
+	if len(fps) > 0 {
+		d.FailQuery.Params = fps
 	}
 	return nil
 }

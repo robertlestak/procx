@@ -54,20 +54,23 @@ func (d *MSSql) LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"MSSQL_DATABASE") != "" {
 		d.Db = os.Getenv(prefix + "MSSQL_DATABASE")
 	}
+	if d.RetrieveQuery == nil {
+		d.RetrieveQuery = &schema.SqlQuery{}
+	}
 	if os.Getenv(prefix+"MSSQL_RETRIEVE_QUERY") != "" {
-		d.RetrieveQuery = &schema.SqlQuery{
-			Query: os.Getenv(prefix + "MSSQL_RETRIEVE_QUERY"),
-		}
+		d.RetrieveQuery.Query = os.Getenv(prefix + "MSSQL_RETRIEVE_QUERY")
+	}
+	if d.ClearQuery == nil {
+		d.ClearQuery = &schema.SqlQuery{}
 	}
 	if os.Getenv(prefix+"MSSQL_CLEAR_QUERY") != "" {
-		d.ClearQuery = &schema.SqlQuery{
-			Query: os.Getenv(prefix + "MSSQL_CLEAR_QUERY"),
-		}
+		d.ClearQuery.Query = os.Getenv(prefix + "MSSQL_CLEAR_QUERY")
+	}
+	if d.FailQuery == nil {
+		d.FailQuery = &schema.SqlQuery{}
 	}
 	if os.Getenv(prefix+"MSSQL_FAIL_QUERY") != "" {
-		d.FailQuery = &schema.SqlQuery{
-			Query: os.Getenv(prefix + "MSSQL_FAIL_QUERY"),
-		}
+		d.FailQuery.Query = os.Getenv(prefix + "MSSQL_FAIL_QUERY")
 	}
 	if os.Getenv(prefix+"MSSQL_RETRIEVE_PARAMS") != "" {
 		p := strings.Split(os.Getenv(prefix+"MSSQL_RETRIEVE_PARAMS"), ",")
@@ -131,26 +134,32 @@ func (d *MSSql) LoadFlags() error {
 	d.Pass = *flags.MSSqlPassword
 	d.Db = *flags.MSSqlDatabase
 	d.RetrieveField = flags.MSSqlRetrieveField
+	if d.RetrieveQuery == nil {
+		d.RetrieveQuery = &schema.SqlQuery{}
+	}
 	if *flags.MSSqlRetrieveQuery != "" {
-		rq := &schema.SqlQuery{
-			Query:  *flags.MSSqlRetrieveQuery,
-			Params: rps,
-		}
-		d.RetrieveQuery = rq
+		d.RetrieveQuery.Query = *flags.MSSqlRetrieveQuery
+	}
+	if len(rps) > 0 {
+		d.RetrieveQuery.Params = rps
+	}
+	if d.ClearQuery == nil {
+		d.ClearQuery = &schema.SqlQuery{}
 	}
 	if *flags.MSSqlClearQuery != "" {
-		cq := &schema.SqlQuery{
-			Query:  *flags.MSSqlClearQuery,
-			Params: cps,
-		}
-		d.ClearQuery = cq
+		d.ClearQuery.Query = *flags.MSSqlClearQuery
+	}
+	if len(cps) > 0 {
+		d.ClearQuery.Params = cps
+	}
+	if d.FailQuery == nil {
+		d.FailQuery = &schema.SqlQuery{}
 	}
 	if *flags.MSSqlFailQuery != "" {
-		fq := &schema.SqlQuery{
-			Query:  *flags.MSSqlFailQuery,
-			Params: fps,
-		}
-		d.FailQuery = fq
+		d.FailQuery.Query = *flags.MSSqlFailQuery
+	}
+	if len(fps) > 0 {
+		d.FailQuery.Params = fps
 	}
 	return nil
 }

@@ -54,20 +54,23 @@ func (d *Mysql) LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"MYSQL_DATABASE") != "" {
 		d.Db = os.Getenv(prefix + "MYSQL_DATABASE")
 	}
+	if d.RetrieveQuery == nil {
+		d.RetrieveQuery = &schema.SqlQuery{}
+	}
 	if os.Getenv(prefix+"MYSQL_RETRIEVE_QUERY") != "" {
-		d.RetrieveQuery = &schema.SqlQuery{
-			Query: os.Getenv(prefix + "MYSQL_RETRIEVE_QUERY"),
-		}
+		d.RetrieveQuery.Query = os.Getenv(prefix + "MYSQL_RETRIEVE_QUERY")
+	}
+	if d.ClearQuery == nil {
+		d.ClearQuery = &schema.SqlQuery{}
 	}
 	if os.Getenv(prefix+"MYSQL_CLEAR_QUERY") != "" {
-		d.ClearQuery = &schema.SqlQuery{
-			Query: os.Getenv(prefix + "MYSQL_CLEAR_QUERY"),
-		}
+		d.ClearQuery.Query = os.Getenv(prefix + "MYSQL_CLEAR_QUERY")
+	}
+	if d.FailQuery == nil {
+		d.FailQuery = &schema.SqlQuery{}
 	}
 	if os.Getenv(prefix+"MYSQL_FAIL_QUERY") != "" {
-		d.FailQuery = &schema.SqlQuery{
-			Query: os.Getenv(prefix + "MYSQL_FAIL_QUERY"),
-		}
+		d.FailQuery.Query = os.Getenv(prefix + "MYSQL_FAIL_QUERY")
 	}
 	if os.Getenv(prefix+"MYSQL_RETRIEVE_PARAMS") != "" {
 		p := strings.Split(os.Getenv(prefix+"MYSQL_RETRIEVE_PARAMS"), ",")
@@ -131,26 +134,32 @@ func (d *Mysql) LoadFlags() error {
 	d.Pass = *flags.MysqlPassword
 	d.Db = *flags.MysqlDatabase
 	d.RetrieveField = flags.MysqlRetrieveField
+	if d.RetrieveQuery == nil {
+		d.RetrieveQuery = &schema.SqlQuery{}
+	}
 	if *flags.MysqlRetrieveQuery != "" {
-		rq := &schema.SqlQuery{
-			Query:  *flags.MysqlRetrieveQuery,
-			Params: rps,
-		}
-		d.RetrieveQuery = rq
+		d.RetrieveQuery.Query = *flags.MysqlRetrieveQuery
+	}
+	if len(rps) > 0 {
+		d.RetrieveQuery.Params = rps
+	}
+	if d.ClearQuery == nil {
+		d.ClearQuery = &schema.SqlQuery{}
 	}
 	if *flags.MysqlClearQuery != "" {
-		cq := &schema.SqlQuery{
-			Query:  *flags.MysqlClearQuery,
-			Params: cps,
-		}
-		d.ClearQuery = cq
+		d.ClearQuery.Query = *flags.MysqlClearQuery
+	}
+	if len(cps) > 0 {
+		d.ClearQuery.Params = cps
+	}
+	if d.FailQuery == nil {
+		d.FailQuery = &schema.SqlQuery{}
 	}
 	if *flags.MysqlFailQuery != "" {
-		fq := &schema.SqlQuery{
-			Query:  *flags.MysqlFailQuery,
-			Params: fps,
-		}
-		d.FailQuery = fq
+		d.FailQuery.Query = *flags.MysqlFailQuery
+	}
+	if len(fps) > 0 {
+		d.FailQuery.Params = fps
 	}
 	return nil
 }
