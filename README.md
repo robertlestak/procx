@@ -212,6 +212,8 @@ Usage: procx [options] [process]
     	Centauri peer URL
   -daemon
     	run as daemon
+  -daemon-interval int
+    	daemon interval in milliseconds
   -driver string
     	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
   -elasticsearch-address string
@@ -722,6 +724,7 @@ Usage: procx [options] [process]
 - `PROCX_CENTAURI_KEY_BASE64`
 - `PROCX_CENTAURI_PEER_URL`
 - `PROCX_DAEMON`
+- `PROCX_DAEMON_INTERVAL`
 - `PROCX_DRIVER`
 - `PROCX_ELASTICSEARCH_ADDRESS`
 - `PROCX_ELASTICSEARCH_CLEAR_INDEX`

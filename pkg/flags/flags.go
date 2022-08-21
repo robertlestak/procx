@@ -11,4 +11,5 @@ var (
 	PayloadFile     = FlagSet.String("payload-file", "", "file to write payload to")
 	KeepPayloadFile = FlagSet.Bool("keep-payload-file", false, "keep payload file after processing")
 	Daemon          = FlagSet.Bool("daemon", false, "run as daemon")
+	DaemonInterval  = FlagSet.Int("daemon-interval", 0, "daemon interval in milliseconds")
 )

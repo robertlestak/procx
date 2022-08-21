@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/robertlestak/procx/pkg/drivers"
 	"github.com/robertlestak/procx/pkg/flags"
@@ -58,6 +60,14 @@ func LoadEnv(prefix string) error {
 		r := os.Getenv(prefix + "DAEMON")
 		t := r == "true"
 		flags.Daemon = &t
+	}
+	if os.Getenv(prefix+"DAEMON_INTERVAL") != "" {
+		r := os.Getenv(prefix + "DAEMON_INTERVAL")
+		i, err := strconv.Atoi(r)
+		if err != nil {
+			return err
+		}
+		flags.DaemonInterval = &i
 	}
 	if os.Getenv(prefix+"PAYLOAD_FILE") != "" {
 		r := os.Getenv(prefix + "PAYLOAD_FILE")
@@ -141,6 +151,7 @@ func main() {
 		l.Debug("running as daemon")
 		for {
 			run(j)
+			time.Sleep(time.Millisecond * time.Duration(*flags.DaemonInterval))
 		}
 	} else {
 		run(j)
