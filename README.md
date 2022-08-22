@@ -67,6 +67,7 @@ Currently, the following drivers are supported:
 - [GCP Cloud Storage](#gcp-gcs) (`gcp-gcs`)
 - [GCP Firestore](#gcp-firestore) (`gcp-firestore`)
 - [GCP Pub/Sub](#gcp-pubsub) (`gcp-pubsub`)
+- [GitHub](#github) (`github`)
 - [HTTP](#http) (`http`)
 - [Kafka](#kafka) (`kafka`)
 - [PostgreSQL](#postgresql) (`postgres`)
@@ -217,7 +218,7 @@ Usage: procx [options] [process]
   -daemon-interval int
     	daemon interval in milliseconds
   -driver string
-    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
+    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, github, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -338,6 +339,44 @@ Usage: procx [options] [process]
     	GCP project ID
   -gcp-pubsub-subscription string
     	GCP Pub/Sub subscription name
+  -github-base-branch string
+    	base branch for PR
+  -github-branch string
+    	branch for PR.
+  -github-clear-location string
+    	clear operation location, if op is mv
+  -github-clear-op string
+    	clear operation. One of: [mv, rm]
+  -github-commit-email string
+    	commit email
+  -github-commit-message string
+    	commit message
+  -github-commit-name string
+    	commit name
+  -github-fail-location string
+    	fail operation location, if op is mv
+  -github-fail-op string
+    	fail operation. One of: [mv, rm]
+  -github-file string
+    	GitHub file
+  -github-file-prefix string
+    	GitHub file prefix
+  -github-file-regex string
+    	GitHub file regex
+  -github-open-pr
+    	open PR on changes. Default: false
+  -github-owner string
+    	GitHub owner
+  -github-pr-body string
+    	PR body
+  -github-pr-title string
+    	PR title
+  -github-ref string
+    	GitHub ref
+  -github-repo string
+    	GitHub repo
+  -github-token string
+    	GitHub token
   -hostenv
     	use host environment
   -http-clear-body string
@@ -788,6 +827,25 @@ Usage: procx [options] [process]
 - `PROCX_GCP_GCS_KEY_REGEX`
 - `PROCX_GCP_PROJECT_ID`
 - `PROCX_GCP_SUBSCRIPTION`
+- `PROCX_GITHUB_BASE_BRANCH`
+- `PROCX_GITHUB_BRANCH`
+- `PROCX_GITHUB_CLEAR_OP`
+- `PROCX_GITHUB_CLEAR_OP_LOCATION`
+- `PROCX_GITHUB_COMMIT_EMAIL`
+- `PROCX_GITHUB_COMMIT_MESSAGE`
+- `PROCX_GITHUB_COMMIT_NAME`
+- `PROCX_GITHUB_FAIL_OP`
+- `PROCX_GITHUB_FAIL_OP_LOCATION`
+- `PROCX_GITHUB_FILE`
+- `PROCX_GITHUB_FILE_PREFIX`
+- `PROCX_GITHUB_FILE_REGEX`
+- `PROCX_GITHUB_OPEN_PR`
+- `PROCX_GITHUB_OWNER`
+- `PROCX_GITHUB_PR_BODY`
+- `PROCX_GITHUB_PR_TITLE`
+- `PROCX_GITHUB_REF`
+- `PROCX_GITHUB_REPO`
+- `PROCX_GITHUB_TOKEN`
 - `PROCX_HOSTENV`
 - `PROCX_HTTP_CLEAR_BODY`
 - `PROCX_HTTP_CLEAR_BODY_FILE`
@@ -1175,6 +1233,31 @@ procx \
     -gcp-project-id my-project \
     -gcp-pubsub-subscription my-subscription \
     -driver gcp-pubsub \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### GitHub
+
+The GitHub driver will retrieve the specified object (`-github-file`, `-github-file-prefix`, or `-github-file-regex`) from a GitHub repository (`-github-repo`) and pass it to the process. This mirrors other file-system drivers and supports both regex and prefix selection in addition to explicit key selection. Upon completion or failure, the object can either be deleted (`rm`) or moved (`mv`) in the repository. This can be done either on the same branch (`-github-ref` or `-github-base-branch`), or a new branch (`-github-branch`). If on a new branch, a pull request can be opened with `-github-open-pr`. If opening a new PR without a branch specified, a new branch name will be generated.
+
+```bash
+procx \
+    -driver github \
+    -github-repo my-repo \
+    -github-owner my-owner \
+    -github-branch my-new-branch \
+    -github-base-branch main \
+    -github-file-regex 'pending/jobs-.*?[a-z]' \
+    -github-token my-token \
+    -github-open-pr \
+    -github-commit-name my-commit-name \
+    -github-commit-email my-commit-email \
+    -github-commit-message my-commit-message \
+    -github-pr-title my-pr-title \
+    -github-pr-body my-pr-body \
+    -github-clear-op rm \
+    -github-fail-op mv \
+    -github-fail-location 'failed/{{key}}' \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 

@@ -10,6 +10,7 @@ import (
 	"github.com/robertlestak/procx/drivers/elasticsearch"
 	"github.com/robertlestak/procx/drivers/fs"
 	"github.com/robertlestak/procx/drivers/gcp"
+	"github.com/robertlestak/procx/drivers/github"
 	"github.com/robertlestak/procx/drivers/http"
 	"github.com/robertlestak/procx/drivers/kafka"
 	"github.com/robertlestak/procx/drivers/local"
@@ -42,6 +43,7 @@ var (
 	GCPFirestore      DriverName = "gcp-firestore"
 	GCPGCS            DriverName = "gcp-gcs"
 	GCPPubSub         DriverName = "gcp-pubsub"
+	GitHub            DriverName = "github"
 	MongoDB           DriverName = "mongodb"
 	MSSql             DriverName = "mssql"
 	MySQL             DriverName = "mysql"
@@ -85,6 +87,8 @@ func GetDriver(name DriverName) Driver {
 		return &gcp.GCS{}
 	case GCPPubSub:
 		return &gcp.GCPPubSub{}
+	case GitHub:
+		return &github.GitHub{}
 	case HTTP:
 		return &http.HTTP{}
 	case Kafka:
