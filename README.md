@@ -61,6 +61,7 @@ Currently, the following drivers are supported:
 - [AWS SQS](#aws-sqs) (`aws-sqs`)
 - [Cassandra](#cassandra) (`cassandra`)
 - [Centauri](#centauri) (`centauri`)
+- [Cockroach](#cockroach) (`cockroach`)
 - [Elasticsearch](#elasticsearch) (`elasticsearch`)
 - [FS](#fs) (`fs`)
 - [GCP Big Query](#gcp-bq) (`gcp-bq`)
@@ -213,12 +214,48 @@ Usage: procx [options] [process]
     	Centauri key base64
   -centauri-peer-url string
     	Centauri peer URL
+  -cockroach-clear-params string
+    	CockroachDB clear params
+  -cockroach-clear-query string
+    	CockroachDB clear query
+  -cockroach-database string
+    	CockroachDB database
+  -cockroach-fail-params string
+    	CockroachDB fail params
+  -cockroach-fail-query string
+    	CockroachDB fail query
+  -cockroach-host string
+    	CockroachDB host
+  -cockroach-password string
+    	CockroachDB password
+  -cockroach-port string
+    	CockroachDB port (default "26257")
+  -cockroach-query-key
+    	CockroachDB query returns key as first column and value as second column
+  -cockroach-retrieve-field string
+    	CockroachDB retrieve field. If not set, all fields will be returned as a JSON object
+  -cockroach-retrieve-params string
+    	CockroachDB retrieve params
+  -cockroach-retrieve-query string
+    	CockroachDB retrieve query
+  -cockroach-routing-id string
+    	CockroachDB routing id
+  -cockroach-ssl-mode string
+    	CockroachDB SSL mode (default "disable")
+  -cockroach-tls-cert string
+    	CockroachDB TLS cert
+  -cockroach-tls-key string
+    	CockroachDB TLS key
+  -cockroach-tls-root-cert string
+    	CockroachDB SSL root cert
+  -cockroach-user string
+    	CockroachDB user
   -daemon
     	run as daemon
   -daemon-interval int
     	daemon interval in milliseconds
   -driver string
-    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, github, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
+    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, cockroach, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, github, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -649,6 +686,12 @@ Usage: procx [options] [process]
     	PostgreSQL retrieve query
   -psql-ssl-mode string
     	PostgreSQL SSL mode (default "disable")
+  -psql-tls-cert string
+    	PostgreSQL TLS cert
+  -psql-tls-key string
+    	PostgreSQL TLS key
+  -psql-tls-root-cert string
+    	PostgreSQL SSL root cert
   -psql-user string
     	PostgreSQL user
   -pulsar-address string
@@ -764,6 +807,23 @@ Usage: procx [options] [process]
 - `PROCX_CENTAURI_KEY`
 - `PROCX_CENTAURI_KEY_BASE64`
 - `PROCX_CENTAURI_PEER_URL`
+- `PROCX_COCKROACH_CLEAR_PARAMS`
+- `PROCX_COCKROACH_CLEAR_QUERY`
+- `PROCX_COCKROACH_DATABASE`
+- `PROCX_COCKROACH_FAIL_PARAMS`
+- `PROCX_COCKROACH_FAIL_QUERY`
+- `PROCX_COCKROACH_HOST`
+- `PROCX_COCKROACH_PASSWORD`
+- `PROCX_COCKROACH_PORT`
+- `PROCX_COCKROACH_RETRIEVE_FIELD`
+- `PROCX_COCKROACH_RETRIEVE_PARAMS`
+- `PROCX_COCKROACH_RETRIEVE_QUERY`
+- `PROCX_COCKROACH_ROUTING_ID`
+- `PROCX_COCKROACH_SSL_MODE`
+- `PROCX_COCKROACH_TLS_CERT`
+- `PROCX_COCKROACH_TLS_KEY`
+- `PROCX_COCKROACH_TLS_ROOT_CERT`
+- `PROCX_COCKROACH_USER`
 - `PROCX_DAEMON`
 - `PROCX_DAEMON_INTERVAL`
 - `PROCX_DRIVER`
@@ -980,6 +1040,9 @@ Usage: procx [options] [process]
 - `PROCX_PSQL_RETRIEVE_PARAMS`
 - `PROCX_PSQL_RETRIEVE_QUERY`
 - `PROCX_PSQL_SSL_MODE`
+- `PROCX_PSQL_TLS_CERT`
+- `PROCX_PSQL_TLS_KEY`
+- `PROCX_PSQL_TLS_ROOT_CERT`
 - `PROCX_PSQL_USER`
 - `PROCX_PULSAR_ADDRESS`
 - `PROCX_PULSAR_AUTH_CERT_FILE`
@@ -1115,6 +1178,27 @@ procx \
     -centauri-key "$(</path/to/private.key)" \
     -centauri-peer-url https://api.test-peer1.centauri.sh \
     -driver centauri \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### Cockroach
+
+The CockroachDB driver will retrieve the next message from the specified table, and pass it to the process.
+
+```bash
+procx \
+    -cockroach-host localhost \
+    -cockroach-port 26257 \
+    -cockroach-database mydb \
+    -cockroach-user myuser \
+    -cockroach-password mypassword \
+    -cockroach-retrieve-query "SELECT id, work from mytable where queue = $1 and status = $2" \
+    -cockroach-retrieve-params "myqueue,pending" \
+    -cockroach-clear-query "UPDATE mytable SET status = $1 where queue = $2 and id = $3" \
+    -cockroach-clear-params "cleared,myqueue,{{id}}" \
+    -cockroach-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = $1 and id = $2" \
+    -cockroach-fail-params "myqueue,{{id}}" \
+    -driver cockroach \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 

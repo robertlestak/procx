@@ -1,4 +1,4 @@
-package postgres
+package cockroach
 
 import (
 	"database/sql"
@@ -16,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Postgres struct {
+type CockroachDB struct {
 	Client        *sql.DB
 	Host          string
 	Port          int
@@ -28,141 +28,146 @@ type Postgres struct {
 	SSLCert       *string
 	SSLKey        *string
 	RetrieveField *string
+	RoutingID     *string
 	RetrieveQuery *schema.SqlQuery
 	ClearQuery    *schema.SqlQuery
 	FailQuery     *schema.SqlQuery
 	data          map[string]any
 }
 
-func (d *Postgres) LoadEnv(prefix string) error {
+func (d *CockroachDB) LoadEnv(prefix string) error {
 	l := log.WithFields(log.Fields{
-		"pkg": "postgres",
+		"pkg": "cockroach",
 		"fn":  "LoadEnv",
 	})
 	l.Debug("Loading environment variables")
-	if os.Getenv(prefix+"PSQL_HOST") != "" {
-		d.Host = os.Getenv(prefix + "PSQL_HOST")
+	if os.Getenv(prefix+"COCKROACH_HOST") != "" {
+		d.Host = os.Getenv(prefix + "COCKROACH_HOST")
 	}
-	if os.Getenv(prefix+"PSQL_PORT") != "" {
-		pval, err := strconv.Atoi(os.Getenv(prefix + "PSQL_PORT"))
+	if os.Getenv(prefix+"COCKROACH_PORT") != "" {
+		pval, err := strconv.Atoi(os.Getenv(prefix + "COCKROACH_PORT"))
 		if err != nil {
 			return err
 		}
 		d.Port = pval
 	}
-	if os.Getenv(prefix+"PSQL_USER") != "" {
-		d.User = os.Getenv(prefix + "PSQL_USER")
+	if os.Getenv(prefix+"COCKROACH_USER") != "" {
+		d.User = os.Getenv(prefix + "COCKROACH_USER")
 	}
-	if os.Getenv(prefix+"PSQL_PASSWORD") != "" {
-		d.Pass = os.Getenv(prefix + "PSQL_PASSWORD")
+	if os.Getenv(prefix+"COCKROACH_PASSWORD") != "" {
+		d.Pass = os.Getenv(prefix + "COCKROACH_PASSWORD")
 	}
-	if os.Getenv(prefix+"PSQL_DATABASE") != "" {
-		d.Db = os.Getenv(prefix + "PSQL_DATABASE")
+	if os.Getenv(prefix+"COCKROACH_DATABASE") != "" {
+		d.Db = os.Getenv(prefix + "COCKROACH_DATABASE")
 	}
-	if os.Getenv(prefix+"PSQL_SSL_MODE") != "" {
-		d.SslMode = os.Getenv(prefix + "PSQL_SSL_MODE")
+	if os.Getenv(prefix+"COCKROACH_SSL_MODE") != "" {
+		d.SslMode = os.Getenv(prefix + "COCKROACH_SSL_MODE")
 	}
-	if os.Getenv(prefix+"PSQL_TLS_ROOT_CERT") != "" {
-		v := os.Getenv(prefix + "PSQL_TLS_ROOT_CERT")
+	if os.Getenv(prefix+"COCKROACH_TLS_ROOT_CERT") != "" {
+		v := os.Getenv(prefix + "COCKROACH_TLS_ROOT_CERT")
 		d.SSLRootCert = &v
 	}
-	if os.Getenv(prefix+"PSQL_TLS_CERT") != "" {
-		v := os.Getenv(prefix + "PSQL_TLS_CERT")
+	if os.Getenv(prefix+"COCKROACH_TLS_CERT") != "" {
+		v := os.Getenv(prefix + "COCKROACH_TLS_CERT")
 		d.SSLCert = &v
 	}
-	if os.Getenv(prefix+"PSQL_TLS_KEY") != "" {
-		v := os.Getenv(prefix + "PSQL_TLS_KEY")
+	if os.Getenv(prefix+"COCKROACH_TLS_KEY") != "" {
+		v := os.Getenv(prefix + "COCKROACH_TLS_KEY")
 		d.SSLKey = &v
 	}
 	if d.RetrieveQuery == nil {
 		d.RetrieveQuery = &schema.SqlQuery{}
 	}
-	if os.Getenv(prefix+"PSQL_RETRIEVE_QUERY") != "" {
-		d.RetrieveQuery.Query = os.Getenv(prefix + "PSQL_RETRIEVE_QUERY")
+	if os.Getenv(prefix+"COCKROACH_RETRIEVE_QUERY") != "" {
+		d.RetrieveQuery.Query = os.Getenv(prefix + "COCKROACH_RETRIEVE_QUERY")
 	}
 	if d.ClearQuery == nil {
 		d.ClearQuery = &schema.SqlQuery{}
 	}
-	if os.Getenv(prefix+"PSQL_CLEAR_QUERY") != "" {
-		d.ClearQuery.Query = os.Getenv(prefix + "PSQL_CLEAR_QUERY")
+	if os.Getenv(prefix+"COCKROACH_CLEAR_QUERY") != "" {
+		d.ClearQuery.Query = os.Getenv(prefix + "COCKROACH_CLEAR_QUERY")
 	}
 	if d.FailQuery == nil {
 		d.FailQuery = &schema.SqlQuery{}
 	}
-	if os.Getenv(prefix+"PSQL_FAIL_QUERY") != "" {
-		d.FailQuery.Query = os.Getenv(prefix + "PSQL_FAIL_QUERY")
+	if os.Getenv(prefix+"COCKROACH_FAIL_QUERY") != "" {
+		d.FailQuery.Query = os.Getenv(prefix + "COCKROACH_FAIL_QUERY")
 	}
-	if os.Getenv(prefix+"PSQL_RETRIEVE_PARAMS") != "" {
-		p := strings.Split(os.Getenv(prefix+"PSQL_RETRIEVE_PARAMS"), ",")
+	if os.Getenv(prefix+"COCKROACH_RETRIEVE_PARAMS") != "" {
+		p := strings.Split(os.Getenv(prefix+"COCKROACH_RETRIEVE_PARAMS"), ",")
 		for _, v := range p {
 			d.RetrieveQuery.Params = append(d.RetrieveQuery.Params, v)
 		}
 	}
-	if os.Getenv(prefix+"PSQL_CLEAR_PARAMS") != "" {
-		p := strings.Split(os.Getenv(prefix+"PSQL_CLEAR_PARAMS"), ",")
+	if os.Getenv(prefix+"COCKROACH_CLEAR_PARAMS") != "" {
+		p := strings.Split(os.Getenv(prefix+"COCKROACH_CLEAR_PARAMS"), ",")
 		for _, v := range p {
 			d.ClearQuery.Params = append(d.ClearQuery.Params, v)
 		}
 	}
-	if os.Getenv(prefix+"PSQL_FAIL_PARAMS") != "" {
-		p := strings.Split(os.Getenv(prefix+"PSQL_FAIL_PARAMS"), ",")
+	if os.Getenv(prefix+"COCKROACH_FAIL_PARAMS") != "" {
+		p := strings.Split(os.Getenv(prefix+"COCKROACH_FAIL_PARAMS"), ",")
 		for _, v := range p {
 			d.FailQuery.Params = append(d.FailQuery.Params, v)
 		}
 	}
-	if os.Getenv(prefix+"PSQL_RETRIEVE_FIELD") != "" {
-		v := os.Getenv(prefix + "PSQL_RETRIEVE_FIELD")
+	if os.Getenv(prefix+"COCKROACH_RETRIEVE_FIELD") != "" {
+		v := os.Getenv(prefix + "COCKROACH_RETRIEVE_FIELD")
 		d.RetrieveField = &v
+	}
+	if os.Getenv(prefix+"COCKROACH_ROUTING_ID") != "" {
+		v := os.Getenv(prefix + "COCKROACH_ROUTING_ID")
+		d.RoutingID = &v
 	}
 	return nil
 }
 
-func (d *Postgres) LoadFlags() error {
+func (d *CockroachDB) LoadFlags() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "postgres",
+		"pkg": "cockroach",
 		"fn":  "LoadFlags",
 	})
 	l.Debug("Loading flags")
-	pv, err := strconv.Atoi(*flags.PsqlPort)
+	pv, err := strconv.Atoi(*flags.CockroachDBPort)
 	if err != nil {
 		return err
 	}
 	var rps []any
 	var cps []any
 	var fps []any
-	if *flags.PsqlRetrieveParams != "" {
-		s := strings.Split(*flags.PsqlRetrieveParams, ",")
+	if *flags.CockroachDBRetrieveParams != "" {
+		s := strings.Split(*flags.CockroachDBRetrieveParams, ",")
 		for _, v := range s {
 			rps = append(rps, v)
 		}
 	}
-	if *flags.PsqlClearParams != "" {
-		s := strings.Split(*flags.PsqlClearParams, ",")
+	if *flags.CockroachDBClearParams != "" {
+		s := strings.Split(*flags.CockroachDBClearParams, ",")
 		for _, v := range s {
 			cps = append(cps, v)
 		}
 	}
-	if *flags.PsqlFailParams != "" {
-		s := strings.Split(*flags.PsqlFailParams, ",")
+	if *flags.CockroachDBFailParams != "" {
+		s := strings.Split(*flags.CockroachDBFailParams, ",")
 		for _, v := range s {
 			fps = append(fps, v)
 		}
 	}
-	d.Host = *flags.PsqlHost
+	d.Host = *flags.CockroachDBHost
 	d.Port = pv
-	d.User = *flags.PsqlUser
-	d.Pass = *flags.PsqlPassword
-	d.Db = *flags.PsqlDatabase
-	d.SslMode = *flags.PsqlSSLMode
-	d.SSLRootCert = flags.PsqlTLSRootCert
-	d.SSLCert = flags.PsqlTLSCert
-	d.SSLKey = flags.PsqlTLSKey
-	d.RetrieveField = flags.PsqlRetrieveField
+	d.User = *flags.CockroachDBUser
+	d.Pass = *flags.CockroachDBPassword
+	d.Db = *flags.CockroachDBDatabase
+	d.SslMode = *flags.CockroachDBSSLMode
+	d.SSLRootCert = flags.CockroachDBTLSRootCert
+	d.SSLCert = flags.CockroachDBTLSCert
+	d.SSLKey = flags.CockroachDBTLSKey
+	d.RetrieveField = flags.CockroachDBRetrieveField
 	if d.RetrieveQuery == nil {
 		d.RetrieveQuery = &schema.SqlQuery{}
 	}
-	if *flags.PsqlRetrieveQuery != "" {
-		d.RetrieveQuery.Query = *flags.PsqlRetrieveQuery
+	if *flags.CockroachDBRetrieveQuery != "" {
+		d.RetrieveQuery.Query = *flags.CockroachDBRetrieveQuery
 	}
 	if len(rps) > 0 {
 		d.RetrieveQuery.Params = rps
@@ -170,8 +175,8 @@ func (d *Postgres) LoadFlags() error {
 	if d.ClearQuery == nil {
 		d.ClearQuery = &schema.SqlQuery{}
 	}
-	if *flags.PsqlClearQuery != "" {
-		d.ClearQuery.Query = *flags.PsqlClearQuery
+	if *flags.CockroachDBClearQuery != "" {
+		d.ClearQuery.Query = *flags.CockroachDBClearQuery
 	}
 	if len(cps) > 0 {
 		d.ClearQuery.Params = cps
@@ -179,8 +184,8 @@ func (d *Postgres) LoadFlags() error {
 	if d.FailQuery == nil {
 		d.FailQuery = &schema.SqlQuery{}
 	}
-	if *flags.PsqlFailQuery != "" {
-		d.FailQuery.Query = *flags.PsqlFailQuery
+	if *flags.CockroachDBFailQuery != "" {
+		d.FailQuery.Query = *flags.CockroachDBFailQuery
 	}
 	if len(fps) > 0 {
 		d.FailQuery.Params = fps
@@ -188,15 +193,18 @@ func (d *Postgres) LoadFlags() error {
 	return nil
 }
 
-func (d *Postgres) Init() error {
+func (d *CockroachDB) Init() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "postgres",
+		"pkg": "cockroach",
 		"fn":  "Init",
 	})
-	l.Debug("Initializing psql client")
+	l.Debug("Initializing cockroachdb client")
 	var err error
 	var opts string
 	var connStr string = "postgresql://"
+	if d.RoutingID != nil && *d.RoutingID != "" {
+		opts = "&options=--cluster%3D" + *d.RoutingID
+	}
 	if d.User != "" && d.Pass != "" {
 		connStr += fmt.Sprintf("%s:%s@%s:%d/%s",
 			d.User, d.Pass, d.Host, d.Port, d.Db)
@@ -215,6 +223,7 @@ func (d *Postgres) Init() error {
 		connStr += "&sslkey=" + *d.SSLKey
 	}
 	connStr += opts
+	l.Debugf("Connecting to %s", connStr)
 	d.Client, err = sql.Open("postgres", connStr)
 	if err != nil {
 		l.Error(err)
@@ -225,16 +234,16 @@ func (d *Postgres) Init() error {
 		l.Error(err)
 		return err
 	}
-	l.Debug("Connected to psql")
+	l.Debug("Connected to cockroachdb")
 	return nil
 }
 
-func (d *Postgres) GetWork() (io.Reader, error) {
+func (d *CockroachDB) GetWork() (io.Reader, error) {
 	l := log.WithFields(log.Fields{
-		"pkg": "postgres",
+		"pkg": "cockroach",
 		"fn":  "GetWork",
 	})
-	l.Debug("Getting work from psql")
+	l.Debug("Getting work from cockroachdb")
 	var result string
 	if d.RetrieveQuery == nil || d.RetrieveQuery.Query == "" {
 		l.Error("RetrieveQuery is nil or empty")
@@ -278,12 +287,12 @@ func (d *Postgres) GetWork() (io.Reader, error) {
 	return strings.NewReader(result), nil
 }
 
-func (d *Postgres) ClearWork() error {
+func (d *CockroachDB) ClearWork() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "postgres",
+		"pkg": "cockroach",
 		"fn":  "ClearWork",
 	})
-	l.Debug("Clearing work from psql")
+	l.Debug("Clearing work from cockroachdb")
 	var err error
 	if d.ClearQuery == nil || d.ClearQuery.Query == "" {
 		return nil
@@ -298,12 +307,12 @@ func (d *Postgres) ClearWork() error {
 	return nil
 }
 
-func (d *Postgres) HandleFailure() error {
+func (d *CockroachDB) HandleFailure() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "postgres",
+		"pkg": "cockroach",
 		"fn":  "HandleFailure",
 	})
-	l.Debug("Handling failure in psql")
+	l.Debug("Handling failure in cockroachdb")
 	var err error
 	if d.FailQuery == nil || d.FailQuery.Query == "" {
 		return nil
@@ -318,12 +327,12 @@ func (d *Postgres) HandleFailure() error {
 	return nil
 }
 
-func (d *Postgres) Cleanup() error {
+func (d *CockroachDB) Cleanup() error {
 	l := log.WithFields(log.Fields{
-		"pkg": "postgres",
+		"pkg": "cockroach",
 		"fn":  "Cleanup",
 	})
-	l.Debug("Cleaning up psql")
+	l.Debug("Cleaning up cockroachdb")
 	err := d.Client.Close()
 	if err != nil {
 		l.Error(err)

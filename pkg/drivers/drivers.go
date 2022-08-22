@@ -7,6 +7,7 @@ import (
 	"github.com/robertlestak/procx/drivers/aws"
 	"github.com/robertlestak/procx/drivers/cassandra"
 	"github.com/robertlestak/procx/drivers/centauri"
+	"github.com/robertlestak/procx/drivers/cockroach"
 	"github.com/robertlestak/procx/drivers/elasticsearch"
 	"github.com/robertlestak/procx/drivers/fs"
 	"github.com/robertlestak/procx/drivers/gcp"
@@ -35,6 +36,7 @@ var (
 	AWSDynamoDB       DriverName = "aws-dynamo"
 	CassandraDB       DriverName = "cassandra"
 	Centauri          DriverName = "centauri"
+	CockroachDB       DriverName = "cockroach"
 	Elasticsearch     DriverName = "elasticsearch"
 	FS                DriverName = "fs"
 	HTTP              DriverName = "http"
@@ -75,6 +77,8 @@ func GetDriver(name DriverName) Driver {
 		return &cassandra.Cassandra{}
 	case Centauri:
 		return &centauri.Centauri{}
+	case CockroachDB:
+		return &cockroach.CockroachDB{}
 	case Elasticsearch:
 		return &elasticsearch.Elasticsearch{}
 	case FS:
