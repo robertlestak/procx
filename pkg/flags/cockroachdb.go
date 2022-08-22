@@ -1,8 +1,7 @@
 package flags
 
 var (
-	CockroachDBRoutingID = FlagSet.String("cockroach-routing-id", "", "CockroachDB routing id")
-
+	CockroachDBRoutingID      = FlagSet.String("cockroach-routing-id", "", "CockroachDB routing id")
 	CockroachDBHost           = FlagSet.String("cockroach-host", "", "CockroachDB host")
 	CockroachDBPort           = FlagSet.String("cockroach-port", "26257", "CockroachDB port")
 	CockroachDBUser           = FlagSet.String("cockroach-user", "", "CockroachDB user")
