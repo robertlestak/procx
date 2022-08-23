@@ -34,7 +34,7 @@ type Dynamo struct {
 	RetrieveQuery    *string
 	ClearQuery       *string
 	FailQuery        *string
-	data             map[string]any
+	data             []map[string]any
 }
 
 func (d *Dynamo) LogIdentity() error {
@@ -214,23 +214,14 @@ func (d *Dynamo) GetWork() (io.Reader, error) {
 		l.Debug("GetWork no items")
 		return nil, nil
 	}
-	// get first item
-	item := resp.Items[0]
-	if item == nil {
+	if len(resp.Items) == 0 {
 		l.Debug("GetWork no items")
 		return nil, nil
 	}
-	err = dynamodbattribute.UnmarshalMap(item, &d.data)
-	if err != nil {
-		l.Errorf("%+v", err)
-		if err := d.LogIdentity(); err != nil {
-			l.Errorf("%+v", err)
-		}
-		return nil, err
-	}
 	var result string
-	if d.RetrieveField != nil && *d.RetrieveField != "" {
-		bd, err := json.Marshal(d.data)
+	for _, item := range resp.Items {
+		var ld map[string]any
+		err = dynamodbattribute.UnmarshalMap(item, &ld)
 		if err != nil {
 			l.Errorf("%+v", err)
 			if err := d.LogIdentity(); err != nil {
@@ -238,29 +229,42 @@ func (d *Dynamo) GetWork() (io.Reader, error) {
 			}
 			return nil, err
 		}
-		l.Debug("GetWork item=%s", string(bd))
-		result = gjson.GetBytes(bd, *d.RetrieveField).String()
-	} else {
-		td := make(map[string]any)
-		for k, v := range d.data {
-			td[k] = v
+		if d.RetrieveField != nil && *d.RetrieveField != "" {
+			bd, err := json.Marshal(ld)
+			if err != nil {
+				l.Errorf("%+v", err)
+				if err := d.LogIdentity(); err != nil {
+					l.Errorf("%+v", err)
+				}
+				return nil, err
+			}
+			l.Debug("GetWork item=%s", string(bd))
+			result = gjson.GetBytes(bd, *d.RetrieveField).String()
+		} else {
+			td := make(map[string]any)
+			for k, v := range ld {
+				td[k] = v
+			}
+			if d.IncludeNextToken {
+				td["_nextToken"] = resp.NextToken
+			}
+			d.data = append(d.data, td)
 		}
-		if d.IncludeNextToken {
-			td["_nextToken"] = resp.NextToken
-		}
-		jd, err := schema.MapStringAnyToJSON(td)
-		if err != nil {
-			l.Error(err)
-			return nil, err
-		}
-		result = string(jd)
 	}
+	if d.RetrieveField != nil && *d.RetrieveField != "" && result != "" {
+		return strings.NewReader(result), nil
+	}
+	jd, err := schema.SliceMapStringAnyToJSON(d.data)
+	if err != nil {
+		l.Error(err)
+		return nil, err
+	}
+	result = string(jd)
 	// if result is empty, return nil
 	if result == "" {
 		l.Debug("result is empty")
 		return nil, nil
 	}
-	l.Debug("Got work")
 	return strings.NewReader(result), nil
 }
 
@@ -273,11 +277,7 @@ func (d *Dynamo) clearQuery() string {
 	if d.ClearQuery == nil {
 		return ""
 	}
-	td := make(map[string]any)
-	for k, v := range d.data {
-		td[k] = v
-	}
-	q := schema.ReplaceParamsMapString(td, *d.ClearQuery)
+	q := schema.ReplaceParamsSliceMapString(d.data, *d.ClearQuery)
 	l.Debugf("clearQuery query=%s", q)
 	return q
 }
@@ -291,11 +291,7 @@ func (d *Dynamo) failQuery() string {
 	if d.FailQuery == nil {
 		return ""
 	}
-	td := make(map[string]any)
-	for k, v := range d.data {
-		td[k] = v
-	}
-	q := schema.ReplaceParamsMapString(td, *d.FailQuery)
+	q := schema.ReplaceParamsSliceMapString(d.data, *d.FailQuery)
 	l.Debugf("failQuery query=%s", q)
 	return q
 }

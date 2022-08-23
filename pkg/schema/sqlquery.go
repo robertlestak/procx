@@ -71,6 +71,25 @@ func MapStringAnyToJSON(m map[string]any) ([]byte, error) {
 	return jd, nil
 }
 
+func SliceMapStringAnyToJSON(m []map[string]any) ([]byte, error) {
+	l := log.WithFields(log.Fields{
+		"pkg": "schema",
+		"fn":  "SliceMapStringAnyToJSON",
+	})
+	l.Debug("Converting map to JSON")
+	for k, v := range m {
+		for kk, vv := range v {
+			m[k][kk] = HandleField(vv)
+		}
+	}
+	jd, err := json.Marshal(m)
+	if err != nil {
+		l.Error(err)
+		return nil, err
+	}
+	return jd, nil
+}
+
 func ExtractMustacheKey(s string) string {
 	l := log.WithFields(log.Fields{
 		"pkg": "schema",
@@ -169,6 +188,27 @@ func ReplaceParamsMapString(data map[string]any, params string) string {
 	})
 	l.Debug("Replacing params map string")
 	jd, err := MapStringAnyToJSON(data)
+	if err != nil {
+		l.Error(err)
+	}
+	s := strings.ReplaceAll(params, "{{procx_payload}}", string(jd))
+	keys := ExtractMustacheKeys(s)
+	for _, k := range keys {
+		jv := gjson.GetBytes(jd, k)
+		s = ReplaceJSONKey(s, k, jv.String())
+	}
+	l.Debug("Replaced params map string: ", s)
+	return s
+}
+
+func ReplaceParamsSliceMapString(data []map[string]any, params string) string {
+	l := log.WithFields(log.Fields{
+		"pkg":    "schema",
+		"fn":     "ReplaceParamsSliceMapString",
+		"params": params,
+	})
+	l.Debug("Replacing params map string")
+	jd, err := SliceMapStringAnyToJSON(data)
 	if err != nil {
 		l.Error(err)
 	}
