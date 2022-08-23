@@ -84,6 +84,7 @@ Currently, the following drivers are supported:
 - [Redis List](#redis-list) (`redis-list`)
 - [Redis Pub/Sub](#redis-pubsub) (`redis-pubsub`)
 - [Redis Stream](#redis-stream) (`redis-stream`)
+- [SMB](#smb) (`smb`)
 - [Local](#local) (`local`)
 
 Plans to add more drivers in the future, and PRs are welcome.
@@ -308,7 +309,7 @@ Usage: procx [options] [process]
   -daemon-interval int
     	daemon interval in milliseconds
   -driver string
-    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, cockroach, couchbase, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, github, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
+    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, cockroach, couchbase, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, github, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream, smb)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -805,6 +806,32 @@ Usage: procx [options] [process]
     	Redis TLS key file
   -redis-tls-skip-verify
     	Redis TLS skip verify
+  -smb-clear-key string
+    	SMB clear key, if clear op is mv. default is origional key name.
+  -smb-clear-key-template string
+    	SMB clear key template, if clear op is mv.
+  -smb-clear-op string
+    	SMB clear operation. Valid values: mv, rm
+  -smb-fail-key string
+    	SMB fail key, if fail op is mv. default is original key name.
+  -smb-fail-key-template string
+    	SMB fail key template, if fail op is mv.
+  -smb-fail-op string
+    	SMB fail operation. Valid values: mv, rm
+  -smb-host string
+    	SMB host
+  -smb-key string
+    	SMB key
+  -smb-key-glob string
+    	SMB key glob
+  -smb-pass string
+    	SMB pass
+  -smb-port int
+    	SMB port (default 445)
+  -smb-share string
+    	SMB share
+  -smb-user string
+    	SMB user
 ```
 
 ### Environment Variables
@@ -1151,6 +1178,19 @@ Usage: procx [options] [process]
 - `PROCX_REDIS_TLS_CERT_FILE`
 - `PROCX_REDIS_TLS_INSECURE`
 - `PROCX_REDIS_TLS_KEY_FILE`
+- `PROCX_SMB_CLEAR_KEY`
+- `PROCX_SMB_CLEAR_KEY_TEMPLATE`
+- `PROCX_SMB_CLEAR_OP`
+- `PROCX_SMB_FAIL_KEY`
+- `PROCX_SMB_FAIL_KEY_TEMPLATE`
+- `PROCX_SMB_FAIL_OP`
+- `PROCX_SMB_HOST`
+- `PROCX_SMB_KEY`
+- `PROCX_SMB_KEY_GLOB`
+- `PROCX_SMB_PASS`
+- `PROCX_SMB_PORT`
+- `PROCX_SMB_SHARE`
+- `PROCX_SMB_USER`
 
 ## Driver Examples
 
@@ -1690,6 +1730,24 @@ procx \
     -redis-stream-clear-op del \
     -redis-stream-fail-op ack \
     -driver redis-stream \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### SMB
+
+The SMB driver will connect to the specified SMB endpoint and retrieve the specified file `-smb-key`, however the first file which matches a glob `-smb-key-glob` can also be used. Similar to the NFS driver, on clear / faiure, the file can be moved (`mv`) or deleted (`rm`) with the `-smb-clear-op` and `-smb-fail-op` flags. The `-smb-clear-key` and `-smb-fail-key` flags can be used to specify the new path, and `-smb-clear-key-template` and `-smb-fail-key-template` can be used to specify a template for the new path, where `{{key}}` is replaced with the original key base name.
+
+```bash
+procx \
+    -smb-host localhost \
+    -smb-port 445 \
+    -smb-share myshare \
+    -smb-key-glob "jobs/job-*" \
+    -smb-clear-op mv \
+    -smb-clear-key-template "cleared/cleared_{{key}}" \
+    -smb-fail-op mv \
+    -smb-fail-key-template "failed/failed_{{key}}" \
+    -driver smb \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
