@@ -62,6 +62,7 @@ Currently, the following drivers are supported:
 - [Cassandra](#cassandra) (`cassandra`)
 - [Centauri](#centauri) (`centauri`)
 - [Cockroach](#cockroach) (`cockroach`)
+- [Couchbase](#couchbase) (`couchbase`)
 - [Elasticsearch](#elasticsearch) (`elasticsearch`)
 - [FS](#fs) (`fs`)
 - [GCP Big Query](#gcp-bq) (`gcp-bq`)
@@ -250,12 +251,64 @@ Usage: procx [options] [process]
     	CockroachDB SSL root cert
   -cockroach-user string
     	CockroachDB user
+  -couchbase-address string
+    	Couchbase address
+  -couchbase-bucket string
+    	Couchbase bucket name
+  -couchbase-clear-bucket string
+    	Couchbase clear bucket, if op is set or merge. Default to the current bucket.
+  -couchbase-clear-collection string
+    	Couchbase clear collection, default to the current collection. (default "_default")
+  -couchbase-clear-doc string
+    	Couchbase clear doc, if op is set or merge
+  -couchbase-clear-id string
+    	Couchbase clear id, default to the current id.
+  -couchbase-clear-op string
+    	Couchbase clear op. one of: mv, rm, set, merge
+  -couchbase-clear-scope string
+    	Couchbase clear scope, default to the current scope. (default "_default")
+  -couchbase-collection string
+    	Couchbase collection (default "_default")
+  -couchbase-enable-tls
+    	Enable TLS
+  -couchbase-fail-bucket string
+    	Couchbase fail bucket, if op is set or merge. Default to the current bucket.
+  -couchbase-fail-collection string
+    	Couchbase fail collection, default to the current collection. (default "_default")
+  -couchbase-fail-doc string
+    	Couchbase fail doc, if op is set or merge
+  -couchbase-fail-id string
+    	Couchbase fail id, default to the current id.
+  -couchbase-fail-op string
+    	Couchbase fail op. one of: mv, rm, set, merge
+  -couchbase-fail-scope string
+    	Couchbase fail scope, default to the current scope. (default "_default")
+  -couchbase-id string
+    	Couchbase id
+  -couchbase-password string
+    	Couchbase password
+  -couchbase-retrieve-params string
+    	Couchbase retrieve params
+  -couchbase-retrieve-query string
+    	Couchbase retrieve query
+  -couchbase-scope string
+    	Couchbase scope (default "_default")
+  -couchbase-tls-ca-file string
+    	Couchbase TLS CA file
+  -couchbase-tls-cert-file string
+    	Couchbase TLS cert file
+  -couchbase-tls-insecure
+    	Enable TLS insecure
+  -couchbase-tls-key-file string
+    	Couchbase TLS key file
+  -couchbase-user string
+    	Couchbase user
   -daemon
     	run as daemon
   -daemon-interval int
     	daemon interval in milliseconds
   -driver string
-    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, cockroach, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, github, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
+    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, cockroach, couchbase, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, github, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-index string
@@ -824,6 +877,31 @@ Usage: procx [options] [process]
 - `PROCX_COCKROACH_TLS_KEY`
 - `PROCX_COCKROACH_TLS_ROOT_CERT`
 - `PROCX_COCKROACH_USER`
+- `PROCX_COUCHBASE_BUCKET_NAME`
+- `PROCX_COUCHBASE_CLEAR_BUCKET`
+- `PROCX_COUCHBASE_CLEAR_COLLECTION`
+- `PROCX_COUCHBASE_CLEAR_DOC`
+- `PROCX_COUCHBASE_CLEAR_ID`
+- `PROCX_COUCHBASE_CLEAR_OP`
+- `PROCX_COUCHBASE_CLEAR_SCOPE`
+- `PROCX_COUCHBASE_COLLECTION`
+- `PROCX_COUCHBASE_ENABLE_TLS`
+- `PROCX_COUCHBASE_FAIL_BUCKET`
+- `PROCX_COUCHBASE_FAIL_COLLECTION`
+- `PROCX_COUCHBASE_FAIL_DOC`
+- `PROCX_COUCHBASE_FAIL_ID`
+- `PROCX_COUCHBASE_FAIL_OP`
+- `PROCX_COUCHBASE_FAIL_SCOPE`
+- `PROCX_COUCHBASE_ID`
+- `PROCX_COUCHBASE_PASSWORD`
+- `PROCX_COUCHBASE_RETRIEVE_PARAMS`
+- `PROCX_COUCHBASE_RETRIEVE_QUERY`
+- `PROCX_COUCHBASE_SCOPE`
+- `PROCX_COUCHBASE_TLS_CA_FILE`
+- `PROCX_COUCHBASE_TLS_CERT_FILE`
+- `PROCX_COUCHBASE_TLS_INSECURE`
+- `PROCX_COUCHBASE_TLS_KEY_FILE`
+- `PROCX_COUCHBASE_USER`
 - `PROCX_DAEMON`
 - `PROCX_DAEMON_INTERVAL`
 - `PROCX_DRIVER`
@@ -1199,6 +1277,26 @@ procx \
     -cockroach-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = $1 and id = $2" \
     -cockroach-fail-params "myqueue,{{id}}" \
     -driver cockroach \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### Couchbase
+
+The Couchbase driver will retrieve the specified document from the bucket and pass it to the process. If `-couchbase-id` is specified, this document will be retrieved. Alternatively, you can use `-couchbase-retrieve-query` and `-couchbase-retrieve-params` to retrieve a document with a N1QL query. Upon completion of the work, the document can be moved (`mv`) to a different bucket/collection, deleted (`rm`) from the bucket, updated in place with a new document (`set`), or merged with a new document (`merge`). If moving the document, you can also provide a document which will be merged with the document before it is moved. You can use `gjson` selectors and mustache syntax to template the new document before it is merged.
+
+```bash
+procx \
+    -couchbase-bucket my-bucket \
+    -couchbase-collection my-collection \
+    -couchbase-retrieve-query "SELECT id, jobName, work, status from my-collection where status = $1" \
+    -couchbase-retrieve-params "pending" \
+    -couchbase-clear-op=mv \
+    -couchbase-clear-doc '{"status": "cleared"}' \
+    -couchbase-clear-bucket my-bucket-cleared \
+    -couchbase-clear-collection my-collection-cleared \
+    -couchbase-fail-op=merge \
+    -couchbase-fail-doc '{"status": "failed"}' \
+    -driver couchbase \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
