@@ -146,6 +146,12 @@ Usage: procx [options] [process]
     	AWS DynamoDB clear query
   -aws-dynamo-fail-query string
     	AWS DynamoDB fail query
+  -aws-dynamo-include-next-token
+    	AWS DynamoDB include next token as _nextToken in response
+  -aws-dynamo-limit int
+    	AWS DynamoDB limit (default 1)
+  -aws-dynamo-next-token string
+    	AWS DynamoDB next token
   -aws-dynamo-retrieve-field string
     	AWS DynamoDB retrieve field
   -aws-dynamo-retrieve-query string
@@ -851,6 +857,9 @@ Usage: procx [options] [process]
 - `PROCX_ACTIVEMQ_TYPE`
 - `PROCX_AWS_DYNAMO_CLEAR_QUERY`
 - `PROCX_AWS_DYNAMO_FAIL_QUERY`
+- `PROCX_AWS_DYNAMO_INCLUDE_NEXT_TOKEN`
+- `PROCX_AWS_DYNAMO_LIMIT`
+- `PROCX_AWS_DYNAMO_NEXT_TOKEN`
 - `PROCX_AWS_DYNAMO_RETRIEVE_FIELD`
 - `PROCX_AWS_DYNAMO_RETRIEVE_QUERY`
 - `PROCX_AWS_DYNAMO_TABLE`
@@ -1213,7 +1222,7 @@ procx \
 
 ### AWS DynamoDB
 
-The AWS DynamoDB driver will execute the provided PartiQL query and return the first result. An optional JSON path can be passed in the `-aws-dynamo-retrieve-field` flag, if this is provided it will be used to extract the value from the returned data before passing to the process, otherwise the full Dynamo JSON document is passed. Similar to other SQL-based drivers, you can use `gjson` syntax to extract values from the data which can be used in subsequent clear and fail handling queries.
+The AWS DynamoDB driver will execute the provided PartiQL query and return the first result. An optional JSON path can be passed in the `-aws-dynamo-retrieve-field` flag, if this is provided it will be used to extract the value from the returned data before passing to the process, otherwise the full Dynamo JSON document is passed. Similar to other SQL-based drivers, you can use `gjson` syntax to extract values from the data which can be used in subsequent clear and fail handling queries. By default, the `-aws-dynamo-limit` is set to 1 to reduce the amount of data evaluated, however this can be increased as needed to query larger sets of data. The `-aws-dynamo-next-token` can be provided to continue querying from a previous result, and `-aws-dynamo-include-next-token` can be set to pass the `_nextToken` in the response payload.
 
 ```bash
 procx \

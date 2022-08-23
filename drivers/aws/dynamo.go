@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -21,16 +22,19 @@ import (
 )
 
 type Dynamo struct {
-	Client        *dynamodb.DynamoDB
-	sts           *STSSession
-	Table         string
-	Region        string
-	RetrieveField *string
-	RoleARN       string
-	RetrieveQuery *string
-	ClearQuery    *string
-	FailQuery     *string
-	data          map[string]any
+	Client           *dynamodb.DynamoDB
+	sts              *STSSession
+	Table            string
+	Region           string
+	RetrieveField    *string
+	Limit            *int64
+	NextToken        *string
+	IncludeNextToken bool
+	RoleARN          string
+	RetrieveQuery    *string
+	ClearQuery       *string
+	FailQuery        *string
+	data             map[string]any
 }
 
 func (d *Dynamo) LogIdentity() error {
@@ -86,6 +90,23 @@ func (d *Dynamo) LoadEnv(prefix string) error {
 		f := os.Getenv(prefix + "AWS_DYNAMO_RETRIEVE_FIELD")
 		d.RetrieveField = &f
 	}
+	if os.Getenv(prefix+"AWS_DYNAMO_INCLUDE_NEXT_TOKEN") != "" {
+		v := os.Getenv(prefix+"AWS_DYNAMO_INCLUDE_NEXT_TOKEN") == "true"
+		d.IncludeNextToken = v
+	}
+	if os.Getenv(prefix+"AWS_DYNAMO_LIMIT") != "" {
+		v := os.Getenv(prefix + "AWS_DYNAMO_LIMIT")
+		i, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			l.Errorf("%+v", err)
+			return err
+		}
+		d.Limit = &i
+	}
+	if os.Getenv(prefix+"AWS_DYNAMO_NEXT_TOKEN") != "" {
+		v := os.Getenv(prefix + "AWS_DYNAMO_NEXT_TOKEN")
+		d.NextToken = &v
+	}
 	if os.Getenv(prefix+"AWS_LOAD_CONFIG") != "" || os.Getenv("AWS_SDK_LOAD_CONFIG") != "" {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	}
@@ -105,6 +126,10 @@ func (d *Dynamo) LoadFlags() error {
 	d.RetrieveField = flags.AWSDynamoRetrieveField
 	d.ClearQuery = flags.AWSDynamoClearQuery
 	d.FailQuery = flags.AWSDynamoFailQuery
+	d.IncludeNextToken = *flags.AWSDynamoIncludeNextToken
+	iv := int64(*flags.AWSDynamoLimit)
+	d.Limit = &iv
+	d.NextToken = flags.AWSDynamoNextToken
 	if flags.AWSLoadConfig != nil && *flags.AWSLoadConfig {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	}
@@ -165,7 +190,12 @@ func (d *Dynamo) GetWork() (io.Reader, error) {
 	// execute statement
 	statement := dynamodb.ExecuteStatementInput{
 		Statement: d.RetrieveQuery,
-		Limit:     aws.Int64(1),
+	}
+	if *d.Limit > 0 {
+		statement.Limit = d.Limit
+	}
+	if d.NextToken != nil && *d.NextToken != "" {
+		statement.NextToken = d.NextToken
 	}
 	resp, err := d.Client.ExecuteStatement(&statement)
 	if err != nil {
@@ -214,6 +244,9 @@ func (d *Dynamo) GetWork() (io.Reader, error) {
 		td := make(map[string]any)
 		for k, v := range d.data {
 			td[k] = v
+		}
+		if d.IncludeNextToken {
+			td["_nextToken"] = resp.NextToken
 		}
 		jd, err := schema.MapStringAnyToJSON(td)
 		if err != nil {
