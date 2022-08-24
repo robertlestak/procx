@@ -43,7 +43,7 @@ procx -driver postgres \
     -psql-retrieve-query "SELECT id,name,work FROM jobs WHERE status=$1 LIMIT 1" \
     -psql-retrieve-params "pending" \
     -psql-clear-query "UPDATE jobs SET status=$1 WHERE id=$2" \
-    -psql-clear-params "complete,{{id}}" \
+    -psql-clear-params "complete,{{0.id}}" \
     -pass-work-as-stdin \
     cat
 # the above will print
