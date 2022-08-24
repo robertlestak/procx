@@ -24,7 +24,6 @@ import (
 type Dynamo struct {
 	Client           *dynamodb.DynamoDB
 	sts              *STSSession
-	Table            string
 	Region           string
 	RetrieveField    *string
 	Limit            *int64
@@ -71,9 +70,6 @@ func (d *Dynamo) LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"AWS_ROLE_ARN") != "" {
 		d.RoleARN = os.Getenv(prefix + "AWS_SQS_ROLE_ARN")
 	}
-	if os.Getenv(prefix+"AWS_DYNAMO_TABLE") != "" {
-		d.Table = os.Getenv(prefix + "AWS_DYNAMO_TABLE")
-	}
 	if os.Getenv(prefix+"AWS_DYNAMO_RETRIEVE_QUERY") != "" {
 		q := os.Getenv(prefix + "AWS_DYNAMO_RETRIEVE_QUERY")
 		d.RetrieveQuery = &q
@@ -119,7 +115,6 @@ func (d *Dynamo) LoadFlags() error {
 		"pkg": "aws",
 	})
 	l.Debug("LoadFlags")
-	d.Table = *flags.AWSDynamoTable
 	d.Region = *flags.AWSRegion
 	d.RoleARN = *flags.AWSRoleARN
 	d.RetrieveQuery = flags.AWSDynamoRetrieveQuery

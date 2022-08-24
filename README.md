@@ -156,8 +156,6 @@ Usage: procx [options] [process]
     	AWS DynamoDB retrieve field
   -aws-dynamo-retrieve-query string
     	AWS DynamoDB retrieve query
-  -aws-dynamo-table string
-    	AWS DynamoDB table name
   -aws-load-config
     	load AWS config from ~/.aws/config
   -aws-region string
@@ -864,7 +862,6 @@ Usage: procx [options] [process]
 - `PROCX_AWS_DYNAMO_NEXT_TOKEN`
 - `PROCX_AWS_DYNAMO_RETRIEVE_FIELD`
 - `PROCX_AWS_DYNAMO_RETRIEVE_QUERY`
-- `PROCX_AWS_DYNAMO_TABLE`
 - `PROCX_AWS_LOAD_CONFIG`
 - `PROCX_AWS_REGION`
 - `PROCX_AWS_ROLE_ARN`
@@ -1231,7 +1228,6 @@ The AWS DynamoDB driver will execute the provided PartiQL query and return the m
 ```bash
 procx \
     -driver aws-dynamo \
-    -aws-dynamo-table my-table \
     -aws-dynamo-retrieve-query "SELECT id,job,status FROM my-table WHERE status = 'pending'" \
     -aws-dynamo-limit 1 \
     -aws-dynamo-clear-query "UPDATE my-table SET status='complete' WHERE id = '{{0.id}}'" \

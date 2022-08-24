@@ -6,7 +6,6 @@ var (
 	AWSRoleARN    = FlagSet.String("aws-role-arn", "", "AWS role ARN")
 	SQSQueueURL   = FlagSet.String("aws-sqs-queue-url", "", "AWS SQS queue URL")
 
-	AWSDynamoTable            = FlagSet.String("aws-dynamo-table", "", "AWS DynamoDB table name")
 	AWSDynamoRetrieveField    = FlagSet.String("aws-dynamo-retrieve-field", "", "AWS DynamoDB retrieve field")
 	AWSDynamoRetrieveQuery    = FlagSet.String("aws-dynamo-retrieve-query", "", "AWS DynamoDB retrieve query")
 	AWSDynamoClearQuery       = FlagSet.String("aws-dynamo-clear-query", "", "AWS DynamoDB clear query")
