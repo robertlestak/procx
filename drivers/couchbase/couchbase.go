@@ -52,7 +52,7 @@ type Couchbase struct {
 	TLSCert     *string
 	TLSKey      *string
 	TLSCA       *string
-	doc         map[string]any
+	doc         []map[string]any
 }
 
 func (d *Couchbase) LoadEnv(prefix string) error {
@@ -215,7 +215,7 @@ func (d *Couchbase) LoadFlags() error {
 	d.Clear.Collection = *flags.CouchbaseClearCollection
 	d.Clear.ID = *flags.CouchbaseClearID
 	if *flags.CouchbaseClearDoc != "" && len(d.Clear.Doc) == 0 {
-		cd := schema.ReplaceParamsMapString(d.doc, *flags.CouchbaseClearDoc)
+		cd := schema.ReplaceParamsSliceMapString(d.doc, *flags.CouchbaseClearDoc)
 		flags.CouchbaseClearDoc = &cd
 		if err := json.Unmarshal([]byte(*flags.CouchbaseClearDoc), &d.Clear.Doc); err != nil {
 			return err
@@ -230,7 +230,7 @@ func (d *Couchbase) LoadFlags() error {
 	d.Fail.Collection = *flags.CouchbaseFailCollection
 	d.Fail.ID = *flags.CouchbaseFailID
 	if *flags.CouchbaseFailDoc != "" && len(d.Fail.Doc) == 0 {
-		fd := schema.ReplaceParamsMapString(d.doc, *flags.CouchbaseFailDoc)
+		fd := schema.ReplaceParamsSliceMapString(d.doc, *flags.CouchbaseFailDoc)
 		flags.CouchbaseFailDoc = &fd
 		if err := json.Unmarshal([]byte(*flags.CouchbaseFailDoc), &d.Fail.Doc); err != nil {
 			return err
@@ -306,7 +306,7 @@ func (d *Couchbase) getByID() error {
 		l.Error(err)
 		return err
 	}
-	d.doc = doc
+	d.doc = []map[string]any{doc}
 	return nil
 }
 
@@ -335,22 +335,19 @@ func (d *Couchbase) GetWork() (io.Reader, error) {
 		l.Error(err)
 		return nil, err
 	}
-	var r map[string]any
 	for res.Next() {
+		var r map[string]any
 		if err := res.Row(&r); err != nil {
 			l.Error(err)
 			return nil, err
 		}
+		d.doc = append(d.doc, r)
 	}
 	if err := res.Err(); err != nil {
 		l.Error(err)
 		return nil, err
 	}
-	if r == nil {
-		return nil, nil
-	}
-	d.doc = r
-	jd, err := json.Marshal(r)
+	jd, err := json.Marshal(d.doc)
 	if err != nil {
 		l.Error(err)
 		return nil, err
@@ -472,16 +469,26 @@ func (d *Couchbase) ClearWork() error {
 	if d.Clear.Op == "" {
 		return nil
 	}
-	if len(d.Clear.Doc) > 0 && (d.Clear.Op == CouchbaseOpMerge || d.Clear.Op == CouchbaseOpMV) {
-		for k, v := range d.Clear.Doc {
-			d.doc[k] = v
+	var errs []error
+	for _, doc := range d.doc {
+		if len(d.Clear.Doc) > 0 && (d.Clear.Op == CouchbaseOpMerge || d.Clear.Op == CouchbaseOpMV) {
+			for k, v := range d.Clear.Doc {
+				doc[k] = v
+			}
+			d.Clear.Doc = doc
 		}
-		d.Clear.Doc = d.doc
+		if len(d.Clear.Doc) == 0 {
+			d.Clear.Doc = doc
+		}
+		errs = append(errs, d.handleOp(d.Clear))
 	}
-	if len(d.Clear.Doc) == 0 {
-		d.Clear.Doc = d.doc
+	for _, err := range errs {
+		if err != nil {
+			l.Error(err)
+			return err
+		}
 	}
-	return d.handleOp(d.Clear)
+	return nil
 }
 
 func (d *Couchbase) HandleFailure() error {
@@ -508,16 +515,26 @@ func (d *Couchbase) HandleFailure() error {
 	if d.Fail.Op == "" {
 		return nil
 	}
-	if len(d.Fail.Doc) > 0 && (d.Fail.Op == CouchbaseOpMerge || d.Fail.Op == CouchbaseOpMV) {
-		for k, v := range d.Fail.Doc {
-			d.doc[k] = v
+	var errs []error
+	for _, doc := range d.doc {
+		if len(d.Fail.Doc) > 0 && (d.Fail.Op == CouchbaseOpMerge || d.Fail.Op == CouchbaseOpMV) {
+			for k, v := range d.Fail.Doc {
+				doc[k] = v
+			}
+			d.Fail.Doc = doc
 		}
-		d.Fail.Doc = d.doc
+		if len(d.Fail.Doc) == 0 {
+			d.Fail.Doc = doc
+		}
+		errs = append(errs, d.handleOp(d.Fail))
 	}
-	if len(d.Fail.Doc) == 0 {
-		d.Fail.Doc = d.doc
+	for _, err := range errs {
+		if err != nil {
+			l.Error(err)
+			return err
+		}
 	}
-	return d.handleOp(d.Fail)
+	return nil
 }
 
 func (d *Couchbase) Cleanup() error {

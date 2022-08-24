@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"cloud.google.com/go/bigquery"
 	"github.com/robertlestak/procx/pkg/flags"
 	"github.com/robertlestak/procx/pkg/schema"
+	"github.com/tidwall/gjson"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -23,7 +25,7 @@ type BQ struct {
 	RetrieveQuery *string
 	ClearQuery    *string
 	FailQuery     *string
-	data          map[string]bigquery.Value
+	data          []map[string]bigquery.Value
 }
 
 func (d *BQ) LoadEnv(prefix string) error {
@@ -109,7 +111,7 @@ func (d *BQ) GetWork() (io.Reader, error) {
 		l.Error(err)
 		return nil, err
 	}
-	m, err := schema.BqRowToMap(it)
+	m, err := schema.BqRowsToMap(it)
 	if err != nil {
 		l.Error(err)
 		return nil, err
@@ -120,13 +122,22 @@ func (d *BQ) GetWork() (io.Reader, error) {
 	}
 	d.data = m
 	if d.RetrieveField != nil && *d.RetrieveField != "" {
-		result = fmt.Sprintf("%s", schema.HandleField(m[*d.RetrieveField]))
-	} else {
-		td := make(map[string]any)
-		for k, v := range d.data {
-			td[k] = v
+		bd, err := json.Marshal(m)
+		if err != nil {
+			return nil, err
 		}
-		jd, err := schema.MapStringAnyToJSON(td)
+		jv := gjson.GetBytes(bd, *d.RetrieveField)
+		result = fmt.Sprintf("%s", jv.Value())
+	} else {
+		var td []map[string]any
+		for _, v := range m {
+			r := make(map[string]any)
+			for k, v := range v {
+				r[k] = v
+			}
+			td = append(td, r)
+		}
+		jd, err := schema.SliceMapStringAnyToJSON(td)
 		if err != nil {
 			l.Error(err)
 			return nil, err
@@ -146,22 +157,30 @@ func (d *BQ) clearQuery() string {
 	if d.ClearQuery == nil {
 		return ""
 	}
-	td := make(map[string]any)
-	for k, v := range d.data {
-		td[k] = v
+	var td []map[string]any
+	for _, v := range d.data {
+		r := make(map[string]any)
+		for k, v := range v {
+			r[k] = v
+		}
+		td = append(td, r)
 	}
-	return schema.ReplaceParamsMapString(td, *d.ClearQuery)
+	return schema.ReplaceParamsSliceMapString(td, *d.ClearQuery)
 }
 
 func (d *BQ) failQuery() string {
 	if d.FailQuery == nil {
 		return ""
 	}
-	td := make(map[string]any)
-	for k, v := range d.data {
-		td[k] = v
+	var td []map[string]any
+	for _, v := range d.data {
+		r := make(map[string]any)
+		for k, v := range v {
+			r[k] = v
+		}
+		td = append(td, r)
 	}
-	return schema.ReplaceParamsMapString(td, *d.FailQuery)
+	return schema.ReplaceParamsSliceMapString(td, *d.FailQuery)
 }
 
 func (d *BQ) ClearWork() error {

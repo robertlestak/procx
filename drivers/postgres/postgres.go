@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/robertlestak/procx/pkg/flags"
 	"github.com/robertlestak/procx/pkg/schema"
+	"github.com/tidwall/gjson"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -31,7 +33,7 @@ type Postgres struct {
 	RetrieveQuery *schema.SqlQuery
 	ClearQuery    *schema.SqlQuery
 	FailQuery     *schema.SqlQuery
-	data          map[string]any
+	data          []map[string]any
 }
 
 func (d *Postgres) LoadEnv(prefix string) error {
@@ -249,7 +251,7 @@ func (d *Postgres) GetWork() (io.Reader, error) {
 		l.Error(r.Err())
 		return nil, r.Err()
 	}
-	m, err := schema.RowsToMap(r)
+	m, err := schema.RowsToMapSlice(r)
 	if err != nil {
 		l.Error(err)
 		return nil, err
@@ -260,9 +262,14 @@ func (d *Postgres) GetWork() (io.Reader, error) {
 	}
 	d.data = m
 	if d.RetrieveField != nil && *d.RetrieveField != "" {
-		result = fmt.Sprintf("%s", schema.HandleField(m[*d.RetrieveField]))
+		bd, err := json.Marshal(m)
+		if err != nil {
+			return nil, err
+		}
+		jv := gjson.GetBytes(bd, *d.RetrieveField)
+		result = fmt.Sprintf("%s", jv.Value())
 	} else {
-		jd, err := schema.MapStringAnyToJSON(m)
+		jd, err := schema.SliceMapStringAnyToJSON(m)
 		if err != nil {
 			l.Error(err)
 			return nil, err
@@ -288,7 +295,7 @@ func (d *Postgres) ClearWork() error {
 	if d.ClearQuery == nil || d.ClearQuery.Query == "" {
 		return nil
 	}
-	d.ClearQuery.Params = schema.ReplaceParamsMap(d.data, d.ClearQuery.Params)
+	d.ClearQuery.Params = schema.ReplaceParamsSliceMap(d.data, d.ClearQuery.Params)
 	_, err = d.Client.Exec(d.ClearQuery.Query, d.ClearQuery.Params...)
 	if err != nil {
 		l.Error(err)
@@ -308,7 +315,7 @@ func (d *Postgres) HandleFailure() error {
 	if d.FailQuery == nil || d.FailQuery.Query == "" {
 		return nil
 	}
-	d.FailQuery.Params = schema.ReplaceParamsMap(d.data, d.FailQuery.Params)
+	d.FailQuery.Params = schema.ReplaceParamsSliceMap(d.data, d.FailQuery.Params)
 	_, err = d.Client.Exec(d.FailQuery.Query, d.FailQuery.Params...)
 	if err != nil {
 		l.Error(err)

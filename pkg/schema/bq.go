@@ -6,22 +6,24 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func BqRowToMap(qry *bigquery.RowIterator) (map[string]bigquery.Value, error) {
+func BqRowsToMap(qry *bigquery.RowIterator) ([]map[string]bigquery.Value, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "sqlquery",
-		"fn":  "CqlRowsToMap",
+		"fn":  "BqRowsToMap",
 	})
-	l.Debug("Converting row to map")
-	m := make(map[string]bigquery.Value)
+	l.Debug("Converting rows to map")
+	var data []map[string]bigquery.Value
 	for {
-		err := qry.Next(&m)
+		var row map[string]bigquery.Value
+		err := qry.Next(&row)
 		if err == iterator.Done {
 			break
 		}
 		if err != nil {
 			return nil, err
 		}
+		data = append(data, row)
 	}
-	l.Debug("Converted row to map")
-	return m, nil
+	l.Debug("Converted rows to map")
+	return data, nil
 }

@@ -12,10 +12,10 @@ import (
 	"strings"
 
 	"github.com/robertlestak/procx/pkg/flags"
+	"github.com/robertlestak/procx/pkg/schema"
 	"github.com/robertlestak/procx/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -29,9 +29,9 @@ type Mongo struct {
 	DB            string
 	Collection    string
 	RetrieveQuery *string
+	Limit         *int64
 	ClearQuery    *string
 	FailQuery     *string
-	Key           *string
 	AuthSource    *string
 	// TLS
 	EnableTLS   *bool
@@ -39,6 +39,7 @@ type Mongo struct {
 	TLSCert     *string
 	TLSKey      *string
 	TLSCA       *string
+	data        []bson.M
 }
 
 func (d *Mongo) LoadEnv(prefix string) error {
@@ -106,6 +107,14 @@ func (d *Mongo) LoadEnv(prefix string) error {
 		v := os.Getenv(prefix + "MONGO_AUTH_SOURCE")
 		d.AuthSource = &v
 	}
+	if os.Getenv(prefix+"MONGO_LIMIT") != "" {
+		v, err := strconv.Atoi(os.Getenv(prefix + "MONGO_LIMIT"))
+		if err != nil {
+			return err
+		}
+		iv := int64(v)
+		d.Limit = &iv
+	}
 	return nil
 }
 
@@ -124,6 +133,8 @@ func (d *Mongo) LoadFlags() error {
 	d.User = *flags.MongoUser
 	d.Password = *flags.MongoPassword
 	d.DB = *flags.MongoDatabase
+	iv := int64(*flags.MongoLimit)
+	d.Limit = &iv
 	d.Collection = *flags.MongoCollection
 	d.RetrieveQuery = flags.MongoRetrieveQuery
 	d.ClearQuery = flags.MongoClearQuery
@@ -186,7 +197,6 @@ func (d *Mongo) GetWork() (io.Reader, error) {
 		return nil, errors.New("query is empty")
 	}
 	var err error
-	var key string
 	coll := d.Client.Database(d.DB).Collection(d.Collection)
 	// unmarshal query string into struct
 	var bsonMap bson.M
@@ -195,28 +205,41 @@ func (d *Mongo) GetWork() (io.Reader, error) {
 		l.Error(err)
 		return nil, err
 	}
-	var res bson.M
-	// get the first document from the collection that matches the query
-	err = coll.FindOne(context.TODO(), bsonMap).Decode(&res)
+	var arr []bson.M
+	// find all documents that match the query and return them in an array
+	findOptions := options.Find()
+	if d.Limit != nil && *d.Limit > 0 {
+		findOptions.SetLimit(*d.Limit)
+	}
+	curr, err := coll.Find(context.TODO(), bsonMap, findOptions)
 	if err != nil {
-		// if no document is found, return nil
-		if err == mongo.ErrNoDocuments {
-			l.Debug("no documents found")
-			return nil, nil
+		l.Error(err)
+		return nil, err
+	}
+	for curr.Next(context.TODO()) {
+		var elem bson.M
+		err := curr.Decode(&elem)
+		if err != nil {
+			l.Error(err)
+			return nil, err
 		}
+		arr = append(arr, elem)
+	}
+	if err := curr.Err(); err != nil {
 		l.Error(err)
 		return nil, err
 	}
-	// get string id
-	id := res["_id"].(primitive.ObjectID).Hex()
-	l.Debug("id: ", id)
-	key = id
-	jd, err := json.Marshal(res)
+	curr.Close(context.TODO())
+	if len(arr) == 0 {
+		l.Debug("No work found")
+		return nil, nil
+	}
+	d.data = arr
+	jd, err := json.Marshal(arr)
 	if err != nil {
 		l.Error(err)
 		return nil, err
 	}
-	d.Key = &key
 	return bytes.NewReader(jd), nil
 }
 
@@ -229,18 +252,16 @@ func (d *Mongo) ClearWork() error {
 	if d.ClearQuery == nil || *d.ClearQuery == "" {
 		return nil
 	}
-	if d.Key != nil {
-		l = l.WithField("key", *d.Key)
-	}
-	if d.Key == nil {
-		return nil
-	}
 	l.Debug("Clearing work from mongo")
 	var err error
 	dbconn := d.Client.Database(d.DB)
 	var result bson.M
-	// replace object ID in query string with string id
-	query := strings.Replace(*d.ClearQuery, "{{key}}", *d.Key, -1)
+	jd, err := json.Marshal(d.data)
+	if err != nil {
+		l.Error(err)
+		return err
+	}
+	query := schema.ReplaceParamsString(jd, *d.ClearQuery)
 	l = l.WithField("newQuery", query)
 	var command bson.D
 	err = bson.UnmarshalExtJSON([]byte(query), true, &command)
@@ -268,17 +289,18 @@ func (d *Mongo) HandleFailure() error {
 		"fn":  "HandleFailure",
 	})
 	l.Debug("Handling failure from mongo")
-	if d.Key == nil {
-		return nil
-	}
 	if d.FailQuery == nil || *d.FailQuery == "" {
 		return nil
 	}
 	var err error
 	dbconn := d.Client.Database(d.DB)
 	var result bson.M
-	// replace object ID in query string with string id
-	query := strings.Replace(*d.FailQuery, "{{key}}", *d.Key, -1)
+	jd, err := json.Marshal(d.data)
+	if err != nil {
+		l.Error(err)
+		return err
+	}
+	query := schema.ReplaceParamsString(jd, *d.FailQuery)
 	l = l.WithField("newQuery", query)
 	var command bson.D
 	err = bson.UnmarshalExtJSON([]byte(query), true, &command)

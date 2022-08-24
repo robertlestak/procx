@@ -35,20 +35,20 @@ If no process is passed to `procx`, the payload will be printed to stdout.
 
 ### Relational Driver JSON Parsing
 
-For drivers which are non-structured (ex. `fs`, `aws-s3`, `redis-list`, etc.), procx will pass the payload data as-is to the driver. However for drivers which enforce some relational schema such as SQL-based drivers, you will need to provide a query which will be run to retrieve the data, and optionally queries to run if the work completes successfully or fails. procx will parse the query output into a JSON object and pass it to the process. You can select a specific column field by passing the driver's respective `-{driver}-retrieve-field` flag. You can then use `{{mustache}}` syntax to extract specific fields from the returned data and use them in your subsequent clear and fail queries. For example:
+For drivers which are non-structured (ex. `fs`, `aws-s3`, `redis-list`, etc.), procx will pass the payload data as-is to the driver. However for drivers which enforce some relational schema such as SQL-based drivers, you will need to provide a query which will be run to retrieve the data, and optionally queries to run if the work completes successfully or fails. procx will parse the query output into an array of JSON objects and pass it to the process. You can select a specific JSON field by passing the driver's respective `-{driver}-retrieve-field` flag. You can then use `{{mustache}}` syntax to extract specific fields from the returned data and use them in your subsequent clear and fail queries. For example:
 
 ```bash
 procx -driver postgres \
     ... \
-    -psql-retrieve-query "SELECT id,name,work FROM jobs WHERE status=$1" \
+    -psql-retrieve-query "SELECT id,name,work FROM jobs WHERE status=$1 LIMIT 1" \
     -psql-retrieve-params "pending" \
     -psql-clear-query "UPDATE jobs SET status=$1 WHERE id=$2" \
     -psql-clear-params "complete,{{id}}" \
     -pass-work-as-stdin \
     cat
 # the above will print
-# {"id":1,"name":"John Doe","work":"This is my work"}
-# however if we use the -psql-retrieve-field flag, we can extract the work field, to just print: "This is my work"
+# [{"id":1,"name":"John Doe","work":"This is my work"}]
+# however if we use the -psql-retrieve-field=0.work flag, we can extract the 0'th work field, to just print: "This is my work"
 ```
 
 ## Drivers
@@ -149,7 +149,7 @@ Usage: procx [options] [process]
   -aws-dynamo-include-next-token
     	AWS DynamoDB include next token as _nextToken in response
   -aws-dynamo-limit int
-    	AWS DynamoDB limit (default 1)
+    	AWS DynamoDB limit
   -aws-dynamo-next-token string
     	AWS DynamoDB next token
   -aws-dynamo-retrieve-field string
@@ -572,6 +572,8 @@ Usage: procx [options] [process]
     	MongoDB fail query
   -mongo-host string
     	MongoDB host
+  -mongo-limit int
+    	MongoDB limit
   -mongo-password string
     	MongoDB password
   -mongo-port string
@@ -982,6 +984,7 @@ Usage: procx [options] [process]
 - `PROCX_GCP_FIRESTORE_RETRIEVE_COLLECTION`
 - `PROCX_GCP_FIRESTORE_RETRIEVE_DOCUMENT`
 - `PROCX_GCP_FIRESTORE_RETRIEVE_DOCUMENT_JSON_KEY`
+- `PROCX_GCP_FIRESTORE_RETRIEVE_LIMIT`
 - `PROCX_GCP_FIRESTORE_RETRIEVE_QUERY_OP`
 - `PROCX_GCP_FIRESTORE_RETRIEVE_QUERY_ORDER`
 - `PROCX_GCP_FIRESTORE_RETRIEVE_QUERY_ORDER_BY`
@@ -1068,6 +1071,7 @@ Usage: procx [options] [process]
 - `PROCX_MONGO_ENABLE_TLS`
 - `PROCX_MONGO_FAIL_QUERY`
 - `PROCX_MONGO_HOST`
+- `PROCX_MONGO_LIMIT`
 - `PROCX_MONGO_PASSWORD`
 - `PROCX_MONGO_PORT`
 - `PROCX_MONGO_RETRIEVE_QUERY`
@@ -1222,15 +1226,16 @@ procx \
 
 ### AWS DynamoDB
 
-The AWS DynamoDB driver will execute the provided PartiQL query and return the first result. An optional JSON path can be passed in the `-aws-dynamo-retrieve-field` flag, if this is provided it will be used to extract the value from the returned data before passing to the process, otherwise the full Dynamo JSON document is passed. Similar to other SQL-based drivers, you can use `gjson` syntax to extract values from the data which can be used in subsequent clear and fail handling queries. By default, the `-aws-dynamo-limit` is set to 1 to reduce the amount of data evaluated, however this can be increased as needed to query larger sets of data. The `-aws-dynamo-next-token` can be provided to continue querying from a previous result, and `-aws-dynamo-include-next-token` can be set to pass the `_nextToken` in the response payload.
+The AWS DynamoDB driver will execute the provided PartiQL query and return the matched results. An optional JSON path can be passed in the `-aws-dynamo-retrieve-field` flag, if this is provided it will be used to extract the value from the returned data before passing to the process, otherwise the full array of Dynamo JSON documents is passed. Similar to other SQL-based drivers, you can use `gjson` syntax to extract values from the data which can be used in subsequent clear and fail handling queries. The `-aws-dynamo-next-token` can be provided to continue querying from a previous result, and `-aws-dynamo-include-next-token` can be set to pass the `_nextToken` in the response payload.
 
 ```bash
 procx \
     -driver aws-dynamo \
     -aws-dynamo-table my-table \
     -aws-dynamo-retrieve-query "SELECT id,job,status FROM my-table WHERE status = 'pending'" \
-    -aws-dynamo-clear-query "UPDATE my-table SET status='complete' WHERE id = '{{id}}'" \
-    -aws-dynamo-fail-query "UPDATE my-table SET status='failed' WHERE id = '{{id}}'" \
+    -aws-dynamo-limit 1 \
+    -aws-dynamo-clear-query "UPDATE my-table SET status='complete' WHERE id = '{{0.id}}'" \
+    -aws-dynamo-fail-query "UPDATE my-table SET status='failed' WHERE id = '{{0.id}}'" \
     -aws-region us-east-1 \
     -aws-role-arn arn:aws:iam::123456789012:role/my-role \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
@@ -1278,17 +1283,17 @@ procx \
 
 ### Cassandra
 
-The Cassandra driver will retrieve the next message from the specified keyspace table, and pass it to the process. Upon successful completion of the process, it will execute the specified query to update / remove the work from the table.
+The Cassandra driver will retrieve the specified rows from the specified keyspace table, and pass it to the process. Upon successful completion of the process, it will execute the specified query to update / remove the work from the table.
 
 ```bash
 procx \
     -cassandra-keyspace mykeyspace \
     -cassandra-consistency QUORUM \
     -cassandra-clear-query "DELETE FROM mykeyspace.mytable WHERE id = ?" \
-    -cassandra-clear-params "{{id}}" \
+    -cassandra-clear-params "{{0.id}}" \
     -cassandra-hosts "localhost:9042,another:9042" \
     -cassandra-fail-query "UPDATE mykeyspace.mytable SET status = 'failed' WHERE id = ?" \
-    -cassandra-fail-params "{{id}}" \
+    -cassandra-fail-params "{{0.id}}" \
     -cassandra-retrieve-field work \
     -cassandra-retrieve-query "SELECT id, work FROM mykeyspace.mytable LIMIT 1" \
     -driver cassandra \
@@ -1310,7 +1315,7 @@ procx \
 
 ### Cockroach
 
-The CockroachDB driver will retrieve the next message from the specified table, and pass it to the process.
+The CockroachDB driver will retrieve the data from the specified table, and pass it to the process.
 
 ```bash
 procx \
@@ -1319,12 +1324,12 @@ procx \
     -cockroach-database mydb \
     -cockroach-user myuser \
     -cockroach-password mypassword \
-    -cockroach-retrieve-query "SELECT id, work from mytable where queue = $1 and status = $2" \
+    -cockroach-retrieve-query "SELECT id, work from mytable where queue = $1 and status = $2 LIMIT 1" \
     -cockroach-retrieve-params "myqueue,pending" \
     -cockroach-clear-query "UPDATE mytable SET status = $1 where queue = $2 and id = $3" \
-    -cockroach-clear-params "cleared,myqueue,{{id}}" \
+    -cockroach-clear-params "cleared,myqueue,{{0.id}}" \
     -cockroach-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = $1 and id = $2" \
-    -cockroach-fail-params "myqueue,{{id}}" \
+    -cockroach-fail-params "myqueue,{{0.id}}" \
     -driver cockroach \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
@@ -1337,7 +1342,7 @@ The Couchbase driver will retrieve the specified document from the bucket and pa
 procx \
     -couchbase-bucket my-bucket \
     -couchbase-collection my-collection \
-    -couchbase-retrieve-query "SELECT id, jobName, work, status from my-collection where status = $1" \
+    -couchbase-retrieve-query "SELECT id, jobName, work, status from my-collection where status = $1 LIMIT 1" \
     -couchbase-retrieve-params "pending" \
     -couchbase-clear-op=mv \
     -couchbase-clear-doc '{"status": "cleared"}' \
@@ -1359,10 +1364,17 @@ procx \
     -elasticsearch-username elastic \
     -elasticsearch-password elastic \
     -elasticsearch-tls-skip-verify \
-    -elasticsearch-retrieve-query '{"status": "pending"}' \
+    -elasticsearch-retrieve-query '{
+            "size": 1,
+            "query": {
+                "term": {
+                    "hello": "world"
+                }
+            }
+        }' \
     -elasticsearch-retrieve-index my-index \
     -elasticsearch-clear-op merge-put \
-    -elasticsearch-clear-index my-index \
+    -elasticsearch-index my-index \
     -elasticsearch-clear-query '{"status": "completed"}' \
     -elasticsearch-fail-op move \
     -elasticsearch-fail-index my-index-failed \
@@ -1401,8 +1413,8 @@ procx \
     -gcp-bq-dataset my-dataset \
     -gcp-bq-table my-table \
     -gcp-bq-retrieve-query "SELECT id, work FROM mydatatest.mytable LIMIT 1" \
-    -gcp-bq-clear-query "DELETE FROM my-table WHERE id = '{{id}}'" \
-    -gcp-bq-fail-query "UPDATE my-table SET status = 'failed' WHERE id = '{{id}}'" \
+    -gcp-bq-clear-query "DELETE FROM my-table WHERE id = '{{0.id}}'" \
+    -gcp-bq-fail-query "UPDATE my-table SET status = 'failed' WHERE id = '{{0.id}}'" \
     -driver gcp-bq \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
@@ -1432,7 +1444,7 @@ procx \
 
 ### GCP Firestore
 
-The GCP Firestore driver will retrieve the first document in the collection `-gcp-firestore-retrieve-collection` which matches the specified input query. If `-gcp-firestore-retrieve-document` is specified, this exact document ID will be retrieved. If `-gcp-firestore-retrieve-query-path` is specified, it will be used with `-gcp-firestore-retrieve-query-op` and `-gcp-firestore-retrieve-query-value` to construct a select query. To order the documents before selecting the first response, `-gcp-firestore-retrieve-query-order-by` and `-gcp-firestore-retrieve-query-order` can be used. The document will be returned to the process as a `map[string]interface{}` JSON object. If neither document nor query is specified, the first document in the collection will be retrieved. If `-gcp-firestore-retrieve-document-json-key` is provided, it will be used to select a single field in the JSON repsonse to pass to the process. Upon completion, the document can either be moved to a new collection, updated, or deleted. If updating, the new fields can be provided as a JSON string which will be merged with the object.
+The GCP Firestore driver will retrieve the documents in the collection `-gcp-firestore-retrieve-collection` which matches the specified input query. If `-gcp-firestore-retrieve-document` is specified, this exact document ID will be retrieved. If `-gcp-firestore-retrieve-query-path` is specified, it will be used with `-gcp-firestore-retrieve-query-op` and `-gcp-firestore-retrieve-query-value` to construct a select query. To order the documents before selecting the first response, `-gcp-firestore-retrieve-query-order-by` and `-gcp-firestore-retrieve-query-order` can be used. The documents will be returned to the process as a `[]map[string]interface{}` JSON array. If neither document nor query is specified, the first document in the collection will be retrieved. If `-gcp-firestore-retrieve-document-json-key` is provided, it will be used to select a single field in the JSON repsonse to pass to the process. Upon completion, the document can either be moved to a new collection, updated, or deleted. If updating, the new fields can be provided as a JSON string which will be merged with the object.
 
 ```bash
 procx \
@@ -1536,7 +1548,7 @@ procx \
 
 ### MongoDB
 
-The MongoDB driver will retrieve the next message from the specified collection, and pass it to the process. Upon successful completion of the process, it will run the specified mongo command. The Mongo ObjectID `_id` will be passed in for the placeholder `{{key}}`.
+The MongoDB driver will retrieve the documents from the specified collection, and pass it to the process. Upon successful completion of the process, it will run the specified mongo command.
 
 ```bash
 procx \
@@ -1547,15 +1559,16 @@ procx \
     -mongo-user my-user \
     -mongo-password my-password \
     -mongo-retrieve-query '{"status": "pending"}' \
-    -mongo-clear-query '{"delete": "my-collection", "deletes": [{"q": {"_id": {"$oid": "{{key}}"}}, "limit": 1}]}' \
-    -mongo-fail-query '{"update":"my-collection","updates":[{"q":{"_id":{"$oid":"{{key}}"}},"u":{"$set": {"failed":true}}}]}' \
+    -mongo-limit 1 \
+    -mongo-clear-query '{"delete": "my-collection", "deletes": [{"q": {"_id": {"$oid": "{{0._id}}"}}, "limit": 1}]}' \
+    -mongo-fail-query '{"update":"my-collection","updates":[{"q":{"_id":{"$oid":"{{0._id}}"}},"u":{"$set": {"failed":true}}}]}' \
     -driver mongodb \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### MSSQL
 
-The MSSQL driver will retrieve the next message from the specified Microsoft SQL Server, and pass it to the process.
+The MSSQL driver will retrieve the messages from the specified Microsoft SQL Server, and pass it to the process.
 
 ```bash
 procx \
@@ -1567,16 +1580,16 @@ procx \
     -mssql-retrieve-query "SET ROWCOUNT 1 SELECT id, work from mytable where queue = ? and status = ?" \
     -mssql-retrieve-params "myqueue,pending" \
     -mssql-clear-query "UPDATE mytable SET status = ? where queue = ? and id = ?" \
-    -mssql-clear-params "cleared,myqueue,{{id}}" \
+    -mssql-clear-params "cleared,myqueue,{{0.id}}" \
     -mssql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = ? and id = ?" \
-    -mssql-fail-params "myqueue,{{id}}" \
+    -mssql-fail-params "myqueue,{{0.id}}" \
     -driver mssql \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 
 ### MySQL
 
-The MySQL driver will retrieve the next message from the specified database, and pass it to the process.
+The MySQL driver will retrieve the messages from the specified database, and pass it to the process.
 
 ```bash
 procx \
@@ -1585,12 +1598,12 @@ procx \
     -mysql-database mydb \
     -mysql-user myuser \
     -mysql-password mypassword \
-    -mysql-retrieve-query "SELECT id, work from mytable where queue = ? and status = ?" \
+    -mysql-retrieve-query "SELECT id, work from mytable where queue = ? and status = ? LIMIT 1" \
     -mysql-retrieve-params "myqueue,pending" \
     -mysql-clear-query "UPDATE mytable SET status = ? where queue = ? and id = ?" \
-    -mysql-clear-params "cleared,myqueue,{{id}}" \
+    -mysql-clear-params "cleared,myqueue,{{0.id}}" \
     -mysql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = ? and id = ?" \
-    -mysql-fail-params "myqueue,{{id}}" \
+    -mysql-fail-params "myqueue,{{0.id}}" \
     -driver mysql \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
@@ -1652,7 +1665,7 @@ procx \
 
 ### PostgreSQL
 
-The PostgreSQL driver will retrieve the next message from the specified queue, and pass it to the process.
+The PostgreSQL driver will retrieve the messages from the specified queue, and pass it to the process.
 
 ```bash
 procx \
@@ -1664,9 +1677,9 @@ procx \
     -psql-retrieve-query "SELECT id, work from mytable where queue = $1 and status = $2" \
     -psql-retrieve-params "myqueue,pending" \
     -psql-clear-query "UPDATE mytable SET status = $1 where queue = $2 and id = $3" \
-    -psql-clear-params "cleared,myqueue,{{id}}" \
+    -psql-clear-params "cleared,myqueue,{{0.id}}" \
     -psql-fail-query "UPDATE mytable SET failure_count = failure_count + 1 where queue = $1 and id = $2" \
-    -psql-fail-params "myqueue,{{id}}" \
+    -psql-fail-params "myqueue,{{0.id}}" \
     -driver postgres \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```

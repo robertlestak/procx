@@ -11,7 +11,7 @@ var (
 	AWSDynamoRetrieveQuery    = FlagSet.String("aws-dynamo-retrieve-query", "", "AWS DynamoDB retrieve query")
 	AWSDynamoClearQuery       = FlagSet.String("aws-dynamo-clear-query", "", "AWS DynamoDB clear query")
 	AWSDynamoFailQuery        = FlagSet.String("aws-dynamo-fail-query", "", "AWS DynamoDB fail query")
-	AWSDynamoLimit            = FlagSet.Int("aws-dynamo-limit", 1, "AWS DynamoDB limit")
+	AWSDynamoLimit            = FlagSet.Int("aws-dynamo-limit", 0, "AWS DynamoDB limit")
 	AWSDynamoNextToken        = FlagSet.String("aws-dynamo-next-token", "", "AWS DynamoDB next token")
 	AWSDynamoIncludeNextToken = FlagSet.Bool("aws-dynamo-include-next-token", false, "AWS DynamoDB include next token as _nextToken in response")
 	AWSS3Bucket               = FlagSet.String("aws-s3-bucket", "", "AWS S3 bucket")

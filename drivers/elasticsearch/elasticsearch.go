@@ -14,6 +14,7 @@ import (
 	elasticsearch8 "github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/robertlestak/procx/pkg/flags"
+	"github.com/robertlestak/procx/pkg/schema"
 	"github.com/robertlestak/procx/pkg/utils"
 	log "github.com/sirupsen/logrus"
 )
@@ -47,7 +48,7 @@ type Elasticsearch struct {
 	FailIndex     *string
 	FailOp        CloseOp
 	Key           *string
-	source        any
+	data          []any
 }
 
 func (d *Elasticsearch) LoadEnv(prefix string) error {
@@ -172,9 +173,8 @@ func (d *Elasticsearch) GetWork() (io.Reader, error) {
 		"fn":  "GetWork",
 	})
 	l.Debug("Getting work from elasticsearch")
-	q := `{"size": "1", "query":` + d.RetrieveQuery + `}`
 	search := esapi.SearchRequest{
-		Body: strings.NewReader(q),
+		Body: strings.NewReader(d.RetrieveQuery),
 	}
 	if d.RetrieveIndex != nil {
 		search.Index = append(search.Index, *d.RetrieveIndex)
@@ -182,7 +182,7 @@ func (d *Elasticsearch) GetWork() (io.Reader, error) {
 	searchResponse, err := search.Do(context.Background(), d.Client)
 	if err != nil {
 		// if we get a 404, we have no work to do
-		if searchResponse.StatusCode == http.StatusNotFound {
+		if searchResponse != nil && searchResponse.StatusCode == http.StatusNotFound {
 			l.Debug("No work to do")
 			return nil, nil
 		}
@@ -190,7 +190,12 @@ func (d *Elasticsearch) GetWork() (io.Reader, error) {
 		return nil, err
 	}
 	if searchResponse.StatusCode != 200 {
-		l.Errorf("error getting work: %v", searchResponse.Body)
+		bd, err := ioutil.ReadAll(searchResponse.Body)
+		if err != nil {
+			l.Errorf("error reading response body: %v", err)
+			return nil, err
+		}
+		l.Errorf("error getting work: %v", string(bd))
 		return nil, errors.New("error getting work")
 	}
 	l.Debug("Got work")
@@ -212,10 +217,14 @@ func (d *Elasticsearch) GetWork() (io.Reader, error) {
 		l.Debug("No work to do")
 		return nil, nil
 	}
-	hit := r.Hits.Hits[0]
-	d.Key = &hit.ID
-	d.source = hit.Source
-	jd, err := json.Marshal(hit.Source)
+	for _, hit := range r.Hits.Hits {
+		l.Debugf("Got work: %v", hit.ID)
+		// add _id to source
+		s := hit.Source.(map[string]interface{})
+		s["_id"] = hit.ID
+		d.data = append(d.data, s)
+	}
+	jd, err := json.Marshal(d.data)
 	if err != nil {
 		l.Errorf("error marshalling source: %v", err)
 		return nil, err
@@ -247,10 +256,10 @@ func mergeStringAndAny(s string, a any) (string, error) {
 	return string(jd), nil
 }
 
-func delete(c *elasticsearch8.Client, index *string, id string) error {
+func deleteDocument(c *elasticsearch8.Client, index *string, id string) error {
 	l := log.WithFields(log.Fields{
 		"pkg": "elasticsearch",
-		"fn":  "delete",
+		"fn":  "deleteDocument",
 	})
 	l.Debug("Deleting work")
 	delete := esapi.DeleteRequest{
@@ -265,8 +274,27 @@ func delete(c *elasticsearch8.Client, index *string, id string) error {
 		return err
 	}
 	if deleteResponse.StatusCode != 200 {
-		l.Errorf("error deleting work: %v", deleteResponse.Body)
+		bd, err := ioutil.ReadAll(deleteResponse.Body)
+		if err != nil {
+			l.Errorf("error reading response body: %v", err)
+			return err
+		}
+		l.Errorf("error deleting work: %v", string(bd))
 		return errors.New("error deleting work")
+	}
+	return nil
+}
+
+func deleteList(c *elasticsearch8.Client, index *string, id []string) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "elasticsearch",
+		"fn":  "delete",
+	})
+	l.Debug("Deleting work")
+	for _, i := range id {
+		if err := deleteDocument(c, index, i); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -283,14 +311,25 @@ func put(c *elasticsearch8.Client, index *string, id string, source string) erro
 	if index != nil {
 		put.Index = *index
 	}
+	dd, err := json.Marshal(source)
+	if err != nil {
+		l.Errorf("error marshalling source: %v", err)
+		return err
+	}
+	source = schema.ReplaceParamsString(dd, source)
 	put.Body = strings.NewReader(source)
 	putResponse, err := put.Do(context.Background(), c)
 	if err != nil {
 		l.Errorf("error putting work: %v", err)
 		return err
 	}
-	if putResponse.StatusCode != 200 {
-		l.Errorf("error putting work: %v", putResponse.Body)
+	if putResponse.StatusCode != 200 && putResponse.StatusCode != 201 {
+		bd, err := ioutil.ReadAll(putResponse.Body)
+		if err != nil {
+			l.Errorf("error reading response body: %v", err)
+			return err
+		}
+		l.Errorf("error putting work: %v", string(bd))
 		return errors.New("error putting work")
 	}
 	return nil
@@ -302,13 +341,15 @@ func mergePut(c *elasticsearch8.Client, index *string, id string, query string, 
 		"fn":  "mergePut",
 	})
 	l.Debug("Merging and putting work")
+	s := source.(map[string]interface{})
+	delete(s, "_id")
 	md, err := mergeStringAndAny(query, source)
 	if err != nil {
 		l.Errorf("error merging work: %v", err)
 		return err
 	}
-	l.Debugf("merged work: %v", md)
 	doc := `{"doc":` + md + `}`
+	l.Debugf("merged work: %v", doc)
 	put := esapi.UpdateRequest{
 		DocumentID: id,
 		Body:       strings.NewReader(doc),
@@ -321,7 +362,7 @@ func mergePut(c *elasticsearch8.Client, index *string, id string, query string, 
 		l.Errorf("error putting work: %v", err)
 		return err
 	}
-	if putResponse.StatusCode != 200 {
+	if putResponse.StatusCode != 200 && putResponse.StatusCode != 201 {
 		bd, err := ioutil.ReadAll(putResponse.Body)
 		if err != nil {
 			l.Errorf("error reading response body: %v", err)
@@ -333,13 +374,38 @@ func mergePut(c *elasticsearch8.Client, index *string, id string, query string, 
 	return nil
 }
 
+func mergePutList(c *elasticsearch8.Client, origIndex *string, index *string, query string, source []any) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "elasticsearch",
+		"fn":  "mergePutList",
+	})
+	l.Debug("Merging and putting work")
+	jd, err := json.Marshal(source)
+	if err != nil {
+		l.Errorf("error marshalling source: %v", err)
+		return err
+	}
+	query = schema.ReplaceParamsString(jd, query)
+	for _, s := range source {
+		ss := s.(map[string]interface{})
+		id := ss["_id"].(string)
+		if err := mergePut(c, index, id, query, s); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func move(c *elasticsearch8.Client, index *string, id string, newIndex *string, source any) error {
 	l := log.WithFields(log.Fields{
 		"pkg": "elasticsearch",
 		"fn":  "move",
 	})
 	l.Debug("Moving work")
-	jd, err := json.Marshal(source)
+	// remove _id field from source
+	s := source.(map[string]interface{})
+	delete(s, "_id")
+	jd, err := json.Marshal(s)
 	if err != nil {
 		l.Errorf("error marshalling source: %v", err)
 		return err
@@ -350,6 +416,8 @@ func move(c *elasticsearch8.Client, index *string, id string, newIndex *string, 
 	}
 	if newIndex != nil {
 		new.Index = *newIndex
+	} else {
+		new.Index = *index
 	}
 	putRes, err := new.Do(context.Background(), c)
 	if err != nil {
@@ -357,14 +425,46 @@ func move(c *elasticsearch8.Client, index *string, id string, newIndex *string, 
 		return err
 	}
 	if putRes.StatusCode != 200 && putRes.StatusCode != 201 {
-		l.Errorf("error putting work: %v", putRes.Body)
+		bd, err := ioutil.ReadAll(putRes.Body)
+		if err != nil {
+			l.Errorf("error reading response body: %v", err)
+			return err
+		}
+		l.Errorf("error putting work: %v", string(bd))
 		return errors.New("error putting work")
 	}
-	if err := delete(c, index, id); err != nil {
+	if err := deleteDocument(c, index, id); err != nil {
 		l.Errorf("error deleting work: %v", err)
 		return err
 	}
 	return nil
+}
+
+func moveList(c *elasticsearch8.Client, index *string, newIndex *string, sources []any) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "elasticsearch",
+		"fn":  "moveList",
+	})
+	l.Debug("Moving work")
+	for _, i := range sources {
+		s := i.(map[string]interface{})
+		id := s["_id"].(string)
+		if err := move(c, index, id, newIndex, i); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (d *Elasticsearch) getKeys() []string {
+	var ks []string
+	for _, v := range d.data {
+		s := v.(map[string]interface{})
+		if v, ok := s["_id"]; ok {
+			ks = append(ks, v.(string))
+		}
+	}
+	return ks
 }
 
 func (d *Elasticsearch) ClearWork() error {
@@ -373,18 +473,22 @@ func (d *Elasticsearch) ClearWork() error {
 		"fn":  "ClearWork",
 	})
 	l.Debug("Clearing work from elasticsearch")
-	if d.Key == nil || *d.Key == "" {
-		return nil
+	if d.ClearIndex == nil || *d.ClearIndex == "" {
+		d.ClearIndex = d.RetrieveIndex
 	}
 	switch d.ClearOp {
 	case CloseOpDelete:
-		return delete(d.Client, d.ClearIndex, *d.Key)
+		return deleteList(d.Client, d.ClearIndex, d.getKeys())
 	case CloseOpPut:
-		return put(d.Client, d.ClearIndex, *d.Key, d.ClearQuery)
+		var k string
+		if d.Key != nil && *d.Key != "" {
+			k = *d.Key
+		}
+		return put(d.Client, d.ClearIndex, k, d.ClearQuery)
 	case CloseOpMergePut:
-		return mergePut(d.Client, d.ClearIndex, *d.Key, d.ClearQuery, d.source)
+		return mergePutList(d.Client, d.RetrieveIndex, d.ClearIndex, d.ClearQuery, d.data)
 	case CloseOpMove:
-		return move(d.Client, d.ClearIndex, *d.Key, d.ClearIndex, d.source)
+		return moveList(d.Client, d.RetrieveIndex, d.ClearIndex, d.data)
 	}
 	l.Debug("Cleared work")
 	return nil
@@ -396,18 +500,22 @@ func (d *Elasticsearch) HandleFailure() error {
 		"fn":  "HandleFailure",
 	})
 	l.Debug("Handling failure")
-	if d.Key == nil || *d.Key == "" {
-		return nil
+	if d.FailIndex == nil || *d.FailIndex == "" {
+		d.FailIndex = d.RetrieveIndex
 	}
 	switch d.FailOp {
 	case CloseOpDelete:
-		return delete(d.Client, d.FailIndex, *d.Key)
+		return deleteDocument(d.Client, d.FailIndex, *d.Key)
 	case CloseOpPut:
-		return put(d.Client, d.FailIndex, *d.Key, d.FailQuery)
+		var k string
+		if d.Key != nil && *d.Key != "" {
+			k = *d.Key
+		}
+		return put(d.Client, d.FailIndex, k, d.FailQuery)
 	case CloseOpMergePut:
-		return mergePut(d.Client, d.FailIndex, *d.Key, d.FailQuery, d.source)
+		return mergePutList(d.Client, d.RetrieveIndex, d.FailIndex, d.FailQuery, d.data)
 	case CloseOpMove:
-		return move(d.Client, d.FailIndex, *d.Key, d.FailIndex, d.source)
+		return moveList(d.Client, d.RetrieveIndex, d.ClearIndex, d.data)
 	}
 	l.Debug("Handled failure")
 	return nil

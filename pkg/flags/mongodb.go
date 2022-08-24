@@ -8,6 +8,7 @@ var (
 	MongoDatabase      = FlagSet.String("mongo-database", "", "MongoDB database")
 	MongoCollection    = FlagSet.String("mongo-collection", "", "MongoDB collection")
 	MongoRetrieveQuery = FlagSet.String("mongo-retrieve-query", "", "MongoDB retrieve query")
+	MongoLimit         = FlagSet.Int("mongo-limit", 0, "MongoDB limit")
 	MongoClearQuery    = FlagSet.String("mongo-clear-query", "", "MongoDB clear query")
 	MongoFailQuery     = FlagSet.String("mongo-fail-query", "", "MongoDB fail query")
 	MongoEnableTLS     = FlagSet.Bool("mongo-enable-tls", false, "Enable TLS")

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"cloud.google.com/go/firestore"
@@ -28,7 +29,7 @@ var (
 type GCPFirestoreQuery struct {
 	Path    *string
 	Op      *string
-	Value   interface{}
+	Value   any
 	OrderBy *string
 	Order   *firestore.Direction
 }
@@ -39,14 +40,15 @@ type GCPFirestore struct {
 	RetrieveDocument        *string
 	RetrieveQuery           *GCPFirestoreQuery
 	RetrieveDocumentJSONKey *string
+	Limit                   *int
 	ClearOp                 *FirestoreOp
-	ClearUpdate             *map[string]interface{}
+	ClearUpdate             *map[string]any
 	ClearCollection         *string
 	FailOp                  *FirestoreOp
-	FailUpdate              *map[string]interface{}
+	FailUpdate              *map[string]any
 	FailCollection          *string
 	ProjectID               string
-	doc                     map[string]interface{}
+	doc                     []map[string]any
 }
 
 func (d *GCPFirestore) LoadEnv(prefix string) error {
@@ -109,6 +111,15 @@ func (d *GCPFirestore) LoadEnv(prefix string) error {
 			tv := firestore.Desc
 			d.RetrieveQuery.Order = &tv
 		}
+	}
+	if os.Getenv(prefix+"GCP_FIRESTORE_RETRIEVE_LIMIT") != "" {
+		v := os.Getenv(prefix + "GCP_FIRESTORE_RETRIEVE_LIMIT")
+		iv, err := strconv.Atoi(v)
+		if err != nil {
+			l.Error(err)
+			return err
+		}
+		d.Limit = &iv
 	}
 	if os.Getenv(prefix+"GCP_FIRESTORE_CLEAR_OP") != "" {
 		v := FirestoreOp(os.Getenv(prefix + "GCP_FIRESTORE_CLEAR_OP"))
@@ -232,7 +243,7 @@ func (d *GCPFirestore) Init() error {
 	return nil
 }
 
-func (d *GCPFirestore) Data(obj map[string]interface{}) (io.Reader, error) {
+func (d *GCPFirestore) Data(obj []map[string]interface{}) (io.Reader, error) {
 	l := log.WithFields(log.Fields{
 		"pkg": "gcp",
 		"fn":  "Data",
@@ -267,9 +278,9 @@ func (d *GCPFirestore) GetWork() (io.Reader, error) {
 		if err != nil {
 			return nil, err
 		}
-		// redundant, but just in case
-		d.RetrieveDocument = &doc.Ref.ID
-		return d.Data(doc.Data())
+		dd := doc.Data()
+		dd["_id"] = doc.Ref.ID
+		return d.Data([]map[string]any{dd})
 	} else if d.RetrieveQuery != nil && *d.RetrieveQuery.Path != "" {
 		qry := d.Client.Collection(*d.RetrieveCollection).
 			Where(*d.RetrieveQuery.Path, *d.RetrieveQuery.Op, d.RetrieveQuery.Value)
@@ -277,17 +288,23 @@ func (d *GCPFirestore) GetWork() (io.Reader, error) {
 			qry = qry.OrderBy(*d.RetrieveQuery.OrderBy, *d.RetrieveQuery.Order)
 		}
 		// get first document
-		doc, err := qry.Limit(1).Documents(ctx).Next()
-		if err != nil {
-			if err == iterator.Done {
-				return nil, nil
-			}
-			return nil, err
+		if d.Limit != nil && *d.Limit > 0 {
+			qry = qry.Limit(*d.Limit)
 		}
-		d.RetrieveDocument = &doc.Ref.ID
-		dd := doc.Data()
-		d.doc = dd
-		return d.Data(dd)
+		iter := qry.Documents(ctx)
+		for {
+			doc, err := iter.Next()
+			if err != nil {
+				if err == iterator.Done {
+					break
+				}
+				return nil, err
+			}
+			dd := doc.Data()
+			dd["_id"] = doc.Ref.ID
+			d.doc = append(d.doc, dd)
+		}
+		return d.Data(d.doc)
 	} else {
 		// get the first document in the collection
 		qry := d.Client.Collection(*d.RetrieveCollection).Limit(1)
@@ -298,27 +315,26 @@ func (d *GCPFirestore) GetWork() (io.Reader, error) {
 			}
 			return nil, err
 		}
-		d.RetrieveDocument = &doc.Ref.ID
 		dd := doc.Data()
-		d.doc = dd
-		return d.Data(dd)
+		dd["_id"] = doc.Ref.ID
+		return d.Data([]map[string]any{dd})
 	}
 }
 
-func (d *GCPFirestore) rmDoc() error {
+func (d *GCPFirestore) rmDoc(collection, id string) error {
 	l := log.WithFields(log.Fields{
 		"pkg": "gcp",
 		"fn":  "rmDoc",
 	})
 	l.Debug("Removing document from gcp firestore driver")
-	if d.RetrieveDocument == nil || *d.RetrieveDocument == "" {
+	if id == "" {
 		return errors.New("no document to remove")
 	}
 	ctx := context.Background()
-	if d.RetrieveCollection == nil {
+	if collection == "" {
 		return errors.New("no collection to remove document from")
 	}
-	_, err := d.Client.Doc(*d.RetrieveCollection + "/" + *d.RetrieveDocument).Delete(ctx)
+	_, err := d.Client.Doc(collection + "/" + id).Delete(ctx)
 	if err != nil {
 		l.Error(err)
 		return err
@@ -348,7 +364,7 @@ func (d *GCPFirestore) createDoc(collection string, id string) error {
 	return nil
 }
 
-func (d *GCPFirestore) mvDoc(collection string) error {
+func (d *GCPFirestore) mvDoc(collection string, id string) error {
 	l := log.WithFields(log.Fields{
 		"pkg": "gcp",
 		"fn":  "mvDoc",
@@ -357,13 +373,13 @@ func (d *GCPFirestore) mvDoc(collection string) error {
 	if collection == "" {
 		return errors.New("no collection to move document to")
 	}
-	if d.RetrieveDocument == nil || *d.RetrieveDocument == "" {
+	if id == "" {
 		return errors.New("no document to move")
 	}
-	if err := d.createDoc(collection, *d.RetrieveDocument); err != nil {
+	if err := d.createDoc(collection, id); err != nil {
 		return err
 	}
-	if err := d.rmDoc(); err != nil {
+	if err := d.rmDoc(collection, id); err != nil {
 		return err
 	}
 	return nil
@@ -375,29 +391,85 @@ func (d *GCPFirestore) merge(merge map[string]interface{}) error {
 		"fn":  "merge",
 	})
 	l.Debug("Merging document in gcp firestore driver")
-	for k, v := range merge {
-		d.doc[k] = v
+	for i, _ := range d.doc {
+		for k, v := range merge {
+			d.doc[i][k] = v
+		}
 	}
 	return nil
 }
 
-func (d *GCPFirestore) updateDoc(merge map[string]interface{}) error {
+func (d *GCPFirestore) updateDoc(collection, id string, merge map[string]interface{}) error {
 	l := log.WithFields(log.Fields{
 		"pkg": "gcp",
 		"fn":  "updateDoc",
 	})
 	l.Debug("Updating document in gcp firestore driver")
-	if d.RetrieveDocument == nil || *d.RetrieveDocument == "" {
+	if id == "" {
 		return errors.New("no document to update")
 	}
-	if d.RetrieveCollection == nil {
+	if collection == "" {
 		return errors.New("no collection to update document in")
 	}
 	ctx := context.Background()
-	_, err := d.Client.Doc(*d.RetrieveCollection+"/"+*d.RetrieveDocument).Set(ctx, d.doc)
+	_, err := d.Client.Doc(collection+"/"+id).Set(ctx, d.doc)
 	if err != nil {
 		l.Error(err)
 		return err
+	}
+	return nil
+}
+
+func (d *GCPFirestore) rmDocs() error {
+	l := log.WithFields(log.Fields{
+		"pkg": "gcp",
+		"fn":  "rmDocs",
+	})
+	l.Debug("Removing documents from gcp firestore driver")
+	var errs []error
+	for _, doc := range d.doc {
+		if err := d.rmDoc(*d.RetrieveCollection, doc["_id"].(string)); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if len(errs) > 0 {
+		return errors.New("errors removing documents")
+	}
+	return nil
+}
+
+func (d *GCPFirestore) mvDocs(collection string) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "gcp",
+		"fn":  "mvDocs",
+	})
+	l.Debug("Moving documents in gcp firestore driver")
+	var errs []error
+	for _, doc := range d.doc {
+		if err := d.mvDoc(collection, doc["_id"].(string)); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if len(errs) > 0 {
+		return errors.New("errors moving documents")
+	}
+	return nil
+}
+
+func (d *GCPFirestore) updateDocs(merge map[string]interface{}) error {
+	l := log.WithFields(log.Fields{
+		"pkg": "gcp",
+		"fn":  "updateDocs",
+	})
+	l.Debug("Updating documents in gcp firestore driver")
+	var errs []error
+	for _, doc := range d.doc {
+		if err := d.updateDoc(*d.RetrieveCollection, doc["_id"].(string), merge); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if len(errs) > 0 {
+		return errors.New("errors updating documents")
 	}
 	return nil
 }
@@ -418,11 +490,11 @@ func (d *GCPFirestore) ClearWork() error {
 	}
 	switch *d.ClearOp {
 	case FirestoreRMOp:
-		return d.rmDoc()
+		return d.rmDocs()
 	case FirestoreMVOp:
-		return d.mvDoc(*d.ClearCollection)
+		return d.mvDocs(*d.ClearCollection)
 	case FirestoreUpdateOp:
-		return d.updateDoc(*d.ClearUpdate)
+		return d.updateDocs(*d.ClearUpdate)
 	}
 	return nil
 }
@@ -443,11 +515,11 @@ func (d *GCPFirestore) HandleFailure() error {
 	}
 	switch *d.FailOp {
 	case FirestoreRMOp:
-		return d.rmDoc()
+		return d.rmDocs()
 	case FirestoreMVOp:
-		return d.mvDoc(*d.FailCollection)
+		return d.mvDocs(*d.FailCollection)
 	case FirestoreUpdateOp:
-		return d.updateDoc(*d.FailUpdate)
+		return d.updateDocs(*d.FailUpdate)
 	}
 	return nil
 }

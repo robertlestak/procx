@@ -47,6 +47,40 @@ func RowsToMap(rows *sql.Rows) (map[string]any, error) {
 	return m, nil
 }
 
+func RowsToMapSlice(rows *sql.Rows) ([]map[string]any, error) {
+	l := log.WithFields(log.Fields{
+		"pkg": "sqlquery",
+		"fn":  "RowsToMap",
+	})
+	l.Debug("Converting row to map")
+	var sm []map[string]any
+	for rows.Next() {
+		m := make(map[string]interface{})
+		cols, err := rows.Columns()
+		if err != nil {
+			l.Error(err)
+			return nil, err
+		}
+		columns := make([]interface{}, len(cols))
+		columnPointers := make([]interface{}, len(cols))
+		for i := range columns {
+			columnPointers[i] = &columns[i]
+		}
+		if err := rows.Scan(columnPointers...); err != nil {
+			l.Error(err)
+			return nil, err
+		}
+		for i, colName := range cols {
+			val := columnPointers[i].(*interface{})
+			m[colName] = *val
+			l.Debugf("%s: %s", colName, *val)
+		}
+		sm = append(sm, m)
+	}
+	l.Debug("Converted row to map")
+	return sm, nil
+}
+
 func HandleField(v any) any {
 	if b, ok := v.([]byte); ok {
 		return string(b)
@@ -103,6 +137,7 @@ func ExtractMustacheKey(s string) string {
 			break
 		}
 	}
+	l.Debug("Extracted mustache key: ", key)
 	return key
 }
 
@@ -147,6 +182,34 @@ func ReplaceParamsMap(data map[string]any, params []any) []any {
 		} else if strings.Contains(sv, "{{") {
 			key := ExtractMustacheKey(sv)
 			params[i] = data[key]
+		}
+	}
+	return params
+}
+
+func ReplaceParamsSliceMap(data []map[string]any, params []any) []any {
+	l := log.WithFields(log.Fields{
+		"pkg": "schema",
+		"fn":  "ReplaceParamsSliceMap",
+	})
+	l.Debug("Replacing mustache params")
+	bd, err := json.Marshal(data)
+	if err != nil {
+		l.Error(err)
+	}
+	for i, v := range params {
+		sv := fmt.Sprintf("%s", v)
+		if sv == "{{procx_payload}}" {
+			l.Debug("Replacing payload")
+			jd, err := json.Marshal(data)
+			if err != nil {
+				l.Error(err)
+			}
+			params[i] = jd
+		} else if strings.Contains(sv, "{{") {
+			key := ExtractMustacheKey(sv)
+			l.Debug("Replacing mustache params")
+			params[i] = gjson.GetBytes(bd, key).String()
 		}
 	}
 	return params
