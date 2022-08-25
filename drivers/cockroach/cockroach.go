@@ -275,8 +275,7 @@ func (d *CockroachDB) GetWork() (io.Reader, error) {
 		if err != nil {
 			return nil, err
 		}
-		jv := gjson.GetBytes(bd, *d.RetrieveField)
-		result = fmt.Sprintf("%s", jv.Value())
+		result = gjson.GetBytes(bd, *d.RetrieveField).String()
 	} else {
 		jd, err := schema.SliceMapStringAnyToJSON(m)
 		if err != nil {

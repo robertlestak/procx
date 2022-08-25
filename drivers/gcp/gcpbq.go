@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -126,8 +125,7 @@ func (d *BQ) GetWork() (io.Reader, error) {
 		if err != nil {
 			return nil, err
 		}
-		jv := gjson.GetBytes(bd, *d.RetrieveField)
-		result = fmt.Sprintf("%s", jv.Value())
+		result = gjson.GetBytes(bd, *d.RetrieveField).String()
 	} else {
 		var td []map[string]any
 		for _, v := range m {
