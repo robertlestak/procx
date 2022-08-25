@@ -156,6 +156,8 @@ Usage: procx [options] [process]
     	AWS DynamoDB retrieve field
   -aws-dynamo-retrieve-query string
     	AWS DynamoDB retrieve query
+  -aws-dynamo-unmarshal-json
+    	AWS DynamoDB unmarshal JSON (default true)
   -aws-load-config
     	load AWS config from ~/.aws/config
   -aws-region string
@@ -862,6 +864,7 @@ Usage: procx [options] [process]
 - `PROCX_AWS_DYNAMO_NEXT_TOKEN`
 - `PROCX_AWS_DYNAMO_RETRIEVE_FIELD`
 - `PROCX_AWS_DYNAMO_RETRIEVE_QUERY`
+- `PROCX_AWS_DYNAMO_UNMARSHAL_JSON`
 - `PROCX_AWS_LOAD_CONFIG`
 - `PROCX_AWS_REGION`
 - `PROCX_AWS_ROLE_ARN`
@@ -1223,7 +1226,7 @@ procx \
 
 ### AWS DynamoDB
 
-The AWS DynamoDB driver will execute the provided PartiQL query and return the matched results. An optional JSON path can be passed in the `-aws-dynamo-retrieve-field` flag, if this is provided it will be used to extract the value from the returned data before passing to the process, otherwise the full array of Dynamo JSON documents is passed. Similar to other SQL-based drivers, you can use `gjson` syntax to extract values from the data which can be used in subsequent clear and fail handling queries. The `-aws-dynamo-next-token` can be provided to continue querying from a previous result, and `-aws-dynamo-include-next-token` can be set to pass the `_nextToken` in the response payload.
+The AWS DynamoDB driver will execute the provided PartiQL query and return the matched results. An optional JSON path can be passed in the `-aws-dynamo-retrieve-field` flag, if this is provided it will be used to extract the value from the returned data before passing to the process, otherwise the full array of Dynamo JSON documents is passed. Similar to other SQL-based drivers, you can use `gjson` syntax to extract values from the data which can be used in subsequent clear and fail handling queries. The `-aws-dynamo-next-token` can be provided to continue querying from a previous result, and `-aws-dynamo-include-next-token` can be set to pass the `_nextToken` in the response payload. By default, the Dynamo JSON objects are unmarshalled, however this can be disabled with `-aws-dynamo-unmarshal-json=false`.
 
 ```bash
 procx \

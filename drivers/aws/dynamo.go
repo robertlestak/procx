@@ -29,6 +29,7 @@ type Dynamo struct {
 	Limit            *int64
 	NextToken        *string
 	IncludeNextToken bool
+	UnmarshalJSON    bool
 	RoleARN          string
 	RetrieveQuery    *string
 	ClearQuery       *string
@@ -90,6 +91,10 @@ func (d *Dynamo) LoadEnv(prefix string) error {
 		v := os.Getenv(prefix+"AWS_DYNAMO_INCLUDE_NEXT_TOKEN") == "true"
 		d.IncludeNextToken = v
 	}
+	if os.Getenv(prefix+"AWS_DYNAMO_UNMARSHAL_JSON") != "" {
+		v := os.Getenv(prefix+"AWS_DYNAMO_UNMARSHAL_JSON") == "true"
+		d.UnmarshalJSON = v
+	}
 	if os.Getenv(prefix+"AWS_DYNAMO_LIMIT") != "" {
 		v := os.Getenv(prefix + "AWS_DYNAMO_LIMIT")
 		i, err := strconv.ParseInt(v, 10, 64)
@@ -121,6 +126,7 @@ func (d *Dynamo) LoadFlags() error {
 	d.RetrieveField = flags.AWSDynamoRetrieveField
 	d.ClearQuery = flags.AWSDynamoClearQuery
 	d.FailQuery = flags.AWSDynamoFailQuery
+	d.UnmarshalJSON = *flags.AWSDynamoUnmarshalJSON
 	d.IncludeNextToken = *flags.AWSDynamoIncludeNextToken
 	iv := int64(*flags.AWSDynamoLimit)
 	d.Limit = &iv
@@ -220,13 +226,23 @@ func (d *Dynamo) GetWork() (io.Reader, error) {
 	var result string
 	for _, item := range resp.Items {
 		var ld map[string]any
-		err = dynamodbattribute.UnmarshalMap(item, &ld)
-		if err != nil {
-			l.Errorf("%+v", err)
-			if err := d.LogIdentity(); err != nil {
+		if d.UnmarshalJSON {
+			err = dynamodbattribute.UnmarshalMap(item, &ld)
+			if err != nil {
 				l.Errorf("%+v", err)
+				return nil, err
 			}
-			return nil, err
+		} else {
+			jd, err := json.Marshal(item)
+			if err != nil {
+				l.Errorf("%+v", err)
+				return nil, err
+			}
+			err = json.Unmarshal(jd, &ld)
+			if err != nil {
+				l.Errorf("%+v", err)
+				return nil, err
+			}
 		}
 		if d.RetrieveField != nil && *d.RetrieveField != "" {
 			bd, err := json.Marshal(ld)
