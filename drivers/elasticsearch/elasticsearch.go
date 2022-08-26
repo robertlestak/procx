@@ -41,10 +41,10 @@ type Elasticsearch struct {
 	TLSCA         *string
 	RetrieveIndex *string
 	RetrieveQuery string
-	ClearQuery    string
+	ClearDoc      string
 	ClearIndex    *string
 	ClearOp       CloseOp
-	FailQuery     string
+	FailDoc       string
 	FailIndex     *string
 	FailOp        CloseOp
 	Key           *string
@@ -77,8 +77,8 @@ func (d *Elasticsearch) LoadEnv(prefix string) error {
 		v := os.Getenv(prefix + "ELASTICSEARCH_RETRIEVE_INDEX")
 		d.RetrieveIndex = &v
 	}
-	if os.Getenv(prefix+"ELASTICSEARCH_CLEAR_QUERY") != "" {
-		d.ClearQuery = os.Getenv(prefix + "ELASTICSEARCH_CLEAR_QUERY")
+	if os.Getenv(prefix+"ELASTICSEARCH_CLEAR_DOC") != "" {
+		d.ClearDoc = os.Getenv(prefix + "ELASTICSEARCH_CLEAR_DOC")
 	}
 	if os.Getenv(prefix+"ELASTICSEARCH_CLEAR_INDEX") != "" {
 		v := os.Getenv(prefix + "ELASTICSEARCH_CLEAR_INDEX")
@@ -87,8 +87,8 @@ func (d *Elasticsearch) LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"ELASTICSEARCH_CLEAR_OP") != "" {
 		d.ClearOp = CloseOp(os.Getenv(prefix + "ELASTICSEARCH_CLEAR_OP"))
 	}
-	if os.Getenv(prefix+"ELASTICSEARCH_FAIL_QUERY") != "" {
-		d.FailQuery = os.Getenv(prefix + "ELASTICSEARCH_FAIL_QUERY")
+	if os.Getenv(prefix+"ELASTICSEARCH_FAIL_DOC") != "" {
+		d.FailDoc = os.Getenv(prefix + "ELASTICSEARCH_FAIL_DOC")
 	}
 	if os.Getenv(prefix+"ELASTICSEARCH_FAIL_INDEX") != "" {
 		v := os.Getenv(prefix + "ELASTICSEARCH_FAIL_INDEX")
@@ -132,10 +132,10 @@ func (d *Elasticsearch) LoadFlags() error {
 	d.TLSCA = flags.ElasticsearchCAFile
 	d.RetrieveQuery = *flags.ElasticsearchRetrieveQuery
 	d.RetrieveIndex = flags.ElasticsearchRetrieveIndex
-	d.ClearQuery = *flags.ElasticsearchClearQuery
+	d.ClearDoc = *flags.ElasticsearchClearDoc
 	d.ClearIndex = flags.ElasticsearchClearIndex
 	d.ClearOp = CloseOp(*flags.ElasticsearchClearOp)
-	d.FailQuery = *flags.ElasticsearchFailQuery
+	d.FailDoc = *flags.ElasticsearchFailDoc
 	d.FailIndex = flags.ElasticsearchFailIndex
 	d.FailOp = CloseOp(*flags.ElasticsearchFailOp)
 	return nil
@@ -484,9 +484,9 @@ func (d *Elasticsearch) ClearWork() error {
 		if d.Key != nil && *d.Key != "" {
 			k = *d.Key
 		}
-		return put(d.Client, d.ClearIndex, k, d.ClearQuery)
+		return put(d.Client, d.ClearIndex, k, d.ClearDoc)
 	case CloseOpMergePut:
-		return mergePutList(d.Client, d.RetrieveIndex, d.ClearIndex, d.ClearQuery, d.data)
+		return mergePutList(d.Client, d.RetrieveIndex, d.ClearIndex, d.ClearDoc, d.data)
 	case CloseOpMove:
 		return moveList(d.Client, d.RetrieveIndex, d.ClearIndex, d.data)
 	}
@@ -511,9 +511,9 @@ func (d *Elasticsearch) HandleFailure() error {
 		if d.Key != nil && *d.Key != "" {
 			k = *d.Key
 		}
-		return put(d.Client, d.FailIndex, k, d.FailQuery)
+		return put(d.Client, d.FailIndex, k, d.FailDoc)
 	case CloseOpMergePut:
-		return mergePutList(d.Client, d.RetrieveIndex, d.FailIndex, d.FailQuery, d.data)
+		return mergePutList(d.Client, d.RetrieveIndex, d.FailIndex, d.FailDoc, d.data)
 	case CloseOpMove:
 		return moveList(d.Client, d.RetrieveIndex, d.ClearIndex, d.data)
 	}

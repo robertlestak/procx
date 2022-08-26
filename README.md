@@ -319,20 +319,20 @@ Usage: procx [options] [process]
     	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, cockroach, couchbase, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, github, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream, smb)
   -elasticsearch-address string
     	Elasticsearch address
+  -elasticsearch-clear-doc string
+    	Elasticsearch clear doc
   -elasticsearch-clear-index string
     	Elasticsearch clear index
   -elasticsearch-clear-op string
     	Elasticsearch clear op. Valid values are: delete, put, merge-put, move
-  -elasticsearch-clear-query string
-    	Elasticsearch clear query
   -elasticsearch-enable-tls
     	Elasticsearch enable TLS
+  -elasticsearch-fail-doc string
+    	Elasticsearch fail doc
   -elasticsearch-fail-index string
     	Elasticsearch fail index
   -elasticsearch-fail-op string
     	Elasticsearch fail op. Valid values are: delete, put, merge-put, move
-  -elasticsearch-fail-query string
-    	Elasticsearch fail query
   -elasticsearch-password string
     	Elasticsearch password
   -elasticsearch-retrieve-index string
@@ -971,13 +971,13 @@ Usage: procx [options] [process]
 - `PROCX_DAEMON_INTERVAL`
 - `PROCX_DRIVER`
 - `PROCX_ELASTICSEARCH_ADDRESS`
+- `PROCX_ELASTICSEARCH_CLEAR_DOC`
 - `PROCX_ELASTICSEARCH_CLEAR_INDEX`
 - `PROCX_ELASTICSEARCH_CLEAR_OP`
-- `PROCX_ELASTICSEARCH_CLEAR_QUERY`
 - `PROCX_ELASTICSEARCH_ENABLE_TLS`
+- `PROCX_ELASTICSEARCH_FAIL_DOC`
 - `PROCX_ELASTICSEARCH_FAIL_INDEX`
 - `PROCX_ELASTICSEARCH_FAIL_OP`
-- `PROCX_ELASTICSEARCH_FAIL_QUERY`
 - `PROCX_ELASTICSEARCH_PASSWORD`
 - `PROCX_ELASTICSEARCH_RETRIEVE_INDEX`
 - `PROCX_ELASTICSEARCH_RETRIEVE_QUERY`
@@ -1414,7 +1414,7 @@ procx \
     -elasticsearch-retrieve-index my-index \
     -elasticsearch-clear-op merge-put \
     -elasticsearch-index my-index \
-    -elasticsearch-clear-query '{"status": "completed"}' \
+    -elasticsearch-clear-doc '{"status": "completed"}' \
     -elasticsearch-fail-op move \
     -elasticsearch-fail-index my-index-failed \
     -driver elasticsearch \
