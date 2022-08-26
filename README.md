@@ -84,6 +84,7 @@ Currently, the following drivers are supported:
 - [Redis List](#redis-list) (`redis-list`)
 - [Redis Pub/Sub](#redis-pubsub) (`redis-pubsub`)
 - [Redis Stream](#redis-stream) (`redis-stream`)
+- [Scylla](#scylla) (`scylla`)
 - [SMB](#smb) (`smb`)
 - [Local](#local) (`local`)
 
@@ -814,6 +815,32 @@ Usage: procx [options] [process]
     	Redis TLS key file
   -redis-tls-skip-verify
     	Redis TLS skip verify
+  -scylla-clear-params string
+    	Scylla clear params
+  -scylla-clear-query string
+    	Scylla clear query
+  -scylla-consistency string
+    	Scylla consistency (default "QUORUM")
+  -scylla-fail-params string
+    	Scylla fail params
+  -scylla-fail-query string
+    	Scylla fail query
+  -scylla-hosts string
+    	Scylla hosts
+  -scylla-keyspace string
+    	Scylla keyspace
+  -scylla-local-dc string
+    	Scylla local dc
+  -scylla-password string
+    	Scylla password
+  -scylla-retrieve-field string
+    	Scylla retrieve field. If not set, all fields will be returned as a JSON object
+  -scylla-retrieve-params string
+    	Scylla retrieve params
+  -scylla-retrieve-query string
+    	Scylla retrieve query
+  -scylla-user string
+    	Scylla user
   -smb-clear-key string
     	SMB clear key, if clear op is mv. default is origional key name.
   -smb-clear-key-template string
@@ -1191,6 +1218,19 @@ Usage: procx [options] [process]
 - `PROCX_REDIS_TLS_CERT_FILE`
 - `PROCX_REDIS_TLS_INSECURE`
 - `PROCX_REDIS_TLS_KEY_FILE`
+- `PROCX_SCYLLA_CLEAR_PARAMS`
+- `PROCX_SCYLLA_CLEAR_QUERY`
+- `PROCX_SCYLLA_CONSISTENCY`
+- `PROCX_SCYLLA_FAIL_PARAMS`
+- `PROCX_SCYLLA_FAIL_QUERY`
+- `PROCX_SCYLLA_HOSTS`
+- `PROCX_SCYLLA_KEYSPACE`
+- `PROCX_SCYLLA_LOCAL_DC`
+- `PROCX_SCYLLA_PASSWORD`
+- `PROCX_SCYLLA_RETRIEVE_FIELD`
+- `PROCX_SCYLLA_RETRIEVE_PARAMS`
+- `PROCX_SCYLLA_RETRIEVE_QUERY`
+- `PROCX_SCYLLA_USER`
 - `PROCX_SMB_CLEAR_KEY`
 - `PROCX_SMB_CLEAR_KEY_TEMPLATE`
 - `PROCX_SMB_CLEAR_OP`
@@ -1751,6 +1791,25 @@ procx \
     -redis-stream-clear-op del \
     -redis-stream-fail-op ack \
     -driver redis-stream \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### Scylla
+
+The Scylla driver will retrieve the specified rows from the specified keyspace table, and pass it to the process. Upon successful completion of the process, it will execute the specified query to update / remove the work from the table.
+
+```bash
+procx \
+    -scylla-keyspace mykeyspace \
+    -scylla-consistency QUORUM \
+    -scylla-clear-query "DELETE FROM mykeyspace.mytable WHERE id = ?" \
+    -scylla-clear-params "{{0.id}}" \
+    -scylla-hosts "localhost:9042,another:9042" \
+    -scylla-fail-query "UPDATE mykeyspace.mytable SET status = 'failed' WHERE id = ?" \
+    -scylla-fail-params "{{0.id}}" \
+    -scylla-retrieve-field work \
+    -scylla-retrieve-query "SELECT id, work FROM mykeyspace.mytable LIMIT 1" \
+    -driver scylla \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 

@@ -33,6 +33,8 @@ require (
 	google.golang.org/api v0.85.0
 )
 
+replace github.com/gocql/gocql => github.com/scylladb/gocql v1.7.1
+
 require (
 	cloud.google.com/go v0.102.1 // indirect
 	cloud.google.com/go/compute v1.7.0 // indirect

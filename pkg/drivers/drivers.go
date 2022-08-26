@@ -26,6 +26,7 @@ import (
 	"github.com/robertlestak/procx/drivers/pulsar"
 	"github.com/robertlestak/procx/drivers/rabbitmq"
 	"github.com/robertlestak/procx/drivers/redis"
+	"github.com/robertlestak/procx/drivers/scylla"
 	"github.com/robertlestak/procx/drivers/smb"
 )
 
@@ -62,6 +63,7 @@ var (
 	RedisSubscription DriverName = "redis-pubsub"
 	RedisStream       DriverName = "redis-stream"
 	SMB               DriverName = "smb"
+	Scylla            DriverName = "scylla"
 	Local             DriverName = "local"
 	ErrDriverNotFound            = errors.New("driver not found")
 )
@@ -129,6 +131,8 @@ func GetDriver(name DriverName) Driver {
 		return &redis.RedisStream{}
 	case SMB:
 		return &smb.SMB{}
+	case Scylla:
+		return &scylla.Scylla{}
 	case Local:
 		return &local.Local{}
 	}
