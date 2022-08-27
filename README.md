@@ -64,6 +64,7 @@ Currently, the following drivers are supported:
 - [Cockroach](#cockroach) (`cockroach`)
 - [Couchbase](#couchbase) (`couchbase`)
 - [Elasticsearch](#elasticsearch) (`elasticsearch`)
+- [Etcd](#etcd) (`etcd`)
 - [FS](#fs) (`fs`)
 - [GCP Big Query](#gcp-bq) (`gcp-bq`)
 - [GCP Cloud Storage](#gcp-gcs) (`gcp-gcs`)
