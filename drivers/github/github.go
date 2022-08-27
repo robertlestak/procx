@@ -227,6 +227,10 @@ func (d *GitHub) GetWork() (io.Reader, error) {
 		l.Debugf("GetContents error=%v", err)
 		return nil, err
 	}
+	if contents == nil {
+		l.Debugf("No contents found for %s", d.File)
+		return nil, nil
+	}
 	c, err := contents.GetContent()
 	if err != nil {
 		l.Debugf("GetContent error=%v", err)
