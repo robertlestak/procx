@@ -1,0 +1,20 @@
+package flags
+
+var (
+	EtcdHosts       = FlagSet.String("etcd-hosts", "", "Etcd hosts")
+	EtcdUsername    = FlagSet.String("etcd-username", "", "Etcd username")
+	EtcdPassword    = FlagSet.String("etcd-password", "", "Etcd password")
+	EtcdKey         = FlagSet.String("etcd-retrieve-key", "", "Etcd retrieve key")
+	EtcdWithPrefix  = FlagSet.Bool("etcd-with-prefix", false, "Etcd with prefix")
+	EtcdClearOp     = FlagSet.String("etcd-clear-op", "", "Etcd clear op. (mv, put, rm)")
+	EtcdClearVal    = FlagSet.String("etcd-clear-val", "", "Etcd clear val")
+	EtcdClearKey    = FlagSet.String("etcd-clear-key", "", "Etcd clear key")
+	EtcdFailOp      = FlagSet.String("etcd-fail-op", "", "Etcd fail op. (mv, put, rm)")
+	EtcdFailVal     = FlagSet.String("etcd-fail-val", "", "Etcd fail val")
+	EtcdFailKey     = FlagSet.String("etcd-fail-key", "", "Etcd fail key")
+	EtcdTLSEnable   = FlagSet.Bool("etcd-tls-enable", false, "Etcd TLS enable")
+	EtcdTLSInsecure = FlagSet.Bool("etcd-tls-insecure", false, "Etcd TLS insecure")
+	EtcdTLSCert     = FlagSet.String("etcd-tls-cert", "", "Etcd TLS cert")
+	EtcdTLSKey      = FlagSet.String("etcd-tls-key", "", "Etcd TLS key")
+	EtcdTLSCA       = FlagSet.String("etcd-tls-ca", "", "Etcd TLS ca")
+)

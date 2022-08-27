@@ -126,6 +126,7 @@ While building for a specific driver may seem contrary to the ethos of procx, th
 ## Usage
 
 ```bash
+time="2022-08-26T21:10:23-07:00" level=debug msg=start app=procx fn=main
 Usage: procx [options] [process]
   -activemq-address string
     	ActiveMQ STOMP address
@@ -316,7 +317,7 @@ Usage: procx [options] [process]
   -daemon-interval int
     	daemon interval in milliseconds
   -driver string
-    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, cockroach, couchbase, elasticsearch, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, github, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream, smb)
+    	driver to use. (activemq, aws-dynamo, aws-s3, aws-sqs, cassandra, centauri, cockroach, couchbase, elasticsearch, etcd, fs, gcp-bq, gcp-firestore, gcp-gcs, gcp-pubsub, github, http, kafka, local, mongodb, mssql, mysql, nats, nfs, nsq, postgres, pulsar, rabbitmq, redis-list, redis-pubsub, redis-stream, scylla, smb)
   -elasticsearch-address string
     	Elasticsearch address
   -elasticsearch-clear-doc string
@@ -349,6 +350,38 @@ Usage: procx [options] [process]
     	Elasticsearch TLS skip verify
   -elasticsearch-username string
     	Elasticsearch username
+  -etcd-clear-key string
+    	Etcd clear key
+  -etcd-clear-op string
+    	Etcd clear op. (mv, put, rm)
+  -etcd-clear-val string
+    	Etcd clear val
+  -etcd-fail-key string
+    	Etcd fail key
+  -etcd-fail-op string
+    	Etcd fail op. (mv, put, rm)
+  -etcd-fail-val string
+    	Etcd fail val
+  -etcd-hosts string
+    	Etcd hosts
+  -etcd-password string
+    	Etcd password
+  -etcd-retrieve-key string
+    	Etcd retrieve key
+  -etcd-tls-ca string
+    	Etcd TLS ca
+  -etcd-tls-cert string
+    	Etcd TLS cert
+  -etcd-tls-enable
+    	Etcd TLS enable
+  -etcd-tls-insecure
+    	Etcd TLS insecure
+  -etcd-tls-key string
+    	Etcd TLS key
+  -etcd-username string
+    	Etcd username
+  -etcd-with-prefix
+    	Etcd with prefix
   -fs-clear-folder string
     	FS clear folder, if clear op is mv
   -fs-clear-key string
@@ -986,6 +1019,22 @@ Usage: procx [options] [process]
 - `PROCX_ELASTICSEARCH_TLS_KEY_FILE`
 - `PROCX_ELASTICSEARCH_TLS_SKIP_VERIFY`
 - `PROCX_ELASTICSEARCH_USERNAME`
+- `PROCX_ETCD_CLEAR_KEY`
+- `PROCX_ETCD_CLEAR_OP`
+- `PROCX_ETCD_CLEAR_VAL`
+- `PROCX_ETCD_FAIL_KEY`
+- `PROCX_ETCD_FAIL_OP`
+- `PROCX_ETCD_FAIL_VAL`
+- `PROCX_ETCD_HOSTS`
+- `PROCX_ETCD_PASSWORD`
+- `PROCX_ETCD_RETRIEVE_KEY`
+- `PROCX_ETCD_TLS_CA`
+- `PROCX_ETCD_TLS_CERT`
+- `PROCX_ETCD_TLS_ENABLE`
+- `PROCX_ETCD_TLS_INSECURE`
+- `PROCX_ETCD_TLS_KEY`
+- `PROCX_ETCD_USERNAME`
+- `PROCX_ETCD_WITH_PREFIX`
 - `PROCX_FS_CLEAR_FOLDER`
 - `PROCX_FS_CLEAR_KEY`
 - `PROCX_FS_CLEAR_KEY_TEMPLATE`
@@ -1418,6 +1467,21 @@ procx \
     -elasticsearch-fail-op move \
     -elasticsearch-fail-index my-index-failed \
     -driver elasticsearch \
+    bash -c 'echo the payload is: $PROCX_PAYLOAD'
+```
+
+### Etcd
+
+The Etcd driver will retrieve the specified key from the etcd cluster, and pass it to the process. Upon successful completion of the process, it will either delete the key (`rm`), update the value (`put`), or move the document to a new key (`mv`).
+
+```bash
+procx \
+    -etcd-hosts localhost:2379,another:2379 \
+    -etcd-retrieve-key my-key \
+    -etcd-clear-op rm \
+    -etcd-fail-op put \
+    -etcd-fail-value '{"hello": "{{hello}}", "status": "failed"}' \
+    -driver etcd \
     bash -c 'echo the payload is: $PROCX_PAYLOAD'
 ```
 

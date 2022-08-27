@@ -10,6 +10,7 @@ import (
 	"github.com/robertlestak/procx/drivers/cockroach"
 	"github.com/robertlestak/procx/drivers/couchbase"
 	"github.com/robertlestak/procx/drivers/elasticsearch"
+	"github.com/robertlestak/procx/drivers/etcd"
 	"github.com/robertlestak/procx/drivers/fs"
 	"github.com/robertlestak/procx/drivers/gcp"
 	"github.com/robertlestak/procx/drivers/github"
@@ -42,6 +43,7 @@ var (
 	CockroachDB       DriverName = "cockroach"
 	Couchbase         DriverName = "couchbase"
 	Elasticsearch     DriverName = "elasticsearch"
+	Etcd              DriverName = "etcd"
 	FS                DriverName = "fs"
 	HTTP              DriverName = "http"
 	Kafka             DriverName = "kafka"
@@ -89,6 +91,8 @@ func GetDriver(name DriverName) Driver {
 		return &couchbase.Couchbase{}
 	case Elasticsearch:
 		return &elasticsearch.Elasticsearch{}
+	case Etcd:
+		return &etcd.Etcd{}
 	case FS:
 		return &fs.FS{}
 	case GCPBQ:
