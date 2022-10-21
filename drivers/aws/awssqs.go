@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"encoding/json"
 	"io"
 	"os"
 	"strings"
@@ -27,6 +28,7 @@ type SQS struct {
 	ReceiptHandle string
 	Region        string
 	RoleARN       string
+	IncludeID     bool
 }
 
 func (d *SQS) LoadEnv(prefix string) error {
@@ -47,6 +49,9 @@ func (d *SQS) LoadEnv(prefix string) error {
 	if os.Getenv(prefix+"AWS_LOAD_CONFIG") != "" || os.Getenv("AWS_SDK_LOAD_CONFIG") != "" {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	}
+	if os.Getenv(prefix+"AWS_SQS_INCLUDE_ID") == "true" {
+		d.IncludeID = true
+	}
 	return nil
 }
 
@@ -59,6 +64,7 @@ func (d *SQS) LoadFlags() error {
 	d.Queue = *flags.SQSQueueURL
 	d.Region = *flags.AWSRegion
 	d.RoleARN = *flags.AWSRoleARN
+	d.IncludeID = *flags.AWSSQSIncludeID
 	if flags.AWSLoadConfig != nil && *flags.AWSLoadConfig {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	}
@@ -166,8 +172,24 @@ func (d *SQS) GetWork() (io.Reader, error) {
 		return nil, nil
 	}
 	md := m.Messages[0]
+	var body string
+	if d.IncludeID {
+		var resp struct {
+			ID   string `json:"id"`
+			Body string `json:"body"`
+		}
+		resp.ID = *md.MessageId
+		resp.Body = *md.Body
+		b, err := json.Marshal(resp)
+		if err != nil {
+			return nil, err
+		}
+		body = string(b)
+	} else {
+		body = *md.Body
+	}
 	d.ReceiptHandle = *md.ReceiptHandle
-	return strings.NewReader(*md.Body), nil
+	return strings.NewReader(body), nil
 }
 
 func (d *SQS) ClearWork() error {

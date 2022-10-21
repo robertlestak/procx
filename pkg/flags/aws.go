@@ -26,4 +26,5 @@ var (
 	AWSS3FailBucket           = FlagSet.String("aws-s3-fail-bucket", "", "AWS S3 fail bucket, if fail op is mv")
 	AWSS3FailKey              = FlagSet.String("aws-s3-fail-key", "", "AWS S3 fail key, if fail op is mv. default is original key name.")
 	AWSS3FailKeyTemplate      = FlagSet.String("aws-s3-fail-key-template", "", "AWS S3 fail key template, if fail op is mv.")
+	AWSSQSIncludeID           = FlagSet.Bool("aws-sqs-include-id", false, "AWS SQS include ID in response")
 )

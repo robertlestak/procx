@@ -127,7 +127,6 @@ While building for a specific driver may seem contrary to the ethos of procx, th
 ## Usage
 
 ```bash
-time="2022-08-26T21:10:23-07:00" level=debug msg=start app=procx fn=main
 Usage: procx [options] [process]
   -activemq-address string
     	ActiveMQ STOMP address
@@ -191,6 +190,8 @@ Usage: procx [options] [process]
     	AWS S3 key prefix
   -aws-s3-key-regex string
     	AWS S3 key regex
+  -aws-sqs-include-id
+    	AWS SQS include ID in response
   -aws-sqs-queue-url string
     	AWS SQS queue URL
   -cassandra-clear-params string
@@ -941,6 +942,7 @@ Usage: procx [options] [process]
 - `PROCX_AWS_S3_KEY`
 - `PROCX_AWS_S3_KEY_PREFIX`
 - `PROCX_AWS_S3_KEY_REGEX`
+- `PROCX_AWS_SQS_INCLUDE_ID`
 - `PROCX_AWS_SQS_QUEUE_URL`
 - `PROCX_AWS_SQS_ROLE_ARN`
 - `PROCX_CASSANDRA_CLEAR_PARAMS`
